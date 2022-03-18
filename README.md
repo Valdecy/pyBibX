@@ -21,7 +21,7 @@ Network Capabilities:
 - a) **Citation Analysis** between Documents (Blue Nodes) and Citations (Red Nodes). (An interactive plot). Documents and Citations can be highlighted for better visualization
 - b) **Collaboration Analysis** between Authors, Countries, Institutions or **Adjacency Analysis** between Authors' Keywords or Keywords Plus.  (An interactive plot). Collaboration and Adjacency can be highlighted for better visualization
 - c) **Similarity Analysis** can be performed using coupling or cocitation methods. (An interactive plot).
-- d) **World MAP Collaboration Analysis** between Countries in a Map
+- d) **World MAP Collaboration Analysis** between Countries in a Map. (An interactive plot).
 
 Correction and Manipulation Capabilities:
 - a) Filter the .bib file by Year, Sources, Bradford Law Cores, Countries, and/or Languages
