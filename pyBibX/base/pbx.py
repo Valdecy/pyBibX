@@ -24,7 +24,6 @@ import textwrap
 try:
     import importlib.resources as pkg_resources
 except ImportError:
-    # Try backported to Python version < 3.7 'importlib_resources'.
     import importlib_resources as pkg_resources
 from . import stws
 
@@ -788,12 +787,13 @@ class pbx_probe():
             for j in range(i, len(self.ref)):
                 for k in range(0, len(self.ref[j])):
                     if (title.lower() in self.ref[j][k].lower()):
-                        flag = 0
-                        for au in self.aut[i]:
-                            if (au in self.ref[j][k].lower()):
-                                flag = flag + 1
-                        if (flag > 0 and flag == len(self.aut[i])):
-                            c_count[j] = c_count[j] + 1
+                        c_count[j] = c_count[j] + 1
+                        #flag = 0
+                        #for au in self.aut[i]:
+                            #if (au in self.ref[j][k].lower()):
+                                #flag = flag + 1
+                        #if (flag > 0 and flag == len(self.aut[i])):
+                            #c_count[j] = c_count[j] + 1
         c_year_  = list(set(c_year))
         c_year_.sort()
         c_count_ = [0]*len(c_year_)
@@ -1305,7 +1305,7 @@ class pbx_probe():
             x_lbl = 'Year'
             y_lbl = 'Citations'
             for i in range(0, len(key)):
-                year = str(key[i])
+                year = key[i]
                 idx  = [i for i, x in enumerate(list(self.dy)) if x == year]
                 docs = 0
                 for j in idx:
@@ -1537,7 +1537,7 @@ class pbx_probe():
         plt.title(title, loc = 'center')
         plt.xlabel(x_lbl)
         plt.ylabel(y_lbl)
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()
         return
     
