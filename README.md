@@ -34,9 +34,8 @@ Correction and Manipulation Capabilities:
 pip install pyBibX
 ```
 
-2. Colab Demo
-
-Try it in **Colab**:
+2. Try it in **Colab**:
 
 - Example 01: Scopus .bib file ([ Colab Demo ](https://colab.research.google.com/drive/1yHiMMZIKa-RrarXbPB9ca0gLN9YvvtPU?usp=sharing))
 - Example 02: WOS .bib file ([ Colab Demo ](https://colab.research.google.com/drive/13HLjC4myTvYcjLk2XBTZKbWJ2aqZUST1?usp=sharing))
+- Example 02: Your own .bib file ([ Colab Demo ](https://colab.research.google.com/drive/19EYjgal9V1kemmzpHnyp6MSlk9S-kGHT?usp=sharing))
