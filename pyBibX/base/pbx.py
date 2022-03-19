@@ -362,8 +362,8 @@ class pbx_probe():
         self.av_d_year          = round(self.av_d_year.mean(), 2)
         self.citation           = self.__get_citations(self.data['note'])
         self.av_c_doc           = round(sum(self.citation)/self.data.shape[0], 2)
-        self.ref, self.u_ref    = self.__get_str(entry = 'references', s = ';',     lower = False, sorting = False)
-        self.aut, self.u_aut    = self.__get_str(entry = 'author',     s = ' and ', lower = True,  sorting = True )
+        self.ref, self.u_ref    = self.__get_str(entry = 'references', s = ';',     lower = False, sorting = True)
+        self.aut, self.u_aut    = self.__get_str(entry = 'author',     s = ' and ', lower = True,  sorting = True)
         self.aut_h              = self.__h_index()
         self.aut_docs           = [len(item) for item in self.aut]
         self.aut_single         = len([item  for item in self.aut_docs if item == 1])
@@ -387,7 +387,7 @@ class pbx_probe():
         idx.reverse()
         self.u_auk              = [self.u_auk[i] for i in idx]
         self.auk_count          = [self.auk_count[i] for i in idx]
-        self.jou, self.u_jou    = self.__get_str(entry = 'abbrev_source_title', s = ';', lower = True, sorting = False)
+        self.jou, self.u_jou    = self.__get_str(entry = 'abbrev_source_title', s = ';', lower = True, sorting = True)
         if ('unknow' in self.u_jou):
             self.u_jou.remove('unknow')
         jou_                    = [item for sublist in self.jou for item in sublist]
@@ -398,7 +398,7 @@ class pbx_probe():
         self.jou_count          = [self.jou_count[i] for i in idx]
         self.jou_cit            = self.__get_counts(self.u_jou, self.jou, self.citation)
         self.jou_cit            = self.__get_counts(self.u_jou, self.jou, self.citation)
-        self.lan, self.u_lan    = self.__get_str(entry = 'language', s = '.', lower = True, sorting = True ) 
+        self.lan, self.u_lan    = self.__get_str(entry = 'language', s = '.', lower = True, sorting = True) 
         lan_                    = [item for sublist in self.lan for item in sublist]
         self.lan_count          = [lan_.count(item) for item in self.u_lan]
         self.ctr, self.u_ctr    = self.__get_countries()
