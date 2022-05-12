@@ -44,9 +44,9 @@ pip install pyBibX
 This section indicates the libraries that inspired pyBibX
 
 * Bibliometrix: https://www.bibliometrix.org/home/
-- Github: https://github.com/massimoaria/bibliometrix
-- Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of informetrics, 11(4), 959-975. doi: 10.1016/j.joi.2017.08.007
+- a) Github: https://github.com/massimoaria/bibliometrix
+- b) Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of informetrics, 11(4), 959-975. doi: 10.1016/j.joi.2017.08.007
 
 * Metaknowledge: http://www.networkslab.org/metaknowledge
-- Github: https://github.com/UWNETLAB/metaknowledge
-- Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
+- a) Github: https://github.com/UWNETLAB/metaknowledge
+- b) Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
