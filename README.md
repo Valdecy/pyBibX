@@ -39,3 +39,14 @@ pip install pyBibX
 - Example 01: 'Scopus'   .bib file ([ Colab Demo ](https://colab.research.google.com/drive/1yHiMMZIKa-RrarXbPB9ca0gLN9YvvtPU?usp=sharing))
 - Example 02: 'WOS'      .bib file ([ Colab Demo ](https://colab.research.google.com/drive/13HLjC4myTvYcjLk2XBTZKbWJ2aqZUST1?usp=sharing))
 - Example 03: 'Your Own' .bib file ([ Colab Demo ](https://colab.research.google.com/drive/19EYjgal9V1kemmzpHnyp6MSlk9S-kGHT?usp=sharing))
+
+# Acknowledgement 
+This section indicates the libraries that inspired pyBibX
+
+* Bibliometrix: https://www.bibliometrix.org/home/
+- Github: https://github.com/massimoaria/bibliometrix
+- Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of informetrics, 11(4), 959-975. doi: 10.1016/j.joi.2017.08.007
+
+* Metaknowledge: http://www.networkslab.org/metaknowledge
+- Github: https://github.com/UWNETLAB/metaknowledge
+- Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
