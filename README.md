@@ -28,10 +28,10 @@ NLP (Natural Language Processing) Capabilities:
 - a) **Topic Modelling** using BERTopic to cluster documents by theme
 - b) Visualize topics distribution
 - c) Visualize topics by the most representative words
-- d) Visualize topics heatmap
-- e) Visualize documents projection and clusterization by topic
+- d) Visualize documents projection and clusterization by topic
+- e) Visualize topics heatmap
 - f) Find the most representative documents from each theme
-- g) Find the most representative documents according to a word or set of words
+- g) Find the most representative topics according to a word
 
 Correction and Manipulation Capabilities:
 - a) Filter the .bib file by Year, Sources, Bradford Law Cores, Countries, and/or Languages
