@@ -3283,7 +3283,7 @@ class pbx_probe():
                 for item in paper:
                     docs[i].append(self.topic_corpus.index(item))
             self.df_rep.iloc[i, 0] = self.topic_info.iloc[i, 0]
-            self.df_repself.drp.iloc[i, 1] = '; '.join(map(str, docs[i]))
+            self.df_rep.iloc[i, 1] = '; '.join(map(str, docs[i]))
         return self.df_rep
         
     # Function: Topics - Reduce
