@@ -15,6 +15,7 @@ import networkx as nx             # version 2.6.3
 import numpy as np                # version 1.20.3
 import pandas as pd               # version 1.3.3
 import plotly.graph_objects as go # version 5.1.0
+import plotly.subplots as ps      # version 5.1.0
 import plotly.io as pio           # version 5.1.0
 import re                         # version 2.2.1
 import squarify                   # version 0.4.3
@@ -27,12 +28,15 @@ except ImportError:
     import importlib_resources as pkg_resources
 from . import stws
 
+from bertopic import BERTopic                               # version 0.10.0
 from collections import Counter
+from difflib import SequenceMatcher
 from matplotlib import pyplot as plt                        # version 3.4.3
 plt.style.use('bmh')
 from scipy.spatial import ConvexHull                        # version 1.7.1
 from sklearn.cluster import KMeans                          # version 1.0.2
 from sklearn.decomposition import TruncatedSVD as tsvd      # version 1.0.2
+from sklearn.feature_extraction.text import CountVectorizer # version 1.0.2
 from sklearn.feature_extraction.text import TfidfVectorizer # version 1.0.2
 from sklearn.metrics.pairwise import cosine_similarity      # version 1.0.2
 from wordcloud import WordCloud                             # version 1.5.0
@@ -532,6 +536,49 @@ class pbx_probe():
                 self.data = self.data[self.data['language'].isin(language)]
         self.__make_bib()
         return
+    
+    #from functools import lru_cache
+    #def __lev_dist(a, b): 
+        #@lru_cache(None)
+        #def min_dist(s1, s2):
+            #if s1 == len(a) or s2 == len(b):
+                #return len(a) - s1 + len(b) - s2
+            #if a[s1] == b[s2]:
+                #return min_dist(s1 + 1, s2 + 1)
+            #return 1 + min(min_dist(s1, s2 + 1),      # insert character
+                           #min_dist(s1 + 1, s2),      # delete character
+                           #min_dist(s1 + 1, s2 + 1),  # replace character
+                           #)
+        #return min_dist(0, 0)
+        
+    # Function: Fuzzy String Matcher
+    def fuzzy_matcher(self, entry = 'aut', cut_ratio = 0.80, verbose = True): # 'aut', 'inst'
+        if (entry == 'aut'):
+            u_lst = [item for item in self.u_aut]
+        if (entry == 'inst'):
+            u_lst = [item for item in self.u_uni]
+        fuzzy_lst = [[] for item in u_lst ]
+        idx       = [i for i in range(0, len(u_lst))]
+        i         = 0
+        while (len(idx) != 0):
+            if (i in idx):
+                idx.remove(i)
+            for j in idx:
+                ratio = SequenceMatcher(None, u_lst[i], u_lst[j]).ratio()
+                if (ratio >= cut_ratio and ratio < 1):
+                    fuzzy_lst[i].append(u_lst[j])
+                    if (j in idx):
+                        idx.remove(j)
+            i = i + 1
+        indices = [i for i, x in enumerate(fuzzy_lst) if x == []]
+        for i in sorted(indices, reverse = True):
+            del fuzzy_lst[i]
+            del u_lst[i]
+        fuzzy_dict = dict(zip(u_lst, fuzzy_lst))
+        if (verbose == True):
+            for key, value in fuzzy_dict.items():
+               print(str(key)+': '+str('; '.join(value)))
+        return fuzzy_dict
 
     # Function: Merge Author
     def merge_author(self, get = [], replace_for = 'name'):
@@ -751,6 +798,7 @@ class pbx_probe():
             if (isinstance(e, str) == True):
                 strg = e.split(s)
                 strg = [item.strip() for item in strg]
+                strg = [' '.join(item.split()) for item in strg]
                 if (lower == True):
                     strg = [item.lower() for item in strg]
                 info.append(strg)
@@ -1037,8 +1085,110 @@ class pbx_probe():
         plt.show()
         return
     
+    # Function: Get Top N-Grams
+    #hhhh
+    def get_top_ngrams(self, view = 'browser', entry = 'kwp', ngrams = 1, stop_words = [], wordsn = 15):
+        sw_full = []
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        if  (entry == 'kwp'):
+            corpora = pd.Series([' '.join(k) for k in self.kid]) 
+        elif (entry == 'kwa'): 
+            corpora = pd.Series([' '.join(a) for a in self.auk] )
+        elif (entry == 'abs'):
+            corpora = self.data['abstract']
+        elif (entry == 'title'):
+            corpora = self.data['title']
+        if (len(stop_words) > 0):
+            for sw_ in stop_words: 
+                if   (sw_ == 'ar' or sw_ == 'ara'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Arabic.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Arabic.txt', 'r',        encoding = 'utf8')
+                elif (sw_ == 'bn' or sw_ == 'ben'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bengali.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Bengali.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'bg' or sw_ == 'bul'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bulgarian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Bulgarian.txt', 'r',     encoding = 'utf8')
+                elif (sw_ == 'cs' or sw_ == 'cze' or sw_ == 'ces'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Czech.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Czech.txt', 'r',         encoding = 'utf8')
+                elif (sw_ == 'en' or sw_ == 'eng'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-English.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-English.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'fi' or sw_ == 'fin'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Finnish.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Finnish.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'fr' or sw_ == 'fre' or sw_ == 'fra'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-French.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-French.txt', 'r',        encoding = 'utf8')
+                elif (sw_ == 'de' or sw_ == 'ger' or sw_ == 'deu'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-German.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-German.txt', 'r',        encoding = 'utf8')
+                elif (sw_ == 'hi' or sw_ == 'hin'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hind.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Hindi.txt', 'r',         encoding = 'utf8')
+                elif (sw_ == 'hu' or sw_ == 'hun'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hungarian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Hungarian.txt', 'r',     encoding = 'utf8')
+                elif (sw_ == 'it' or sw_ == 'ita'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Italian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Italian.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'mr' or sw_ == 'mar'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Marathi.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Marathi.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'fa' or sw_ == 'per' or sw_ == 'fas'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Persian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Persian.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'pl' or sw_ == 'pol'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Polish.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Polish.txt', 'r',        encoding = 'utf8')
+                elif (sw_ == 'pt-br' or sw_ == 'por-br'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Portuguese-br.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Portuguese-br.txt', 'r', encoding = 'utf8')
+                elif (sw_ == 'ro' or sw_ == 'rum' or sw_ == 'ron'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Romanian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Romanian.txt', 'r',      encoding = 'utf8')
+                elif (sw_ == 'ru' or sw_ == 'rus'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Russian.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Russian.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'es' or sw_ == 'spa'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Spanish.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Spanish.txt', 'r',       encoding = 'utf8')
+                elif (sw_ == 'sv' or sw_ == 'swe'):
+                    f_file = pkg_resources.open_text(stws, 'Stopwords-Swedish.txt', encoding = 'utf8')
+                    #f_file = open('../pyBibX/Stopwords-Swedish.txt', 'r',       encoding = 'utf8')
+                f_lines = f_file.read()
+                sw      = f_lines.split('\n')
+                sw      = list(filter(None, sw))
+                sw_full.extend(sw)
+        vec          = CountVectorizer(stop_words = frozenset(sw_full), ngram_range = (ngrams, ngrams)).fit(corpora)
+        bag_of_words = vec.transform(corpora)
+        sum_words    = bag_of_words.sum(axis = 0)
+        words_freq   = [(word, sum_words[0, idx]) for word, idx in vec.vocabulary_.items()]
+        words_freq   = sorted(words_freq, key = lambda x: x[1], reverse = True)
+        common_words = words_freq[:wordsn]
+        words        = []
+        freqs        = []
+        for word, freq in common_words:
+            words.append(word)
+            freqs.append(freq) 
+        df  = pd.DataFrame({'Word': words, 'Freq': freqs})
+        fig = go.Figure(go.Bar(
+                                x           = df['Freq'],
+                                y           = df['Word'],
+                                orientation = 'h',
+                                marker      = dict(color = 'rgba(246, 78, 139, 0.6)', line = dict(color = 'black', width = 1))
+                               ),
+                        )
+        
+        fig.update_yaxes(autorange = 'reversed')
+        fig.update_layout(paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)')
+        fig.show()
+        return
+    
     # Function: Tree Map
-    def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10):
+    def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10): 
         if   (entry == 'kwp'):
             labels = self.u_kid
             sizes  = self.kid_count 
@@ -3101,5 +3251,175 @@ class pbx_probe():
         fig.update_traces(textfont_size = 10, textfont_color = 'yellow') 
         fig.show()
         return
+
+############################################################################
+
+    # Function: Topics - Create
+    def topics_creation(self, stop_words = ['en']):
+        self.topic_model        = BERTopic(calculate_probabilities = True)
+        self.topic_corpus       = self.__clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False)
+        self.topics, self.probs = self.topic_model.fit_transform(self.topic_corpus)
+        self.topic_info         = self.topic_model.get_topic_info()
+        print(self.topic_info)
+        return self   
+
+    # Function: Topics - Align Outliers
+    #def topics_align_outliers(self):
+        #self.topics     = [np.argmax(probs[i,:]) for i in range(0, self.probs.shape[0])]
+        #self.topic_info = self.topic_info[self.topic_info.Topic != -1]
+        #for i in range(0, self.topic_info.shape[0]):
+            #self.topic_info.iloc[i, 1] = self.topics.count(self.topic_info.iloc[i, 0])
+        #print(self.topic_info)
+        #return self
+
+    # Function: Topics - Main Representatives
+    def topics_representatives(self):
+        docs        = [[] for _ in range(0, self.topic_info.shape[0])]
+        papers      = self.topic_model.get_representative_docs()
+        self.df_rep = pd.DataFrame(np.zeros((self.topic_info.shape[0], 2)), columns = ['Topic', 'Docs'])
+        for i in range(0, self.topic_info.shape[0]):
+            if (self.topic_info.iloc[i, 0] != -1):
+                paper = papers[self.topic_info.iloc[i, 0]]
+                for item in paper:
+                    docs[i].append(self.topic_corpus.index(item))
+            self.df_rep.iloc[i, 0] = self.topic_info.iloc[i, 0]
+            self.df_repself.drp.iloc[i, 1] = '; '.join(map(str, docs[i]))
+        return self.df_rep
+        
+    # Function: Topics - Reduce
+    def topics_reduction(self, topicsn = 3):
+        self.topics, self.probs = self.topic_model.reduce_topics(self.topic_corpus, self.topics, self.probs, nr_topics = topicsn - 1)
+        self.topic_info         = self.topic_model.get_topic_info()
+        print(self.topic_info)
+        return self 
+    
+    # Function: Graph Topics - Topics
+    def graph_topics(self, view = 'browser'):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        topics_label = ['Topic ' + str(self.topic_info.iloc[i, 0]) + ' ( Count = ' + str(self.topic_info.iloc[i, 1]) + ') ' for i in range(0, self.topic_info.shape[0])]
+        column       = 1
+        columns      = 4
+        row          = 1
+        rows         = int(np.ceil(self.topic_info.shape[0] / columns))
+        fig          = ps.make_subplots(rows               = rows,
+                                        cols               = columns,
+                                        shared_yaxes       = False,
+                                        shared_xaxes       = False,
+                                        horizontal_spacing = 0.1,
+                                        vertical_spacing   = 0.4 / rows if rows > 1 else 0,
+                                        subplot_titles     = topics_label
+                                        )
+        for i in range(0, self.topic_info.shape[0]):
+            sequence = self.topic_model.get_topic(self.topic_info.iloc[i, 0])
+            words    = [str(item[0]) for item in sequence]
+            values   = [str(item[1]) for item in sequence]
+            trace    = go.Bar(x           = values,
+                              y           = words,
+                              orientation = 'h',
+                              marker      = dict(color = self.color_names[i], line = dict(color = 'black', width = 1))
+                              )
+            fig.append_trace(trace, row, column)
+            if (column == columns):
+                column = 1
+                row    = row + 1
+            else:
+                column = column + 1
+        fig.update_xaxes(showticklabels = False)
+        fig.update_layout(paper_bgcolor = 'rgb(255, 255, 255)', plot_bgcolor = 'rgb(255, 255, 255)', showlegend = False)
+        fig.show()
+        return self 
+    
+    # Function: Graph Topics - Topics Distribution
+    def graph_topics_distribution(self, view = 'browser'):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        topics_label = []
+        topics_count = []
+        words        = []
+        for i in range(0, self.topic_info.shape[0]):
+            topics_label.append('Topic ' + str(self.topic_info.iloc[i, 0]))
+            topics_count.append(self.topic_info.iloc[i, 1])
+            sequence = self.topic_model.get_topic(self.topic_info.iloc[i, 0])
+            sequence = ['-'+str(item[0]) for item in sequence]
+            words.append('Count: ' + str(self.topic_info.iloc[i, 1]) +'<br>'+'<br>'+ 'Words: ' +'<br>'+ '<br>'.join(sequence))
+        fig = go.Figure(go.Bar(x           = topics_label,
+                               y           = topics_count,
+                               orientation = 'v',
+                               hoverinfo   = 'text',
+                               hovertext   = words,
+                               marker      = dict(color = 'rgba(78, 246, 215, 0.6)', line = dict(color = 'black', width = 1)),
+                               name        = ''
+                              ),
+                        )
+        fig.update_xaxes(zeroline = False)
+        fig.update_layout(paper_bgcolor = 'rgb(189, 189, 189)', plot_bgcolor = 'rgb(189, 189, 189)')
+        fig.show()
+        return self 
+    
+    # Function: Graph Topics - Projected Topics 
+    def graph_topics_projection(self, view = 'browser'):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        topics_label = []
+        topics_count = []
+        words        = []
+        for i in range(0, self.topic_info.shape[0]):
+            topics_label.append(str(self.topic_info.iloc[i, 0]))
+            topics_count.append(self.topic_info.iloc[i, 1])
+            sequence  = self.topic_model.get_topic(self.topic_info.iloc[i, 0])
+            sequence  = ['-'+str(item[0]) for item in sequence]
+            words.append('Count: ' + str(self.topic_info.iloc[i, 1]) +'<br>'+'<br>'+ 'Words: ' +'<br>'+ '<br>'.join(sequence))
+        embeddings    = self.topic_model.c_tf_idf.toarray()
+        decomposition = tsvd(n_components = 2)
+        transformed   = decomposition.fit_transform(embeddings)
+        fig           = go.Figure(go.Scatter(x           = transformed[:,0],
+                                             y           = transformed[:,1],
+                                             opacity     = 0.85,
+                                             mode        = 'markers+text',
+                                             marker      = dict(symbol = 'circle-dot', color = 'rgba(250, 240, 52, 0.75)', line = dict(color = 'black', width = 1)), 
+                                             marker_size = topics_count,
+                                             text        = topics_label,
+                                             hoverinfo   = 'text',
+                                             hovertext   = words,
+                                             name        = ''
+                                             ),
+                                  )
+        x_range = (transformed[:,0].min() - abs((transformed[:,0].min()) * .15), transformed[:,0].max() + abs((transformed[:,0].max()) * .15))
+        y_range = (transformed[:,1].min() - abs((transformed[:,1].min()) * .15), transformed[:,1].max() + abs((transformed[:,1].max()) * .15))
+        fig.update_xaxes(range = x_range, showticklabels = False)
+        fig.update_yaxes(range = y_range, showticklabels = False)
+        fig.add_shape(type = 'line', x0 = sum(x_range)/2, y0 = y_range[0], x1 = sum(x_range)/2, y1 = y_range[1], line = dict(color = 'rgb(0, 0, 0)', width = 0.5))
+        fig.add_shape(type = 'line', x0 = x_range[0], y0 = sum(y_range)/2, x1 = x_range[1], y1 = sum(y_range)/2, line = dict(color = 'rgb(0, 0, 0)', width = 0.5))
+        fig.add_annotation(x = x_range[0], y = sum(y_range)/2, text = '<b>D1<b>', showarrow = False, yshift = 10)
+        fig.add_annotation(y = y_range[1], x = sum(x_range)/2, text = '<b>D2<b>', showarrow = False, xshift = 10)
+        fig.update_layout(paper_bgcolor = 'rgb(235, 235, 235)', plot_bgcolor = 'rgb(235, 235, 235)', xaxis = dict(showgrid = False, zeroline = False), yaxis = dict(showgrid = False, zeroline = False))
+        fig.show()
+        return self 
+    
+    # Function: Graph Topics - Topics Heatmap
+    def graph_topics_heatmap(self, view = 'browser'):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        topics_label = []
+        embeddings   = self.topic_model.c_tf_idf.toarray()
+        dist_matrix  = cosine_similarity(embeddings)
+        for i in range(0, self.topic_info.shape[0]):
+            topics_label.append('Topic ' + str(self.topic_info.iloc[i, 0]))
+        trace = go.Heatmap(z          = dist_matrix,
+                           x          = topics_label,
+                           y          = topics_label,
+                           zmin       = -1,
+                           zmax       =  1,
+                           xgap       =  1,
+                           ygap       =  1,
+                           text       = np.around(dist_matrix, decimals = 2),
+                           hoverinfo  = 'text',
+                           colorscale = 'thermal'
+                          )
+        layout = go.Layout(title_text = 'Topics Heatmap', xaxis_showgrid = False, yaxis_showgrid = False, yaxis_autorange = 'reversed')
+        fig = go.Figure(data = [trace], layout = layout)
+        fig.show()
+        return self
 
 ############################################################################
