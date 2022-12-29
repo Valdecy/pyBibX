@@ -33,7 +33,7 @@ from collections import Counter
 from difflib import SequenceMatcher
 from matplotlib import pyplot as plt                        # version 3.4.3
 plt.style.use('bmh')
-from scipy.spatial import ConvexHull                        # version 1.7.1
+#from scipy.spatial import ConvexHull                       # version 1.7.1
 from sklearn.cluster import KMeans                          # version 1.0.2
 from sklearn.decomposition import TruncatedSVD as tsvd      # version 1.0.2
 from sklearn.feature_extraction.text import CountVectorizer # version 1.0.2
@@ -357,7 +357,7 @@ class pbx_probe():
         self.__make_bib()
     
     # Function: Prepare .bib File
-    def __make_bib(self):
+    def __make_bib(self, verbose = True):
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
         self.date_end           = int(self.dy.max())
@@ -429,8 +429,9 @@ class pbx_probe():
         self.__id_country()
         self.__id_kwa()
         self.__id_kwp()
-        for i in range(0, len(self.vb)):
-            print(self.vb[i])
+        if (verbose == True):
+            for i in range(0, len(self.vb)):
+                print(self.vb[i])
         return
     
     # Function: Document ID
@@ -488,6 +489,17 @@ class pbx_probe():
         self.dict_id_kwp  = dict(zip(kwp_list, self.u_kid))
         self.dict_kwp_id  = dict(zip(self.u_kid, kwp_list))
         return
+    
+    # Function: ID types
+    def id_doc_types(self):
+        dt     = self.doc_types.index.to_list()
+        dt_ids = []
+        for i in range(0, len(dt)):
+            item = dt[i]
+            idx  = self.data.index[self.data['document_type'] == item].tolist()
+            dt_ids.append([item, idx])
+        report_dt = pd.DataFrame(dt_ids, columns = ['Document Types', 'IDs'])
+        return report_dt
 
     # Function: Filter
     def filter_bib(self, doc_type = [], year_str = -1, year_end = -1, sources = [], core = -1, country = [], language = []):
@@ -580,6 +592,22 @@ class pbx_probe():
                print(str(key)+': '+str('; '.join(value)))
         return fuzzy_dict
 
+    # Function: Merge Datatbase
+    def merge_database(self, file_bib, db, del_duplicated):
+        data, _    = self.__read_bib(file_bib, db, del_duplicated)
+        self.data  = pd.concat([self.data, data]) 
+        self.data  = self.data.reset_index(drop = True)
+        self.data  = self.data.fillna('UNKNOW')
+        duplicated = self.data['doi'].duplicated() # self.data = self.data.drop_duplicates(subset = 'doi', keep = 'first')
+        for i in range(0, duplicated.shape[0]):
+            if (self.data.loc[i, 'doi'] == 'UNKNOW'):
+                duplicated[i] = False
+        idx        = list(duplicated.index[duplicated])
+        self.data.drop(idx, axis = 0, inplace = True)
+        self.data  = self.data.reset_index(drop = True)
+        self.__make_bib(verbose = False)
+        return
+    
     # Function: Merge Author
     def merge_author(self, get = [], replace_for = 'name'):
         for name in get:
@@ -587,7 +615,7 @@ class pbx_probe():
                 target = self.data.loc[i, 'author'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'author'] = target.replace(name, replace_for)
-        self.__make_bib()
+        self.__make_bib(verbose = False)
         return
     
     # Function: Merge Institution
@@ -597,7 +625,7 @@ class pbx_probe():
                 target = self.data.loc[i, 'affiliation'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'affiliation'] = target.replace(name, replace_for)
-        self.__make_bib()
+        self.__make_bib(verbose = False)
         return
     
     # Function: Merge Country
@@ -607,7 +635,7 @@ class pbx_probe():
                 target = self.data.loc[i, 'affiliation'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'affiliation'] = target.replace(name, replace_for)
-        self.__make_bib()
+        self.__make_bib(verbose = False)
         return
     
     # Function: Merge Language
@@ -617,7 +645,7 @@ class pbx_probe():
                 target = self.data.loc[i, 'language'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'language'] = target.replace(name, replace_for)
-        self.__make_bib()
+        self.__make_bib(verbose = False)
         return
     
     # Function: Merge Source
@@ -627,7 +655,7 @@ class pbx_probe():
                 target = self.data.loc[i, 'abbrev_source_title'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'abbrev_source_title'] = target.replace(name, replace_for)
-        self.__make_bib()
+        self.__make_bib(verbose = False)
         return
 
     # Function: Transform Hex to RGBa
@@ -737,9 +765,13 @@ class pbx_probe():
                 if (lhs[i] == 'type'):
                     lhs[i] = 'document_type'
                 lhs[i] = lhs[i].replace('-', '_')
-        labels      = list(set(lhs))
+        labels       = list(set(lhs))
         labels.remove('doc_start')
-        labels.sort()
+        sanity_check = ['abbrev_source_title', 'abstract', 'address', 'affiliation', 'art_number', 'author', 'author_keywords', 'chemicals_cas', 'coden', 'correspondence_address1', 'document_type', 'doi', 'editor', 'funding_details', 'funding_text\xa01', 'funding_text\xa02', 'funding_text\xa03', 'isbn', 'issn', 'journal', 'keywords', 'language', 'note', 'number', 'page_count', 'pages', 'publisher', 'pubmed_id', 'references', 'source', 'sponsors', 'title', 'tradenames', 'url', 'volume', 'year']
+        for item in sanity_check:
+            if (item not in labels):
+                labels.append(item)
+        labels.sort()      
         values      = [i for i in range(0, len(labels))] 
         labels_dict = dict(zip(labels, values))
         data        = pd.DataFrame(index = range(0, doc), columns = labels)
@@ -750,8 +782,13 @@ class pbx_probe():
           else:
             data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
         entries = list(data.columns)
+        data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
+        data['document_type'] = data['document_type'].replace('Article; Early Access','Article in Press')
         if (del_duplicated == True and 'doi' in entries):
             duplicated = data['doi'].duplicated()
+            for i in range(0, duplicated.shape[0]):
+                if (data.loc[i, 'doi'] == 'UNKNOW' or pd.isnull(data.loc[i, 'doi'])):
+                    duplicated[i] = False
             idx        = list(duplicated.index[duplicated])
             data.drop(idx, axis = 0, inplace = True)
             data       = data.reset_index(drop = True)
@@ -786,6 +823,7 @@ class pbx_probe():
             idx_val = [data.loc[i, 'da'][:4] for i in idx]
             for i in range(0, len(idx)):
                 data.iloc[idx[i], -1] = idx_val[i]
+        data = data.reindex(sorted(data.columns), axis = 1)
         return data, entries
 
     ##############################################################################
@@ -1250,15 +1288,9 @@ class pbx_probe():
             name = key[n]
             docs = [i for i in range(0, len(self.aut)) if name in self.aut[i]]
             for i in docs:
-                j                       = dicty[int(self.data.iloc[i, -1])]
+                j                       = dicty[int(self.data.loc[i, 'year'])]
                 productivity.iloc[n, j] = productivity.iloc[n, j] + 1
-                n_id[n][j].append( 'id: '+str(i)+' ('+name+', '+self.data.loc[i, 'year']+')'
-                                   #self.data.loc[i, 'author'] +' ('    +
-                                   #self.data.loc[i, 'year']   +'). '   +
-                                   #self.data.loc[i, 'title']  +'. '    +
-                                   #self.data.loc[i, 'journal']+'. doi:'+
-                                   #self.data.loc[i, 'doi']    +'.'
-                                 )
+                n_id[n][j].append( 'id: '+str(i)+' ('+name+', '+self.data.loc[i, 'year']+')')
                 Xv.append(n)
                 Yv.append(j)
         node_list_a = [ str(int(productivity.iloc[Xv[i], Yv[i]])) for i in range(0, len(Xv)) ]
@@ -1273,8 +1305,8 @@ class pbx_probe():
                 for i in range(1, len(item)):
                     itens[0] = itens[0]+'<br>'+item[i]
                 nid_list_a.append(itens)
-        nid_list_a  = [txt[0] for txt in nid_list_a]
-        #nid_list_a  = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in nid_list_a]
+        nid_list_a = [txt[0] for txt in nid_list_a]
+        #nid_list_a = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in nid_list_a]
         for i in range(0, len(Xv)-1):
             if (Xv[i] == Xv[i+1]):
                 Xe.append(Xv[i]*1.00)
@@ -1305,7 +1337,6 @@ class pbx_probe():
                             margin       = dict(b = 10, l = 5, r = 5, t = 10),
                             plot_bgcolor = '#e0e0e0',
                             xaxis        = dict(  showgrid       = True, 
-                                                  #gridwidth      = 0.5, 
                                                   gridcolor      = 'grey',
                                                   zeroline       = False, 
                                                   showticklabels = True, 
@@ -1317,7 +1348,6 @@ class pbx_probe():
                                                   spikethickness = 2
                                                ),
                             yaxis        = dict(  showgrid       = True, 
-                                                  #gridwidth      = 0.5, 
                                                   gridcolor      = 'grey',
                                                   zeroline       = False, 
                                                   showticklabels = True,
@@ -1343,7 +1373,7 @@ class pbx_probe():
             start = self.date_str
         if (end > self.date_end):
             end = self.date_end
-        y_idx = [i for i in range(0, self.data.shape[0]) if int(self.data.iloc[i, -1]) >= start and int(self.data.iloc[i, -1]) <= end]
+        y_idx = [i for i in range(0, self.data.shape[0]) if int(self.data.loc[i, 'year']) >= start and int(self.data.loc[i, 'year']) <= end]
         if (len(rmv_custom_words) == 0):
             rmv_custom_words = ['unknow']
         else:
@@ -1997,7 +2027,7 @@ class pbx_probe():
         return dtm
    
     # Function: Projection
-    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, hull_plot = True, tf_idf = True):
+    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True):
         if   (corpus_type == 'abs'):
             corpus = self.data['abstract']
             corpus = corpus.tolist()
@@ -2006,7 +2036,7 @@ class pbx_probe():
             corpus = self.data['title']
             corpus = corpus.tolist()
             corpus = self.__clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
-        elif (corpus_type == 'kwa'): #
+        elif (corpus_type == 'kwa'): 
             corpus = self.data['author_keywords']
             corpus = corpus.tolist()
         elif (corpus_type == 'kwp'):
@@ -2015,7 +2045,7 @@ class pbx_probe():
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
         dtm           = self.__dtm_tf_idf(corpus)
-        decomposition = tsvd(n_components = n_components)
+        decomposition = tsvd(n_components = n_components, random_state = 1001)
         if (len(custom_projection) == 0):
             transformed = decomposition.fit_transform(dtm)
         elif (custom_projection.shape[0] == self.data.shape[0] and custom_projection.shape[1] >= 2):
@@ -2032,27 +2062,32 @@ class pbx_probe():
         n       = len(set(labels.tolist()))
         n_trace = []
         for i in range(0, n):
-            labels_c  = []
-            node_list = []
-            n_id      = []
-            x_h       = []
-            y_h       = []
-            idx       = [j for j in range(0, len(labels)) if labels[j] == i]
-            x         = transformed[idx, 0]
-            y         = transformed[idx, 1]
-            if (hull_plot == True):
-                pts = np.c_[x,y]
-                try:
-                    hull  = ConvexHull(pts)
-                    pts_h = pts[hull.vertices, :]
-                    pts_s = [( pts_h[i, 0], pts_h[i, 1] ) for i in range(0, pts_h.shape[0])]
-                    pts_  = [ ( pts[i, 0], pts[i, 1] ) for i in range(0, pts.shape[0]) if ( pts[i, 0], pts[i, 1] ) not in pts_s]
-                    x     = [item[0] for item in pts_]
-                    y     = [item[1] for item in pts_]
-                    x_h.extend(pts_h[:,0].tolist())
-                    y_h.extend(pts_h[:,1].tolist())
-                except:
-                    hull_plot = False
+            labels_c    = []
+            node_list   = []
+            #node_list_h = []
+            n_id        = []
+            #n_id_h      = []
+            #x_h         = []
+            #y_h         = []
+            idx         = [j for j in range(0, len(labels)) if labels[j] == i]
+            #idx_h       = []
+            x           = transformed[idx, 0]
+            y           = transformed[idx, 1]
+            #if (hull_plot == True):
+                #pts = np.c_[x,y]
+                #try:
+                    #hull  = ConvexHull(pts)
+                    #pts_h = pts[hull.vertices, :]
+                    #pts_  = [ ( pts[i, 0], pts[i, 1] ) for i in range(0, pts.shape[0])]
+                    #x     = [item[0] for item in pts_]
+                    #y     = [item[1] for item in pts_]
+                    #x_h.extend(pts_h[:,0].tolist())
+                    #y_h.extend(pts_h[:,1].tolist())
+                    #for hv in hull.vertices:
+                        #node_list_h.etend(idx[hv])
+                        #idx_h.extend(idx[hv])
+                #except:
+                    #hull_plot = False
             labels_c.extend(self.color_names[i] for item in idx)
             node_list.extend(idx)
             for j in range(0, len(idx)):
@@ -2066,19 +2101,31 @@ class pbx_probe():
                              self.data.loc[idx[j], 'doi']    +'.'
                              )
                 n_id[-1] = '<br>'.join(textwrap.wrap(n_id[-1], width = 50))
-            if (hull_plot == True):
-                n_trace.append(go.Scatter(x         = x_h,
-                                          y         = y_h,
-                                          opacity   = 1,
-                                          mode      = 'markers+text',
-                                          marker    = dict(symbol = 'circle-dot', size = 25, color = self.color_names[i]),
-                                          fill      = 'toself',
-                                          fillcolor = self.__hex_rgba(hxc = self.color_names[i], alpha = 0.15),
-                                          text      = node_list,
-                                          hoverinfo = 'text',
-                                          hovertext = n_id,
-                                          name      = ''
-                                          ))
+            #if (hull_plot == True):
+                #for j in range(0, len(idx_h)):
+                    #n_id_h.append(
+                                #'id:' +str(idx_h[j])               +'<br>'  +
+                                #'cluster:' +str(i)                 +'<br>'  +
+                                # self.data.loc[idx_h[j], 'author'] +' ('    +
+                                # self.data.loc[idx_h[j], 'year']   +'). '   +
+                                # self.data.loc[idx_h[j], 'title']  +'. '    +
+                                # self.data.loc[idx_h[j], 'journal']+'. doi:'+
+                                # self.data.loc[idx_h[j], 'doi']    +'.'
+                                # )
+                    #n_id_h[-1] = '<br>'.join(textwrap.wrap(n_id_h[-1], width = 50))
+            #if (hull_plot == True):
+                #n_trace.append(go.Scatter(x         = x_h,
+                                          #y         = y_h,
+                                          #opacity   = 1,
+                                          #mode      = 'markers+text',
+                                          #marker    = dict(symbol = 'circle-dot', size = 25, color = self.color_names[i]),
+                                          #fill      = 'toself',
+                                          #fillcolor = self.__hex_rgba(hxc = self.color_names[i], alpha = 0.15),
+                                          #text      = node_list_h,
+                                          #hoverinfo = 'text',
+                                          #hovertext = n_id_h,
+                                          #name      = ''
+                                          #))
             n_trace.append(go.Scatter(x         = x,
                                       y         = y,
                                       opacity   = 1,
@@ -3370,7 +3417,10 @@ class pbx_probe():
             sequence  = self.topic_model.get_topic(self.topic_info.iloc[i, 0])
             sequence  = ['-'+str(item[0]) for item in sequence]
             words.append('Count: ' + str(self.topic_info.iloc[i, 1]) +'<br>'+'<br>'+ 'Words: ' +'<br>'+ '<br>'.join(sequence))
-        embeddings    = self.topic_model.c_tf_idf.toarray()
+        try:
+            embeddings = self.topic_model.c_tf_idf.toarray()
+        except:
+            embeddings = self.topic_model.c_tf_idf_.toarray()
         decomposition = tsvd(n_components = 2)
         transformed   = decomposition.fit_transform(embeddings)
         fig           = go.Figure(go.Scatter(x           = transformed[:,0],
@@ -3402,7 +3452,10 @@ class pbx_probe():
         if (view == 'browser'):
             pio.renderers.default = 'browser'
         topics_label = []
-        embeddings   = self.topic_model.c_tf_idf.toarray()
+        try:
+            embeddings = self.topic_model.c_tf_idf.toarray()
+        except:
+            embeddings = self.topic_model.c_tf_idf_.toarray()
         dist_matrix  = cosine_similarity(embeddings)
         for i in range(0, self.topic_info.shape[0]):
             topics_label.append('Topic ' + str(self.topic_info.iloc[i, 0]))
