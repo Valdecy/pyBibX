@@ -7,16 +7,17 @@ A Bibliometric and Scientometric python library that uses the .bib file generate
 General Capabilities:
 - a) Works with **Scopus** or **WOS** .bib files
 - b) Identification and Removal of duplicates
-- c) Generates an **EDA** (Exploratory Data Analysis) Report: Publications Timespan, Total Number of Countries, Total Number of Institutions, Total Number of Sources, Total Number of References, Total Number of Languages (and also the number of docs for each language), Total Number of Documents, Average Documents per Author, Average Documents per Institution, Average Documents per Source, Average Documents per Year, Total Number of Authors, Total Number of Authors Keywords, Total Number of Authors Keywords Plus, Total Single-Authored Documents, Total Multi-Authored Documents, Average Collaboration Index, Max H-Index, Total Number of Citations, Average Citations per Author, Average Citations per Institution, Average Citations per Document, Average Citations per Source
-- d) Creates an **ID** (Identification) for each Document, Authors, Sources, Institutions, Countries, Authors' Keywords, Keywords Plus. The IDs can be used in graphs/plots to obtain a cleaner visualization
-- e) Creates a **WordCloud** from the Abstracts, Titles, Authors Keywords or Keywords Plus
-- f) Creates a **N-Gram Bar Plot (interactive plot)** from the Abstracts, Titles, Authors Keywords or Keywords Plus
-- g) Creates a **Projection** of the documents based on the Abstracts, Titles, Authors Keywords or Keywords Plus
-- h) Creates a **Evolution Plot** based on Abstracts, Titles, Sources, Authors Keywords or Keywords Plus
-- i) Creates a **Sankey Plot (interactive plot)** with any combination of the following keys: Authors, Countries, Institutions, Journals, Auhors_Keywords, Keywords_Plus, and/or Languages
-- j) Creates a **TreeMap** from the Authors, Countries, Institutions, Journals, Auhors_Keywords, or Keywords_Plus
-- k) Creates an **Authors Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each author
-- l) Creates a **Bar Plot**  for the following statistics: Documents per Year, Citations per Year, Past Citations per Year, Lotka's Law, Sources per Documents, Sources per Citations, Authors per Documents, Authors per Citations, Authors per H-Index, Bradford's Law (Core Sources 1, 2 or 3), Institutions per Documents, Institutions per Citations, Countries per Documents, Countries per Citations, Language per Documents, Keywords Plus per Documents and Authors' Keywords per Documents
+- c) Identification of documents per type
+- d) Generates an **EDA** (Exploratory Data Analysis) Report: Publications Timespan, Total Number of Countries, Total Number of Institutions, Total Number of Sources, Total Number of References, Total Number of Languages (and also the number of docs for each language), Total Number of Documents, Average Documents per Author, Average Documents per Institution, Average Documents per Source, Average Documents per Year, Total Number of Authors, Total Number of Authors Keywords, Total Number of Authors Keywords Plus, Total Single-Authored Documents, Total Multi-Authored Documents, Average Collaboration Index, Max H-Index, Total Number of Citations, Average Citations per Author, Average Citations per Institution, Average Citations per Document, Average Citations per Source
+- e) Creates an **ID** (Identification) for each Document, Authors, Sources, Institutions, Countries, Authors' Keywords, Keywords Plus. The IDs can be used in graphs/plots to obtain a cleaner visualization
+- f) Creates a **WordCloud** from the Abstracts, Titles, Authors Keywords or Keywords Plus
+- g) Creates a **N-Gram Bar Plot (interactive plot)** from the Abstracts, Titles, Authors Keywords or Keywords Plus
+- h) Creates a **Projection** of the documents based on the Abstracts, Titles, Authors Keywords or Keywords Plus
+- i) Creates a **Evolution Plot** based on Abstracts, Titles, Sources, Authors Keywords or Keywords Plus
+- j) Creates a **Sankey Plot (interactive plot)** with any combination of the following keys: Authors, Countries, Institutions, Journals, Auhors_Keywords, Keywords_Plus, and/or Languages
+- k) Creates a **TreeMap** from the Authors, Countries, Institutions, Journals, Auhors_Keywords, or Keywords_Plus
+- l) Creates an **Authors Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each author
+- m) Creates a **Bar Plot**  for the following statistics: Documents per Year, Citations per Year, Past Citations per Year, Lotka's Law, Sources per Documents, Sources per Citations, Authors per Documents, Authors per Citations, Authors per H-Index, Bradford's Law (Core Sources 1, 2 or 3), Institutions per Documents, Institutions per Citations, Countries per Documents, Countries per Citations, Language per Documents, Keywords Plus per Documents and Authors' Keywords per Documents
 
 Network Capabilities:
 - a) **Citation Analysis (interactive plot)** between Documents (Blue Nodes) and Citations (Red Nodes). Documents and Citations can be highlighted for better visualization
@@ -36,6 +37,7 @@ NLP (Natural Language Processing) Capabilities:
 Correction and Manipulation Capabilities:
 - a) Filter the .bib file by Year, Sources, Bradford Law Cores, Countries, and/or Languages
 - b) Merge Authors, Institutions, Countries, Languages and/or Sources that have multiple entries 
+- c) Merge different or same Databases one at a time(e.g.: scopus + scopus, scopus + wos, wos + wos, wos + scopus). The preference of information preservation is given to the old database, so the order of merging matters (see Examples 03 and 04)
 
 ## Usage
 
@@ -46,9 +48,11 @@ pip install pyBibX
 
 2. Try it in **Colab**:
 
-- Example 01: 'Scopus'   .bib file ([ Colab Demo ](https://colab.research.google.com/drive/1yHiMMZIKa-RrarXbPB9ca0gLN9YvvtPU?usp=sharing))
-- Example 02: 'WOS'      .bib file ([ Colab Demo ](https://colab.research.google.com/drive/13HLjC4myTvYcjLk2XBTZKbWJ2aqZUST1?usp=sharing))
-- Example 03: 'Your Own' .bib file ([ Colab Demo ](https://colab.research.google.com/drive/19EYjgal9V1kemmzpHnyp6MSlk9S-kGHT?usp=sharing))
+- Example 01: 'Scopus'       .bib file ([ Colab Demo ](https://colab.research.google.com/drive/1yHiMMZIKa-RrarXbPB9ca0gLN9YvvtPU?usp=sharing))
+- Example 02: 'WOS'          .bib file ([ Colab Demo ](https://colab.research.google.com/drive/13HLjC4myTvYcjLk2XBTZKbWJ2aqZUST1?usp=sharing))
+- Example 03: 'Scopus + WOS' .bib file ([ Colab Demo ](https://colab.research.google.com/drive/1DqEk0_IakJPfIZDVcnTWBE_nxyhW9p-W?usp=sharing))
+- Example 04: 'WOS + Scopus' .bib file ([ Colab Demo ](https://colab.research.google.com/drive/12k_IOcSDwumbEtPqqSMbCIE6ZypgKAJn?usp=sharing))
+- Example 05: 'Your Own'     .bib file ([ Colab Demo ](https://colab.research.google.com/drive/19EYjgal9V1kemmzpHnyp6MSlk9S-kGHT?usp=sharing))
 
 # Acknowledgement 
 This section indicates the libraries that inspired pyBibX
@@ -64,3 +68,7 @@ This section indicates the libraries that inspired pyBibX
 * Metaknowledge (http://www.networkslab.org/metaknowledge)
 - a) Github: https://github.com/UWNETLAB/metaknowledge
 - b) Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
+
+And to all the people that helped to improve or correct the code. Thank you very much!
+
+* Fabio Ribeiro von Glehn (29.DECEMBER.2022) - UFG - Federal University of Goias (Brazil)
