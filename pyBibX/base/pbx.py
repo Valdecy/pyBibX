@@ -567,8 +567,10 @@ class pbx_probe():
     def fuzzy_matcher(self, entry = 'aut', cut_ratio = 0.80, verbose = True): # 'aut', 'inst'
         if (entry == 'aut'):
             u_lst = [item for item in self.u_aut]
-        if (entry == 'inst'):
+        elif (entry == 'inst'):
             u_lst = [item for item in self.u_uni]
+        else:
+            u_lst = [item for item in entry]
         fuzzy_lst = [[] for item in u_lst ]
         idx       = [i for i in range(0, len(u_lst))]
         i         = 0
@@ -594,18 +596,51 @@ class pbx_probe():
 
     # Function: Merge Datatbase
     def merge_database(self, file_bib, db, del_duplicated):
+        old_vb   = [item for item in self.vb]
+        old_size = self.data.shape[0]
+        print('############################################################################')
+        print('')
+        print('Original Database')
+        print('')
+        for i in range(0, len(old_vb)):
+            print(old_vb[i])
+        print('')
+        print('############################################################################')
+        print('')
+        print('Added Database')
+        print('')
         data, _    = self.__read_bib(file_bib, db, del_duplicated)
         self.data  = pd.concat([self.data, data]) 
         self.data  = self.data.reset_index(drop = True)
         self.data  = self.data.fillna('UNKNOW')
         duplicated = self.data['doi'].duplicated() # self.data = self.data.drop_duplicates(subset = 'doi', keep = 'first')
+        title      = self.data['title']
+        title      = title.to_list()
+        title      = self.__clear_text(title, stop_words  = [], lowercase   = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+        t_dupl     = pd.Series(title).duplicated()
         for i in range(0, duplicated.shape[0]):
             if (self.data.loc[i, 'doi'] == 'UNKNOW'):
                 duplicated[i] = False
+            if (t_dupl[i] == True):
+                duplicated[i] = True
         idx        = list(duplicated.index[duplicated])
         self.data.drop(idx, axis = 0, inplace = True)
         self.data  = self.data.reset_index(drop = True)
-        self.__make_bib(verbose = False)
+        size       = self.data.shape[0]
+        self.__make_bib(verbose = True)
+        dt         = self.data['document_type'].value_counts()
+        dt         = dt.sort_index(axis = 0)
+        print('')
+        print('############################################################################')
+        print('')
+        print('Merging Information:')
+        print('')
+        print( 'A Total of ', size, ' Documents were Found ( ', size - old_size, 'New Documents from the Added Database )')
+        print('')
+        for i in range(0, dt.shape[0]):
+            print(dt.index[i], ' = ', dt[i])
+        print('')
+        print('############################################################################')
         return
     
     # Function: Merge Author
@@ -784,11 +819,18 @@ class pbx_probe():
         entries = list(data.columns)
         data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
         data['document_type'] = data['document_type'].replace('Article; Early Access','Article in Press')
+        data['document_type'] = data['document_type'].replace('Editorial Material','Editorial')
         if (del_duplicated == True and 'doi' in entries):
             duplicated = data['doi'].duplicated()
+            title      = data['title']
+            title      = title.to_list()
+            title      = self.__clear_text(title, stop_words  = [], lowercase   = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+            t_dupl     = pd.Series(title).duplicated()
             for i in range(0, duplicated.shape[0]):
                 if (data.loc[i, 'doi'] == 'UNKNOW' or pd.isnull(data.loc[i, 'doi'])):
                     duplicated[i] = False
+                if (t_dupl[i] == True):
+                    duplicated[i] = True
             idx        = list(duplicated.index[duplicated])
             data.drop(idx, axis = 0, inplace = True)
             data       = data.reset_index(drop = True)
