@@ -11,15 +11,15 @@
 ############################################################################
 
 # Required Libraries
-import networkx as nx             # version 2.6.3
-import numpy as np                # version 1.20.3
-import pandas as pd               # version 1.3.3
-import plotly.graph_objects as go # version 5.1.0
-import plotly.subplots as ps      # version 5.1.0
-import plotly.io as pio           # version 5.1.0
-import re                         # version 2.2.1
-import squarify                   # version 0.4.3
-import unicodedata                # version 11.0.0
+import networkx as nx             
+import numpy as np                
+import pandas as pd               
+import plotly.graph_objects as go
+import plotly.subplots as ps      
+import plotly.io as pio           
+import re                         
+import squarify                  
+import unicodedata                
 import textwrap
 
 try:
@@ -28,18 +28,19 @@ except ImportError:
     import importlib_resources as pkg_resources
 from . import stws
 
-from bertopic import BERTopic                               # version 0.10.0
+from bertopic import BERTopic                               
 from collections import Counter
 from difflib import SequenceMatcher
-from matplotlib import pyplot as plt                        # version 3.4.3
+from matplotlib import pyplot as plt                       
 plt.style.use('bmh')
-#from scipy.spatial import ConvexHull                       # version 1.7.1
-from sklearn.cluster import KMeans                          # version 1.0.2
-from sklearn.decomposition import TruncatedSVD as tsvd      # version 1.0.2
-from sklearn.feature_extraction.text import CountVectorizer # version 1.0.2
-from sklearn.feature_extraction.text import TfidfVectorizer # version 1.0.2
-from sklearn.metrics.pairwise import cosine_similarity      # version 1.0.2
-from wordcloud import WordCloud                             # version 1.5.0
+#from scipy.spatial import ConvexHull                       
+from sklearn.cluster import KMeans                          
+from sklearn.decomposition import TruncatedSVD as tsvd      
+from sklearn.feature_extraction.text import CountVectorizer 
+from sklearn.feature_extraction.text import TfidfVectorizer 
+from sklearn.metrics.pairwise import cosine_similarity   
+from umap import UMAP  
+from wordcloud import WordCloud                             
 
 ############################################################################
 
@@ -563,6 +564,18 @@ class pbx_probe():
                            #)
         #return min_dist(0, 0)
         
+    # Function: Get Duplicates Index
+    def find_duplicates(self, u_list):
+        duplicates = []
+        indices    = []
+        for i in range(0, len(u_list)):
+            x = u_list[i]
+            if (u_list.count(x) > 1 and x not in indices):
+                u_list.index(u_list[i])
+                duplicates.append([i for i in range(0, len(u_list)) if u_list[i] == x])
+                indices.append(x)
+        return indices, duplicates
+    
     # Function: Fuzzy String Matcher
     def fuzzy_matcher(self, entry = 'aut', cut_ratio = 0.80, verbose = True): # 'aut', 'inst'
         if (entry == 'aut'):
@@ -616,8 +629,12 @@ class pbx_probe():
         duplicated = self.data['doi'].duplicated() # self.data = self.data.drop_duplicates(subset = 'doi', keep = 'first')
         title      = self.data['title']
         title      = title.to_list()
-        title      = self.__clear_text(title, stop_words  = [], lowercase   = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+        title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
         t_dupl     = pd.Series(title).duplicated()
+        #abst       = self.data['abstract']
+        #abst       = abst.to_list()
+        #abst       = self.clear_text(abst, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+        #a_dupl     = pd.Series(abst).duplicated()
         for i in range(0, duplicated.shape[0]):
             if (self.data.loc[i, 'doi'] == 'UNKNOW'):
                 duplicated[i] = False
@@ -635,7 +652,7 @@ class pbx_probe():
         print('')
         print('Merging Information:')
         print('')
-        print( 'A Total of ', size, ' Documents were Found ( ', size - old_size, 'New Documents from the Added Database )')
+        print( 'A Total of ' + str(size) + ' Documents were Found ( ' + str(size - old_size) + ' New Documents from the Added Database )')
         print('')
         for i in range(0, dt.shape[0]):
             print(dt.index[i], ' = ', dt[i])
@@ -824,8 +841,12 @@ class pbx_probe():
             duplicated = data['doi'].duplicated()
             title      = data['title']
             title      = title.to_list()
-            title      = self.__clear_text(title, stop_words  = [], lowercase   = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+            title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
             t_dupl     = pd.Series(title).duplicated()
+            #abst       = data['abstract']
+            #abst       = abst.to_list()
+            #abst       = self.clear_text(abst, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
+            #a_dupl     = pd.Series(abst).duplicated()
             for i in range(0, duplicated.shape[0]):
                 if (data.loc[i, 'doi'] == 'UNKNOW' or pd.isnull(data.loc[i, 'doi'])):
                     duplicated[i] = False
@@ -837,7 +858,7 @@ class pbx_probe():
             string_vb  = 'A Total of ' + str(doc-len(idx)) + ' Documents were Found ( ' + str(doc) + ' Documents and '+ str(len(idx)) + ' Duplicates )'
             self.vb.append(string_vb)
         else:
-            string_vb  = 'A Total of '+ str(doc) + ' Documents were Found' 
+            string_vb  = 'A Total of ' + str(doc) + ' Documents were Found' 
             self.vb.append(string_vb)
         if ('document_type' in entries):
             types     = list(data['document_type'])
@@ -1429,7 +1450,7 @@ class pbx_probe():
         elif (key == 'abs'):
             abs_  = self.data['abstract'].tolist()
             abs_  = ['the' if i not in y_idx else  abs_[i] for i in range(0, len(abs_))]
-            abs_  = self.__clear_text(abs_, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+            abs_  = self.clear_text(abs_, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
             u_abs = [item.split() for item in abs_]
             u_abs = [item for sublist in u_abs for item in sublist]
             u_abs = list(set(u_abs))
@@ -1446,7 +1467,7 @@ class pbx_probe():
         elif (key == 'title'):
             tit_  = self.data['title'].tolist()
             tit_  = ['the' if i not in y_idx else  tit_[i] for i in range(0, len(tit_))]
-            tit_  = self.__clear_text(tit_, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+            tit_  = self.clear_text(tit_, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
             u_tit = [item.split() for item in tit_]
             u_tit = [item for sublist in u_tit for item in sublist]
             u_tit = list(set(u_tit))
@@ -1930,7 +1951,7 @@ class pbx_probe():
     #############################################################################
 
     # Function: Text Pre-Processing
-    def __clear_text(self, corpus, stop_words = ['en'], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False):
+    def clear_text(self, corpus, stop_words = ['en'], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False):
         sw_full = []
         # Lower Case
         if (lowercase == True):
@@ -2053,10 +2074,12 @@ class pbx_probe():
                    print('Removing Custom Words: ' + str(i + 1) +  ' of ' + str(len(corpus)) )
             if (verbose == True):
                 print('Removing Custom Word: Done!')
+        for i in range(0, len(corpus)):
+            corpus[i] = ' '.join(corpus[i].split())
         return corpus
 
     # Function: TF-IDF
-    def __dtm_tf_idf(self, corpus):
+    def dtm_tf_idf(self, corpus):
         vectorizer = TfidfVectorizer(norm = 'l2')
         tf_idf     = vectorizer.fit_transform(corpus)
         try:
@@ -2073,11 +2096,11 @@ class pbx_probe():
         if   (corpus_type == 'abs'):
             corpus = self.data['abstract']
             corpus = corpus.tolist()
-            corpus = self.__clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+            corpus = self.clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
         elif (corpus_type == 'title'):
             corpus = self.data['title']
             corpus = corpus.tolist()
-            corpus = self.__clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+            corpus = self.clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
         elif (corpus_type == 'kwa'): 
             corpus = self.data['author_keywords']
             corpus = corpus.tolist()
@@ -2086,7 +2109,7 @@ class pbx_probe():
             corpus = corpus.tolist()
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
-        dtm           = self.__dtm_tf_idf(corpus)
+        dtm           = self.dtm_tf_idf(corpus)
         decomposition = tsvd(n_components = n_components, random_state = 1001)
         if (len(custom_projection) == 0):
             transformed = decomposition.fit_transform(dtm)
@@ -3345,8 +3368,9 @@ class pbx_probe():
 
     # Function: Topics - Create
     def topics_creation(self, stop_words = ['en']):
-        self.topic_model        = BERTopic(calculate_probabilities = True)
-        self.topic_corpus       = self.__clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False)
+        umap_model              = UMAP(n_neighbors = 15, n_components = 5, min_dist = 0.0, metric = 'cosine', random_state = 1001)
+        self.topic_model        = BERTopic(umap_model = umap_model, calculate_probabilities = True)
+        self.topic_corpus       = self.clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False)
         self.topics, self.probs = self.topic_model.fit_transform(self.topic_corpus)
         self.topic_info         = self.topic_model.get_topic_info()
         print(self.topic_info)
@@ -3463,7 +3487,7 @@ class pbx_probe():
             embeddings = self.topic_model.c_tf_idf.toarray()
         except:
             embeddings = self.topic_model.c_tf_idf_.toarray()
-        decomposition = tsvd(n_components = 2)
+        decomposition = tsvd(n_components = 2, random_state = 1001)
         transformed   = decomposition.fit_transform(embeddings)
         fig           = go.Figure(go.Scatter(x           = transformed[:,0],
                                              y           = transformed[:,1],
@@ -3513,7 +3537,7 @@ class pbx_probe():
                            colorscale = 'thermal'
                           )
         layout = go.Layout(title_text = 'Topics Heatmap', xaxis_showgrid = False, yaxis_showgrid = False, yaxis_autorange = 'reversed')
-        fig = go.Figure(data = [trace], layout = layout)
+        fig    = go.Figure(data = [trace], layout = layout)
         fig.show()
         return self
 
