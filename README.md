@@ -37,7 +37,7 @@ NLP (Natural Language Processing) Capabilities:
 Correction and Manipulation Capabilities:
 - a) Filter the .bib file by Year, Sources, Bradford Law Cores, Countries, and/or Languages
 - b) Merge Authors, Institutions, Countries, Languages and/or Sources that have multiple entries 
-- c) Merge different or same Databases one at a time(e.g.: scopus + scopus, scopus + wos, wos + wos, wos + scopus). The preference of information preservation is given to the old database, so the order of merging matters (see Examples 03 and 04)
+- c) Merge different or same Databases one at a time (e.g.: scopus + scopus, scopus + wos, wos + wos, wos + scopus). The preference of information preservation is given to the old database, so the order of merging matters (see Examples 03 and 04)
 
 ## Usage
 
