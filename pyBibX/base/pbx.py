@@ -38,7 +38,10 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD as tsvd      
 from sklearn.feature_extraction.text import CountVectorizer 
 from sklearn.feature_extraction.text import TfidfVectorizer 
-from sklearn.metrics.pairwise import cosine_similarity   
+from sklearn.metrics.pairwise import cosine_similarity  
+from summarizer import Summarizer
+from transformers import PegasusForConditionalGeneration
+from transformers import PegasusTokenizer
 from umap import UMAP  
 from wordcloud import WordCloud                             
 
@@ -647,15 +650,18 @@ class pbx_probe():
         self.__make_bib(verbose = True)
         dt         = self.data['document_type'].value_counts()
         dt         = dt.sort_index(axis = 0)
+        self.vb    = []
         print('')
         print('############################################################################')
         print('')
         print('Merging Information:')
         print('')
         print( 'A Total of ' + str(size) + ' Documents were Found ( ' + str(size - old_size) + ' New Documents from the Added Database )')
+        self.vb.append('A Total of ' + str(size) + ' Documents were Found')
         print('')
         for i in range(0, dt.shape[0]):
             print(dt.index[i], ' = ', dt[i])
+            self.vb.append(dt.index[i] + ' = ' + str(dt[i]))
         print('')
         print('############################################################################')
         return
@@ -764,6 +770,7 @@ class pbx_probe():
     # Function: Read .bib File
     def __read_bib(self, bib, db = 'scopus', del_duplicated = True):
         self.vb = []
+        db      = db.lower()
         f_file  = open(bib, 'r', encoding = 'utf8')
         f_lines = f_file.read()
         f_list  = f_lines.split('\n')
@@ -781,13 +788,84 @@ class pbx_probe():
                         f_list[i]   = f_list[i].replace(';', ',')
                         f_list_[-1] = f_list_[-1] + ';' + f_list[i]
             f_list = f_list_
+        if (db == 'pubmed'):
+            f_list_ = []
+            for i in range(0, len(f_list)):
+                if (i == 0 and f_list[i][:6] != '      ' ):
+                    f_list_.append(f_list[i])
+                elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] != f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ')):
+                    f_list_.append(f_list[i])
+                elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] == f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ' and f_list[i][:6].lower() != 'pt  - ')):
+                    f_list_[-1] = f_list_[-1] + '; ' + f_list[i][6:]
+                elif (f_list[i][:6] == '      '):
+                    f_list_[-1] = f_list_[-1] + f_list[i][6:]
+                elif (f_list[i][:6] == 'FAU - '):
+                    f_list_.append(f_list[i])
+                    j = i + 1
+                    while (len(f_list[j]) != 0):
+                        j = j + 1
+                        if (f_list[j][:6].lower() == 'fau - '):
+                            f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
+                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                elif (f_list[i][:6] == 'AU  - '):
+                    f_list_.append(f_list[i])
+                    j = i + 1
+                    while (len(f_list[j]) != 0):
+                        j = j + 1
+                        if (f_list[j][:6].lower() == 'au  - '):
+                            f_list_[-1] = f_list_[-1] + ' and ' + f_list[j][6:]
+                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                elif (f_list[i][:6] == 'AUID- '):
+                    f_list_.append(f_list[i])
+                    j = i + 1
+                    while (len(f_list[j]) != 0):
+                        j = j + 1
+                        if (f_list[j][:6].lower() == 'auid- '):
+                            f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
+                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                elif (f_list[i][:6] == 'AD  - '):
+                    f_list_.append(f_list[i])
+                    j = i + 1
+                    while (len(f_list[j]) != 0):
+                        j = j + 1
+                        if (f_list[j][:6].lower() == 'ad  - '):
+                            f_list_[-1] = f_list_[-1] + f_list[j][6:]
+                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                elif (f_list[i][:6] == 'PT  - '):
+                    f_list_.append(f_list[i])
+                    j = i + 1
+                    while (len(f_list[j]) != 0):
+                        j = j + 1
+                        if (f_list[j][:6].lower() == 'pt  - '):
+                            f_list[j] = f_list[j][:6].lower() + f_list[j][6:]
+            f_list = [item for item in f_list_]
+            for i in range(0, len(f_list)):
+                if (len(f_list[i]) > 0):
+                    if (f_list[i][4] == '-'):
+                        f_list[i] = f_list[i][:4] + '=' + f_list[i][5:]
+                    if (f_list[i][:3] == 'LID'):
+                        f_list[i] = f_list[i].replace(' [doi]', '')
+                        #f_list[i] = f_list[i].replace(' [pii]', '')
+                        #f_list[i] = f_list[i].replace(' [isbn]', '')
+                        #f_list[i] = f_list[i].replace(' [ed]', '')
+                        #f_list[i] = f_list[i].replace(' [editor]', '')
+                        #f_list[i] = f_list[i].replace(' [book]', '')
+                        #f_list[i] = f_list[i].replace(' [bookaccession]', '')
         lhs     = []
         rhs     = []
         doc     = 0
         for i in range(0, len(f_list)):
-          if (f_list[i].find('@') == 0):  
+          if (f_list[i].find('@') == 0 or f_list[i][:4].lower() == 'pmid'):  
             lhs.append('doc_start')
             rhs.append('doc_start')
+            if (db == 'pubmed'):
+                lhs.append('note')
+                rhs.append('0')
+                lhs.append('source')
+                rhs.append('PubMed')
+            if (db == 'wos'):
+                lhs.append('source')
+                rhs.append('WoS')
             doc = doc + 1
           if (f_list[i].find('=') != -1 and f_list[i].find(' ') != 0):
             lhs.append(f_list[i].split('=')[0].lower().strip())
@@ -796,27 +874,72 @@ class pbx_probe():
             rhs[-1] = rhs[-1]+' '+f_list[i].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip()
         if (db == 'wos'):
             for i in range(0, len(lhs)):
-                if (lhs[i] == 'article-number'):
-                    lhs[i] = 'art_number'
                 if (lhs[i] == 'affiliation'):
                     lhs[i] = 'affiliation_'
                 if (lhs[i] == 'affiliations'):
                     lhs[i] = 'affiliation'
-                if (lhs[i] == 'keywords'):
-                    lhs[i] = 'author_keywords'
-                if (lhs[i] == 'keywords-plus'):
-                    lhs[i] = 'keywords'
+                if (lhs[i] == 'article-number'):
+                    lhs[i] = 'art_number'
                 if (lhs[i] == 'cited-references'):
                     lhs[i] = 'references'
+                if (lhs[i] == 'keywords'):
+                    lhs[i] = 'author_keywords'
+                if (lhs[i] == 'journal-iso'):
+                    lhs[i] = 'abbrev_source_title'
+                if (lhs[i] == 'keywords-plus'):
+                    lhs[i] = 'keywords'
                 if (lhs[i] == 'note'):
                     lhs[i] = 'note_'
                 if (lhs[i] == 'times-cited'):
                     lhs[i] = 'note'
-                if (lhs[i] == 'journal-iso'):
-                    lhs[i] = 'abbrev_source_title'
                 if (lhs[i] == 'type'):
                     lhs[i] = 'document_type'
                 lhs[i] = lhs[i].replace('-', '_')
+        if (db == 'pubmed'):
+            for i in range(0, len(lhs)):
+                if (lhs[i] == 'ab'):
+                    lhs[i] = 'abstract'
+                if (lhs[i] == 'ad'):
+                    lhs[i] = 'affiliation'
+                if (lhs[i] == 'au'):
+                    lhs[i] = 'author'
+                if (lhs[i] == 'auid'):
+                    lhs[i] = 'orcid'
+                if (lhs[i] == 'fau'):
+                    lhs[i] = 'full_author'
+                if (lhs[i] == 'lid'):
+                    lhs[i] = 'doi'
+                if (lhs[i] == 'dp'):
+                    lhs[i] = 'year'
+                    rhs[i] = rhs[i][:4]
+                if (lhs[i] == 'ed'):
+                    lhs[i] = 'editor'
+                if (lhs[i] == 'ip'):
+                    lhs[i] = 'issue'
+                if (lhs[i] == 'is'):
+                    lhs[i] = 'issn'
+                if (lhs[i] == 'isbn'):
+                    lhs[i] = 'isbn'
+                if (lhs[i] == 'jt'):
+                    lhs[i] = 'journal'
+                if (lhs[i] == 'la'):
+                    lhs[i] = 'language'
+                if (lhs[i] == 'mh'):
+                    lhs[i] = 'keywords'
+                if (lhs[i] == 'ot'):
+                    lhs[i] = 'author_keywords'
+                if (lhs[i] == 'pg'):
+                    lhs[i] = 'pages'
+                if (lhs[i] == 'pt'):
+                    lhs[i] = 'document_type'
+                if (lhs[i] == 'pmid'):
+                    lhs[i] = 'pubmed_id'
+                if (lhs[i] == 'ta'):
+                    lhs[i] = 'abbrev_source_title'
+                if (lhs[i] == 'ti'):
+                    lhs[i] = 'title'
+                if (lhs[i] == 'vi'):
+                    lhs[i] = 'volume'
         labels       = list(set(lhs))
         labels.remove('doc_start')
         sanity_check = ['abbrev_source_title', 'abstract', 'address', 'affiliation', 'art_number', 'author', 'author_keywords', 'chemicals_cas', 'coden', 'correspondence_address1', 'document_type', 'doi', 'editor', 'funding_details', 'funding_text\xa01', 'funding_text\xa02', 'funding_text\xa03', 'isbn', 'issn', 'journal', 'keywords', 'language', 'note', 'number', 'page_count', 'pages', 'publisher', 'pubmed_id', 'references', 'source', 'sponsors', 'title', 'tradenames', 'url', 'volume', 'year']
@@ -834,19 +957,52 @@ class pbx_probe():
           else:
             data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
         entries = list(data.columns)
-        data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
         data['document_type'] = data['document_type'].replace('Article; Early Access','Article in Press')
         data['document_type'] = data['document_type'].replace('Editorial Material','Editorial')
+        data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
+
+        data['document_type'] = data['document_type'].replace('Clinical Study','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial Protocol','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial, Phase I','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial, Phase II','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial, Phase III','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial, Phase IV','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Trial, Veterinary','Article')
+        data['document_type'] = data['document_type'].replace('Comparative Study','Article')
+        data['document_type'] = data['document_type'].replace('Controlled Clinical Trial','Article')
+        data['document_type'] = data['document_type'].replace('Corrected and Republished Article','Article')
+        data['document_type'] = data['document_type'].replace('Duplicate Publication','Article')
+        data['document_type'] = data['document_type'].replace('Essay','Article')
+        data['document_type'] = data['document_type'].replace('Historical Article','Article')
+        data['document_type'] = data['document_type'].replace('Journal Article','Article')
+        data['document_type'] = data['document_type'].replace('Letter','Article')
+        data['document_type'] = data['document_type'].replace('Meta-Analysis','Article')
+        data['document_type'] = data['document_type'].replace('Randomized Controlled Trial','Article')
+        data['document_type'] = data['document_type'].replace('Randomized Controlled Trial, Veterinary','Article')
+        data['document_type'] = data['document_type'].replace('Research Support, N.I.H., Extramural','Article')
+        data['document_type'] = data['document_type'].replace('Research Support, N.I.H., Intramural','Article')
+        data['document_type'] = data['document_type'].replace("Research Support, Non-U.S. Gov't",'Article')
+        data['document_type'] = data['document_type'].replace("Research Support, U.S. Gov't, Non-P.H.S.",'Article')
+        data['document_type'] = data['document_type'].replace("Research Support, U.S. Gov't, P.H.S.",'Article')
+        data['document_type'] = data['document_type'].replace('Research Support, U.S. Government','Article')
+        data['document_type'] = data['document_type'].replace('Research Support, American Recovery and Reinvestment Act','Article')
+        data['document_type'] = data['document_type'].replace('Technical Report','Article')
+        data['document_type'] = data['document_type'].replace('Twin Study','Article')
+        data['document_type'] = data['document_type'].replace('Validation Study','Article')
+        data['document_type'] = data['document_type'].replace('Clinical Conference','Conference Paper')
+        data['document_type'] = data['document_type'].replace('Congress','Conference Paper')
+        data['document_type'] = data['document_type'].replace('Consensus Development Conference','Conference Paper')
+        data['document_type'] = data['document_type'].replace('Consensus Development Conference, NIH','Conference Paper')
+        data['document_type'] = data['document_type'].replace('Systematic Review','Review')
+        data['document_type'] = data['document_type'].replace('Scientific Integrity Review','Review')
+        
         if (del_duplicated == True and 'doi' in entries):
             duplicated = data['doi'].duplicated()
             title      = data['title']
             title      = title.to_list()
             title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
             t_dupl     = pd.Series(title).duplicated()
-            #abst       = data['abstract']
-            #abst       = abst.to_list()
-            #abst       = self.clear_text(abst, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
-            #a_dupl     = pd.Series(abst).duplicated()
             for i in range(0, duplicated.shape[0]):
                 if (data.loc[i, 'doi'] == 'UNKNOW' or pd.isnull(data.loc[i, 'doi'])):
                     duplicated[i] = False
@@ -860,8 +1016,10 @@ class pbx_probe():
         else:
             string_vb  = 'A Total of ' + str(doc) + ' Documents were Found' 
             self.vb.append(string_vb)
+        if (db == 'scopus'):
+            data['document_type'] = data['type']
         if ('document_type' in entries):
-            types     = list(data['document_type'])
+            types     = list(data['document_type'].replace(np.nan, 'UNKNOW'))
             u_types   = list(set(types))
             u_types.sort()
             string_vb = ''
@@ -869,15 +1027,15 @@ class pbx_probe():
             for tp in u_types:
                 string_vb = tp + ' = ' + str(types.count(tp))
                 self.vb.append(string_vb)
-        if ('type' in entries):
-            types     = list(data['type'])
-            u_types   = list(set(types))
-            u_types.sort()
-            string_vb = ''
-            self.vb.append(string_vb)
-            for tp in u_types:
-                string_vb = tp + ' = ' + str(types.count(tp))
-                self.vb.append(string_vb)
+        #if ('type' in entries):
+            #types     = list(data['type'].replace(np.nan, 'UNKNOW'))
+            #u_types   = list(set(types))
+            #u_types.sort()
+            #string_vb = ''
+            #self.vb.append(string_vb)
+            #for tp in u_types:
+                #string_vb = tp + ' = ' + str(types.count(tp))
+                #self.vb.append(string_vb)
         data.fillna('UNKNOW', inplace = True)
         data['keywords']        = data['keywords'].apply(lambda x: x.replace(',',';'))
         data['author_keywords'] = data['author_keywords'].apply(lambda x: x.replace(',',';'))
@@ -915,13 +1073,20 @@ class pbx_probe():
     
     # Function: Get Citations
     def __get_citations(self, series):
-        citation = [item.lower().replace('cited by ', '') for item in list(series)] 
+        citation = [item.lower().replace('cited by ' , '') for item in list(series)] 
+        citation = [item.lower().replace('cited by: ', '') for item in list(citation)] 
         for i in range(0, len(citation)):
             idx = citation[i].find(';')
             if (idx >= 0):
-                citation[i] = int(citation[i][:idx])
+                try:
+                    citation[i] = int(citation[i][:idx])
+                except:
+                    citation[i] = int(re.search(r'\d+', citation[i]).group())
             else:
-                citation[i] = int(citation[i])
+                try:
+                    citation[i] = int(citation[i])
+                except:
+                    citation[i] = int(re.search(r'\d+', citation[i]).group()) 
         return citation
     
     # Function: Get Past Citations per Year
@@ -952,7 +1117,7 @@ class pbx_probe():
     
     # Function: Get Countries
     def __get_countries(self):
-        if   (self.data_base == 'scopus'):
+        if   (self.data_base == 'scopus' or self.data_base == 'pubmed'):
             df = self.data['affiliation']
             df = df.str.lower()
         elif (self.data_base == 'wos'):
@@ -989,6 +1154,14 @@ class pbx_probe():
                         if (country.lower() in affiliation.lower()):
                             ctrs[i].append(country)
                             break
+        if (self.data_base == 'pubmed'):
+            for i in range(0, df.shape[0]):
+                affiliations = str(df[i]).strip().split(',')
+                for affiliation in affiliations:
+                    for country in self.country_names:
+                        if (country.lower() in affiliation.lower()):
+                            ctrs[i].append(country)
+                            break
         elif (self.data_base == 'wos'):
            for i in range(0, df.shape[0]): 
                affiliations = str(df[i]).strip().split('.')[:-1]
@@ -1013,7 +1186,7 @@ class pbx_probe():
   
     # Function: Get Institutions
     def __get_institutions(self):
-        if   (self.data_base == 'scopus'):
+        if   (self.data_base == 'scopus' or self.data_base == 'pubmed'):
             df = self.data['affiliation']
             df = df.str.lower()
         elif (self.data_base == 'wos'):
@@ -1027,6 +1200,25 @@ class pbx_probe():
         if  (self.data_base == 'scopus'):
             for i in range(0, df.shape[0]):
                 affiliations = str(df[i]).split(';')
+                for affiliation in affiliations:
+                    for institution in self.institution_names:
+                        if (institution.lower() in affiliation.lower()):
+                            if (affiliation.strip() not in inst[i]):
+                                inst[i].append(affiliation.strip())
+                            break
+            for i in range(0, len(inst)):
+                for j in range(0, len(inst[i])):
+                    item = inst[i][j].split(',')
+                    for institution in self.institution_names:
+                        idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
+                        if (len(idx) > 0):
+                            institution_name = item[idx[0]]
+                            institution_name = ' '.join(institution_name.split())
+                            inst_[i].append(institution_name)
+                            break
+        if  (self.data_base == 'pubmed'):
+            for i in range(0, df.shape[0]):
+                affiliations = str(df[i]).split(',')
                 for affiliation in affiliations:
                     for institution in self.institution_names:
                         if (institution.lower() in affiliation.lower()):
@@ -2348,17 +2540,18 @@ class pbx_probe():
         insd_r = []
         insd_t = []
         corp   = []
-        corp.append(self.u_ref[0].lower())
-        for i in range(1, len(self.u_ref)):
-            corp[-1] = corp[-1]+' '+self.u_ref[i].lower()
-        idx_   = [i for i in range(0, len(keys)) if re.search(keys[i], corp[0]) ]
-        for i in idx_:
-            for j in range(0, len(self.u_ref)):
-                if (re.search(keys[i], self.u_ref[j].lower()) ):
-                    insd_r.append('r_'+str(j))
-                    insd_t.append(str(i))
-                    self.dy_ref[j] = int(self.dy[i])
-                    break
+        if (len(self.u_ref) > 0):
+            corp.append(self.u_ref[0].lower())
+            for i in range(1, len(self.u_ref)):
+                corp[-1] = corp[-1]+' '+self.u_ref[i].lower()
+            idx_   = [i for i in range(0, len(keys)) if re.search(keys[i], corp[0]) ]
+            for i in idx_:
+                for j in range(0, len(self.u_ref)):
+                    if (re.search(keys[i], self.u_ref[j].lower()) ):
+                        insd_r.append('r_'+str(j))
+                        insd_t.append(str(i))
+                        self.dy_ref[j] = int(self.dy[i])
+                        break
         self.dict_lbs = dict(zip(insd_r, insd_t))
         for item in self.labels_r:
             if item not in self.dict_lbs.keys():
@@ -2626,7 +2819,10 @@ class pbx_probe():
             if (name.find('r_') != -1):
                 color = 'red'
                 year  = self.dy_ref[ int(name.replace('r_','')) ]
-                n_id  = self.u_ref [ int(name.replace('r_','')) ]
+                if (len(self.u_ref) > 0):
+                    n_id  = self.u_ref [ int(name.replace('r_','')) ]
+                else:
+                    n_id  = ''
                 G.add_node(name, color = color,  year = year, n_id = n_id)
             else:
                 if (int(name.replace('r_','')) not in u_rows):
@@ -3190,7 +3386,10 @@ class pbx_probe():
             if (name.find('r_') != -1):
                 color = 'red'
                 year  = self.dy_ref[ int(name.replace('r_','')) ]
-                n_id  = self.u_ref [ int(name.replace('r_','')) ]
+                if (len(self.u_ref) > 0):
+                    n_id  = self.u_ref [ int(name.replace('r_','')) ]
+                else:
+                    n_id  = ''
                 if ( year not in y_lst):
                     y_lst.append(year)
                     flag = 0
@@ -3540,5 +3739,54 @@ class pbx_probe():
         fig    = go.Figure(data = [trace], layout = layout)
         fig.show()
         return self
+ 
+############################################################################
+
+    # Function: Abstractive Text Summarization # Model Name List = https://huggingface.co/models?pipeline_tag=summarization&sort=downloads&search=pegasus
+    def summarize_abst_peg(self, article_ids = [], model_name = 'google/pegasus-xsum'):
+        abstracts   = self.data['abstract']
+        corpus      = []
+        if (len(article_ids) == 0):
+            article_ids = [i for i in range(0, abstracts.shape[0])]
+        else:
+            article_ids = [int(item) for item in article_ids]
+        for i in range(0, abstracts.shape[0]):
+            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+                corpus.append(abstracts.iloc[i])
+        if (len(corpus) > 0):
+            print('')
+            print('Total Number of Valid Abstracts: ', len(corpus))
+            print('')
+            corpus     = ' '.join(corpus)
+            tokenizer  = PegasusTokenizer.from_pretrained(model_name)
+            pegasus    = PegasusForConditionalGeneration.from_pretrained(model_name)
+            tokens     = tokenizer(corpus, truncation = True, padding = 'longest', return_tensors = 'pt')
+            summary    = pegasus.generate(**tokens) # max_new_tokens = 1024, max_length = 1024, 
+            summary    = tokenizer.decode(summary[0])
+        else:
+            summary    = 'No abstracts were found in the selected set of documents'
+        return summary
+    
+    # Function: Extractive Text Summarization
+    def summarize_ext_bert(self, article_ids = []):
+        abstracts   = self.data['abstract']
+        corpus      = []
+        if (len(article_ids) == 0):
+            article_ids = [i for i in range(0, abstracts.shape[0])]
+        else:
+            article_ids = [int(item) for item in article_ids]
+        for i in range(0, abstracts.shape[0]):
+            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+                corpus.append(abstracts.iloc[i])
+        if (len(corpus) > 0):
+            print('')
+            print('Total Number of Valid Abstracts: ', len(corpus))
+            print('')
+            corpus     = ' '.join(corpus)
+            bert_model = Summarizer()
+            summary    = ''.join(bert_model(corpus, min_length = 5))
+        else:
+            summary    = 'No abstracts were found in the selected set of documents'
+        return summary
 
 ############################################################################
