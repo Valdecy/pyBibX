@@ -1016,7 +1016,7 @@ class pbx_probe():
         else:
             string_vb  = 'A Total of ' + str(doc) + ' Documents were Found' 
             self.vb.append(string_vb)
-        if (db == 'scopus'):
+        if (db == 'wos' and 'type' in entries):
             data['document_type'] = data['type']
         if ('document_type' in entries):
             types     = list(data['document_type'].replace(np.nan, 'UNKNOW'))
