@@ -957,10 +957,32 @@ class pbx_probe():
           else:
             data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
         entries = list(data.columns)
+        
+        # WoS -> Scopus
         data['document_type'] = data['document_type'].replace('Article; Early Access','Article in Press')
-        data['document_type'] = data['document_type'].replace('Editorial Material','Editorial')
         data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
-
+        data['document_type'] = data['document_type'].replace('Article; Proceedings Paper','Proceedings Paper')
+        data['document_type'] = data['document_type'].replace('Article; Discussion','Article')
+        data['document_type'] = data['document_type'].replace('Article; Letter','Article')
+        data['document_type'] = data['document_type'].replace('Article; Excerpt','Article')
+        data['document_type'] = data['document_type'].replace('Article; Chronology','Article')
+        data['document_type'] = data['document_type'].replace('Article; Correction','Article')
+        data['document_type'] = data['document_type'].replace('Article; Correction, Addition','Article')
+        data['document_type'] = data['document_type'].replace('Article; Data Paper','Article')
+        data['document_type'] = data['document_type'].replace('Art Exhibit Review','Review')
+        data['document_type'] = data['document_type'].replace('Dance Performance Review','Review')
+        data['document_type'] = data['document_type'].replace('Music Performance Review','Review')
+        data['document_type'] = data['document_type'].replace('Music Score Review','Review')
+        data['document_type'] = data['document_type'].replace('Film Review','Review')
+        data['document_type'] = data['document_type'].replace('TV Review, Radio Review','Review')
+        data['document_type'] = data['document_type'].replace('TV Review, Radio Review, Video','Review')
+        data['document_type'] = data['document_type'].replace('Theater Review, Video','Review')
+        data['document_type'] = data['document_type'].replace('Database Review','Review')
+        data['document_type'] = data['document_type'].replace('Record Review','Review')
+        data['document_type'] = data['document_type'].replace('Software Review','Review')
+        data['document_type'] = data['document_type'].replace('Hardware Review','Review')
+        
+        # PubMed -> Scopus
         data['document_type'] = data['document_type'].replace('Clinical Study','Article')
         data['document_type'] = data['document_type'].replace('Clinical Trial','Article')
         data['document_type'] = data['document_type'].replace('Clinical Trial Protocol','Article')
@@ -1027,15 +1049,6 @@ class pbx_probe():
             for tp in u_types:
                 string_vb = tp + ' = ' + str(types.count(tp))
                 self.vb.append(string_vb)
-        #if ('type' in entries):
-            #types     = list(data['type'].replace(np.nan, 'UNKNOW'))
-            #u_types   = list(set(types))
-            #u_types.sort()
-            #string_vb = ''
-            #self.vb.append(string_vb)
-            #for tp in u_types:
-                #string_vb = tp + ' = ' + str(types.count(tp))
-                #self.vb.append(string_vb)
         data.fillna('UNKNOW', inplace = True)
         data['keywords']        = data['keywords'].apply(lambda x: x.replace(',',';'))
         data['author_keywords'] = data['author_keywords'].apply(lambda x: x.replace(',',';'))
