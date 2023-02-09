@@ -51,7 +51,7 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.data_base         =  db
-        self.institution_names =  ['chuo kikuu', 'egyetemi', 'eyunivesithi', 'háskóli', 'inivèsite', 'inyuvesi', 'iunivesite',
+        self.institution_names =  [ 'chuo kikuu', 'egyetemi', 'eyunivesithi', 'háskóli', 'inivèsite', 'inyuvesi', 'iunivesite',
                                     'jaamacad', "jami'a", 'kulanui', 'mahadum', 'oilthigh', 'ollscoile', 'oniversite', 'prifysgol',
                                     'sveučilište', 'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade',
                                     'universitas', 'universitat', 'universitate', 'universitato', 'universiteit', 'universitet',
@@ -62,6 +62,20 @@ class pbx_probe():
                                     'university', 'academy', 'institut', 'supérieur', 'ibmec', 'uff', 'gradevinski', 'lab.', 
                                     'politecnico', 'research', 'laborat', 'college'
                                   ]
+        self.language_names  =    { 'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 'arm': 'Armenian', 
+                                    'aze': 'Azerbaijani', 'bos': 'Bosnian', 'bul': 'Bulgarian', 'cat': 'Catalan', 'chi': 'Chinese', 
+                                    'cze': 'Czech', 'dan': 'Danish', 'dut': 'Dutch', 'eng': 'English', 'epo': 'Esperanto', 
+                                    'est': 'Estonian', 'fin': 'Finnish', 'fre': 'French', 'geo': 'Georgian', 'ger': 'German', 
+                                    'gla': 'Scottish Gaelic', 'gre': 'Greek, Modern', 'heb': 'Hebrew', 'hin': 'Hindi', 
+                                    'hrv': 'Croatian', 'hun': 'Hungarian', 'ice': 'Icelandic', 'ind': 'Indonesian', 'ita': 'Italian', 
+                                    'jpn': 'Japanese', 'kin': 'Kinyarwanda', 'kor': 'Korean', 'lat': 'Latin', 'lav': 'Latvian', 
+                                    'lit': 'Lithuanian', 'mac': 'Macedonian', 'mal': 'Malayalam', 'mao': 'Maori', 'may': 'Malay', 
+                                    'mul': 'Multiple languages', 'nor': 'Norwegian', 'per': 'Persian, Iranian', 'pol': 'Polish', 
+                                    'por': 'Portuguese', 'pus': 'Pushto', 'rum': 'Romanian, Rumanian, Moldovan', 'rus': 'Russian', 
+                                    'san': 'Sanskrit', 'slo': 'Slovak', 'slv': 'Slovenian', 'spa': 'Spanish', 'srp': 'Serbian', 
+                                    'swe': 'Swedish', 'tha': 'Thai', 'tur': 'Turkish', 'ukr': 'Ukrainian', 'und': 'Undetermined', 
+                                    'vie': 'Vietnamese', 'wel': 'Welsh'
+                                  }
         self.country_names =      ['Afghanistan', 'Albania', 'Algeria', 'American Samoa', 'Andorra', 'Angola', 'Anguilla', 
                                    'Antarctica', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Aruba', 'Australia', 'Austria', 
                                    'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 
@@ -634,10 +648,6 @@ class pbx_probe():
         title      = title.to_list()
         title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
         t_dupl     = pd.Series(title).duplicated()
-        #abst       = self.data['abstract']
-        #abst       = abst.to_list()
-        #abst       = self.clear_text(abst, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
-        #a_dupl     = pd.Series(abst).duplicated()
         for i in range(0, duplicated.shape[0]):
             if (self.data.loc[i, 'doi'] == 'UNKNOW'):
                 duplicated[i] = False
@@ -924,6 +934,8 @@ class pbx_probe():
                     lhs[i] = 'journal'
                 if (lhs[i] == 'la'):
                     lhs[i] = 'language'
+                    if (rhs[i] in self.language_names.keys()):
+                        rhs[i] = self.language_names[rhs[i]]
                 if (lhs[i] == 'mh'):
                     lhs[i] = 'keywords'
                 if (lhs[i] == 'ot'):
@@ -1115,12 +1127,6 @@ class pbx_probe():
                 for k in range(0, len(self.ref[j])):
                     if (title.lower() in self.ref[j][k].lower()):
                         c_count[j] = c_count[j] + 1
-                        #flag = 0
-                        #for au in self.aut[i]:
-                            #if (au in self.ref[j][k].lower()):
-                                #flag = flag + 1
-                        #if (flag > 0 and flag == len(self.aut[i])):
-                            #c_count[j] = c_count[j] + 1
         c_year_  = list(set(c_year))
         c_year_.sort()
         c_count_ = [0]*len(c_year_)
@@ -3406,8 +3412,10 @@ class pbx_probe():
                 if ( year not in y_lst):
                     y_lst.append(year)
                     flag = 0
-                else:
-                    flag = flag + 1
+                elif (year in y_lst):
+                    counter = y_lst.count(year)
+                    flag    = counter*1.2
+                    y_lst.append(year)
                 G.add_node(name, color = color,  year = year, n_id = n_id, flag = flag)
             else:
                 if (int(name.replace('r_','')) not in u_rows):
@@ -3423,8 +3431,10 @@ class pbx_probe():
             if ( year not in y_lst):
                 y_lst.append(year)
                 flag = 0
-            else:
-                flag = flag + 1.2
+            elif (year in y_lst):
+                counter = y_lst.count(year)
+                flag    = counter*1.2
+                y_lst.append(year)
             G.add_node(name, color = color, year = year, n_id = n_id, flag = flag)
             Xn.append(dict_y[year])
             Yn.append(flag)
@@ -3757,8 +3767,8 @@ class pbx_probe():
 
     # Function: Abstractive Text Summarization # Model Name List = https://huggingface.co/models?pipeline_tag=summarization&sort=downloads&search=pegasus
     def summarize_abst_peg(self, article_ids = [], model_name = 'google/pegasus-xsum'):
-        abstracts   = self.data['abstract']
-        corpus      = []
+        abstracts = self.data['abstract']
+        corpus    = []
         if (len(article_ids) == 0):
             article_ids = [i for i in range(0, abstracts.shape[0])]
         else:
@@ -3770,20 +3780,20 @@ class pbx_probe():
             print('')
             print('Total Number of Valid Abstracts: ', len(corpus))
             print('')
-            corpus     = ' '.join(corpus)
-            tokenizer  = PegasusTokenizer.from_pretrained(model_name)
-            pegasus    = PegasusForConditionalGeneration.from_pretrained(model_name)
-            tokens     = tokenizer(corpus, truncation = True, padding = 'longest', return_tensors = 'pt')
-            summary    = pegasus.generate(**tokens) # max_new_tokens = 1024, max_length = 1024, 
-            summary    = tokenizer.decode(summary[0])
+            corpus    = ' '.join(corpus)
+            tokenizer = PegasusTokenizer.from_pretrained(model_name)
+            pegasus   = PegasusForConditionalGeneration.from_pretrained(model_name)
+            tokens    = tokenizer(corpus, truncation = True, padding = 'longest', return_tensors = 'pt')
+            summary   = pegasus.generate(**tokens) # max_new_tokens = 1024, max_length = 1024, 
+            summary   = tokenizer.decode(summary[0])
         else:
-            summary    = 'No abstracts were found in the selected set of documents'
+            summary   = 'No abstracts were found in the selected set of documents'
         return summary
     
     # Function: Extractive Text Summarization
     def summarize_ext_bert(self, article_ids = []):
-        abstracts   = self.data['abstract']
-        corpus      = []
+        abstracts = self.data['abstract']
+        corpus    = []
         if (len(article_ids) == 0):
             article_ids = [i for i in range(0, abstracts.shape[0])]
         else:
