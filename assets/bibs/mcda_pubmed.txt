@@ -1,0 +1,944 @@
+PMID- 36206242
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20221011
+LR  - 20221012
+IS  - 1932-6203 (Electronic)
+IS  - 1932-6203 (Linking)
+VI  - 17
+IP  - 10
+DP  - 2022
+TI  - On the Monte Carlo weights in multiple criteria decision analysis.
+PG  - e0268950
+LID - 10.1371/journal.pone.0268950 [doi]
+LID - e0268950
+AB  - In multiple-criteria decision making/aiding/analysis (MCDM/MCDA) weights of 
+      criteria constitute a crucial input for finding an optimal solution 
+      (alternative). A large number of methods were proposed for criteria weights 
+      derivation including direct ranking, point allocation, pairwise comparisons, 
+      entropy method, standard deviation method, and so on. However, the problem of 
+      correct criteria weights setting persists, especially when the number of criteria 
+      is relatively high. The aim of this paper is to approach the problem of 
+      determining criteria weights from a different perspective: we examine what 
+      weights' values have to be for a given alternative to be ranked the best. We 
+      consider a space of all feasible weights from which a large number of weights in 
+      the form of n-tuples is drawn randomly via Monte Carlo method. Then, we use 
+      predefined dominance relations for comparison and ranking of alternatives, which 
+      are based on the set of generated cases. Further on, we provide the estimates for 
+      a sample size so the results could be considered robust enough. At last, but not 
+      least, we introduce the concept of central weights and the measure of its 
+      robustness (stability) as well as the concept of alternatives' multi-dominance, 
+      and show their application to a real-world problem of the selection of the best 
+      wind turbine.
+FAU - Mazurek, Jiří
+AU  - Mazurek J
+AD  - Department of Informatics and Mathematics, School of Business Administration in 
+      Karvina, Silesian University in Opava, Opava, Czech Republic.
+FAU - Strzałka, Dominik
+AU  - Strzałka D
+AUID- ORCID: 0000-0002-8887-4321
+AD  - Department of Informatics and Mathematics, School of Business Administration in 
+      Karvina, Silesian University in Opava, Opava, Czech Republic.
+AD  - Department of Complex Systems, Faculty of Electrical and Computer Engineering, 
+      Rzesźow University of Technology, Rzesźow, Poland.
+LA  - eng
+SI  - figshare/10.6084/m9.figshare.19525087.v1
+PT  - Journal Article
+PT  - Research Support, Non-U.S. Gov't
+DEP - 20221007
+PL  - United States
+TA  - PLoS One
+JT  - PloS one
+JID - 101285081
+SB  - IM
+MH  - *Decision Making
+MH  - *Decision Support Techniques
+MH  - Entropy
+MH  - Monte Carlo Method
+PMC - PMC9543698
+COIS- The authors have declared that no competing interests exist.
+EDAT- 2022/10/08 06:00
+MHDA- 2022/10/12 06:00
+CRDT- 2022/10/07 13:34
+PHST- 2021/11/02 00:00 [received]
+PHST- 2022/05/11 00:00 [accepted]
+PHST- 2022/10/07 13:34 [entrez]
+PHST- 2022/10/08 06:00 [pubmed]
+PHST- 2022/10/12 06:00 [medline]
+AID - PONE-D-21-34944 [pii]
+AID - 10.1371/journal.pone.0268950 [doi]
+PST - epublish
+SO  - PLoS One. 2022 Oct 7;17(10):e0268950. doi: 10.1371/journal.pone.0268950. 
+      eCollection 2022.
+
+PMID- 32338143
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20210323
+LR  - 20210323
+IS  - 1552-681X (Electronic)
+IS  - 0272-989X (Linking)
+VI  - 40
+IP  - 4
+DP  - 2020 May
+TI  - Framework for Drug Formulary Decision Using Multiple-Criteria Decision Analysis.
+PG  - 438-447
+LID - 10.1177/0272989X20915241 [doi]
+AB  - Background. Reviewing drugs to determine coverage or reimbursement level is a 
+      complex process that involves significant time and expertise. Review boards 
+      gather evidence from the submission provided, input from clinicians and patients, 
+      and results of clinical and economic reviews. This information consists of 
+      assessments on multiple criteria that often conflict with one another. 
+      Multiple-criteria decision analysis (MCDA) includes methods to address complex 
+      decision making problems with conflicting objectives and criteria. We propose an 
+      MCDA approach that infers a utility model based on reviews of previously 
+      submitted drugs. Methods. We use a recent extension of the UTilitiés Additives 
+      DIScriminantes approach, UTADIS(GMS). This disaggregation approach deconstructs a 
+      portfolio of elements such as a set of drugs that have been reviewed and for 
+      which a decision has been made. It derives global and marginal utility functions 
+      that are consistent with the preferences exhibited by the review boards in their 
+      recommendations. We apply the method to oncology drugs reviewed in Canada between 
+      2011 and 2017. We also illustrate how to conduct scenario analyses and predict 
+      the coverage decisions for new drugs. Results. Applying the method yields a 
+      utility value for each submission along with a set of thresholds that partition 
+      the utility values based on the submission outcomes. Scenario analyses illustrate 
+      the predictive ability of the method. Conclusion. Preference disaggregation is an 
+      indirect way of eliciting an additive global utility value function. It requires 
+      less of a cognitive effort from the decision making bodies because it infers 
+      preferences from the data rather than relying on direct assessments of model 
+      parameters. We illustrate how it can be applied to validate existing decisions 
+      and to predict the recommendation of a new drug.
+FAU - Babashov, Vusal
+AU  - Babashov V
+AD  - Telfer School of Management, University of Ottawa, Ottawa, ON, Canada.
+FAU - Ben Amor, Sarah
+AU  - Ben Amor S
+AD  - Telfer School of Management, University of Ottawa, Ottawa, ON, Canada.
+FAU - Reinhardt, Gilles
+AU  - Reinhardt G
+AUID- ORCID: 0000-0001-9810-9503
+AD  - Telfer School of Management, University of Ottawa, Ottawa, ON, Canada.
+LA  - eng
+PT  - Journal Article
+DEP - 20200426
+PL  - United States
+TA  - Med Decis Making
+JT  - Medical decision making : an international journal of the Society for Medical 
+      Decision Making
+JID - 8109073
+RN  - 0 (Pharmaceutical Preparations)
+SB  - IM
+MH  - Canada
+MH  - Cost-Benefit Analysis
+MH  - *Decision Making
+MH  - Humans
+MH  - Pharmaceutical Preparations/*classification/*supply & distribution
+OTO - NOTNLM
+OT  - decision support
+OT  - formulary design
+OT  - multiple-criteria decision analysis
+EDAT- 2020/04/28 06:00
+MHDA- 2021/03/24 06:00
+CRDT- 2020/04/28 06:00
+PHST- 2020/04/28 06:00 [pubmed]
+PHST- 2021/03/24 06:00 [medline]
+PHST- 2020/04/28 06:00 [entrez]
+AID - 10.1177/0272989X20915241 [doi]
+PST - ppublish
+SO  - Med Decis Making. 2020 May;40(4):438-447. doi: 10.1177/0272989X20915241. Epub 
+      2020 Apr 26.
+
+PMID- 31874372
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20210322
+LR  - 20210322
+IS  - 1873-5347 (Electronic)
+IS  - 0277-9536 (Linking)
+VI  - 246
+DP  - 2020 Feb
+TI  - Multiple Criteria Decision Analysis for HTA across four EU Member States: 
+      Piloting the Advance Value Framework.
+PG  - 112595
+LID - S0277-9536(19)30590-8 [pii]
+LID - 10.1016/j.socscimed.2019.112595 [doi]
+AB  - Multiple Criteria Decision Analysis (MCDA) has emerged as a methodology for 
+      Health Technology Assessment (HTA). However, limited empirical evidence is 
+      available on its use by decision-makers; where available, it only comes from 
+      single-setting exercises, while cross-country comparative studies are 
+      unavailable. This study applies the Advance Value Framework (AVF), an MCDA 
+      methodology for HTA based on multi-attribute value theory, through a series of 
+      case studies with decision-makers in four countries, to explore its feasibility 
+      and compare decision-makers' value preferences and results. The AVF was applied 
+      in the evaluation of three drugs for metastatic, castrate resistant, prostate 
+      cancer (abiraterone, cabazitaxel and enzalutamide) in the post-chemotherapy 
+      indication. Decision conferences were organised in four European countries in 
+      collaboration with their HTA or health insurance organisations by involving 
+      relevant assessors and experts: Sweden (TLV), Andalusia/Spain (AETSA), Poland 
+      (AOTMiT) and Belgium (INAMI-RIZIV). Participants' value preferences, including 
+      performance scoring and criteria weighting, were elicited through a facilitated 
+      decision-analysis modelling approach using the MACBETH technique. Between 6 and 
+      11 criteria were included in each jurisdiction's value model, allocated across 
+      four criteria domains; Therapeutic Benefit criteria consistently ranked first in 
+      relative importance across all countries. Consistent drug rankings were observed 
+      in all settings, with enzalutamide generating the highest overall weighted 
+      preference value (WPV) score, followed by abiraterone and cabazitaxel. Dividing 
+      drugs' overall WPV scores by their costs produced the lowest "cost per unit of 
+      value" for enzalutamide, followed by abiraterone and cabazitaxel. These results 
+      come in contrast with the actual country HTA recommendations and pricing 
+      decisions. Overall, although some differences in value preferences were observed 
+      between countries, drug rankings remained the same. The MCDA methodology employed 
+      could act as a decision support tool in HTA, due to the transparency in the 
+      construction of value preferences in a collaborative manner.
+CI  - Copyright © 2019 The Authors. Published by Elsevier Ltd.. All rights reserved.
+FAU - Angelis, A
+AU  - Angelis A
+AD  - LSE Health and Department of Health Policy, London School of Economics, London, 
+      UK. Electronic address: a.n.angelis@lse.ac.uk.
+FAU - Linch, M
+AU  - Linch M
+AD  - University College London Cancer Institute and University College London 
+      Hospital, London, UK.
+FAU - Montibeller, G
+AU  - Montibeller G
+AD  - School of Business and Economics, Loughborough University, Loughborough, UK.
+FAU - Molina-Lopez, T
+AU  - Molina-Lopez T
+AD  - Andalusian Agency for Health Technology Assessment, Sevilla, Spain.
+FAU - Zawada, A
+AU  - Zawada A
+AD  - Agency for Health Technology Assessment and Tariff System, Warsaw, Poland.
+FAU - Orzel, K
+AU  - Orzel K
+AD  - Agency for Health Technology Assessment and Tariff System, Warsaw, Poland.
+FAU - Arickx, F
+AU  - Arickx F
+AD  - National Institute for Health and Disability Insurance, Brussels, Belgium.
+FAU - Espin, J
+AU  - Espin J
+AD  - Andalusian School of Public Health, Instituto de Investigación Biosanitaria 
+      (ibs.GRANADA), Granada, Spain; CIBER de Epidemiología y Salud Pública (CIBERESP), 
+      Madrid, Spain.
+FAU - Kanavos, P
+AU  - Kanavos P
+AD  - LSE Health and Department of Health Policy, London School of Economics, London, 
+      UK. Electronic address: p.g.kanavos@lse.ac.uk.
+LA  - eng
+PT  - Journal Article
+DEP - 20191015
+PL  - England
+TA  - Soc Sci Med
+JT  - Social science & medicine (1982)
+JID - 8303205
+SB  - IM
+MH  - Belgium
+MH  - Decision Making
+MH  - *Decision Support Techniques
+MH  - Europe
+MH  - Humans
+MH  - Poland
+MH  - Spain
+MH  - Sweden
+MH  - *Technology Assessment, Biomedical
+OTO - NOTNLM
+OT  - Advance Value Framework (AVF)
+OT  - Decision conference
+OT  - Decision making
+OT  - Health Technology Assessment (HTA)
+OT  - Multiple Criteria Decision Analysis (MCDA)
+OT  - Oncology
+OT  - Pharmaceuticals
+OT  - Value assessment
+EDAT- 2019/12/25 06:00
+MHDA- 2021/03/23 06:00
+CRDT- 2019/12/25 06:00
+PHST- 2019/03/26 00:00 [received]
+PHST- 2019/09/29 00:00 [revised]
+PHST- 2019/10/10 00:00 [accepted]
+PHST- 2019/12/25 06:00 [pubmed]
+PHST- 2021/03/23 06:00 [medline]
+PHST- 2019/12/25 06:00 [entrez]
+AID - S0277-9536(19)30590-8 [pii]
+AID - 10.1016/j.socscimed.2019.112595 [doi]
+PST - ppublish
+SO  - Soc Sci Med. 2020 Feb;246:112595. doi: 10.1016/j.socscimed.2019.112595. Epub 2019 
+      Oct 15.
+
+PMID- 36084067
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20220913
+LR  - 20220922
+IS  - 1932-6203 (Electronic)
+IS  - 1932-6203 (Linking)
+VI  - 17
+IP  - 9
+DP  - 2022
+TI  - Multiple criteria decision analysis for therapeutic innovations in a hemophilia 
+      care center: A pilot study of the organizational impact of innovation in 
+      hemophilia care management.
+PG  - e0273775
+LID - 10.1371/journal.pone.0273775 [doi]
+LID - e0273775
+AB  - BACKGROUND: Several innovative drugs liable to lead to changes in healthcare 
+      organization are or soon will be available for the management of hemophilia. 
+      Analyzing their implementation can shed further light on healthcare 
+      decision-making, to anticipate changes and risk of breakdown in the patient's 
+      care pathway. METHODS: Multiple criteria decision analysis (MCDA), based on ISPOR 
+      recommendations, was used to assess the organizational impact of innovation in 
+      hemophilia care management. The MCDA process designed for this specific context 
+      involved ten French experts in hemophilia care management (physicians, nurses, 
+      pharmacist, physiotherapist and psychologist) in the hemophilia care center of 
+      Chambéry, in the Rhône-Alpes Region of France. This pilot study involved seven 
+      steps: (i) defining the decision problem; (ii) selecting and structuring 
+      criteria; (iii) assessing the relative weight of each criterion with 
+      software-assisted simulation based on pairwise comparisons of different 
+      organizational change scenarios; (iv) measuring the performance of the selected 
+      innovations; (v) scoring alternatives; (vi) calculating aggregate scores; (vii) 
+      discussion. The endpoint was to determine the expected overall organizational 
+      impact on a 0-100 scale. RESULTS: Seven organizational criteria were selected. 
+      "Acceptability for patient/caregiver/association" was the most heavily weighted. 
+      Factor VIII by subcutaneous route obtained the highest aggregate score: i.e., low 
+      impact on care organization (88.8 out of 100). The innovation with strongest 
+      organizational impact was gene therapy (27.3 out of 100). CONCLUSION: This 
+      approach provided a useful support for discussion, integrating organizational 
+      aspects in the treatment decision-making process, at healthcare team level. The 
+      study needs repeating in a few years' time and in other hemophilia centers.
+FAU - Beny, Karen
+AU  - Beny K
+AUID- ORCID: 0000-0003-1437-4276
+AD  - Health Systemic Process (P2S), Research Unit 4129, University Claude Bernard 
+      Lyon1, University of Lyon, Lyon, France.
+AD  - Central Pharmacy, Lyon Public Hospices, Lyon, France.
+FAU - Dubromel, Amélie
+AU  - Dubromel A
+AD  - Central Pharmacy, Lyon Public Hospices, Lyon, France.
+FAU - du Sartz de Vigneulles, Benjamin
+AU  - du Sartz de Vigneulles B
+AD  - Health Systemic Process (P2S), Research Unit 4129, University Claude Bernard 
+      Lyon1, University of Lyon, Lyon, France.
+FAU - Gay, Valérie
+AU  - Gay V
+AD  - Hemophilia Care Center, Métropole Savoie Hospital, Chambery, France.
+FAU - Carrouel, Florence
+AU  - Carrouel F
+AD  - Health Systemic Process (P2S), Research Unit 4129, University Claude Bernard 
+      Lyon1, University of Lyon, Lyon, France.
+FAU - Negrier, Claude
+AU  - Negrier C
+AD  - Reference Center on Hemophilia and other Constitutional Hemorrhagic Diseases, 
+      Groupement Hospitalier Est, Lyon Public Hospices, Lyon, France.
+FAU - Dussart, Claude
+AU  - Dussart C
+AD  - Health Systemic Process (P2S), Research Unit 4129, University Claude Bernard 
+      Lyon1, University of Lyon, Lyon, France.
+AD  - Central Pharmacy, Lyon Public Hospices, Lyon, France.
+LA  - eng
+PT  - Journal Article
+DEP - 20220909
+PL  - United States
+TA  - PLoS One
+JT  - PloS one
+JID - 101285081
+SB  - IM
+MH  - Critical Pathways
+MH  - Decision Support Techniques
+MH  - *Hemophilia A/therapy
+MH  - Humans
+MH  - Organizational Innovation
+MH  - Pilot Projects
+PMC - PMC9462757
+COIS- The authors have declared that no competing interests exist.
+EDAT- 2022/09/10 06:00
+MHDA- 2022/09/14 06:00
+CRDT- 2022/09/09 14:15
+PHST- 2021/12/16 00:00 [received]
+PHST- 2022/08/16 00:00 [accepted]
+PHST- 2022/09/09 14:15 [entrez]
+PHST- 2022/09/10 06:00 [pubmed]
+PHST- 2022/09/14 06:00 [medline]
+AID - PONE-D-21-37437 [pii]
+AID - 10.1371/journal.pone.0273775 [doi]
+PST - epublish
+SO  - PLoS One. 2022 Sep 9;17(9):e0273775. doi: 10.1371/journal.pone.0273775. 
+      eCollection 2022.
+
+PMID- 35613115
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20220527
+LR  - 20220716
+IS  - 1932-6203 (Electronic)
+IS  - 1932-6203 (Linking)
+VI  - 17
+IP  - 5
+DP  - 2022
+TI  - Multiple Criteria Decision Analysis (MCDA) for evaluating cancer treatments in 
+      hospital-based health technology assessment: The Paraconsistent Value Framework.
+PG  - e0268584
+LID - 10.1371/journal.pone.0268584 [doi]
+LID - e0268584
+AB  - BACKGROUND: In recent years, the potential of multi-criteria decision analysis 
+      (MCDA) in the health field has been discussed widely. However, most MCDA 
+      methodologies have given little attention to the aggregation of different 
+      stakeholder individual perspectives. OBJECTIVE: To illustrate how a 
+      paraconsistent theory-based MCDA reusable framework, designed to aid 
+      hospital-based Health Technology Assessment (HTA), could be used to aggregate 
+      individual expert perspectives when valuing cancer treatments. METHODS: An MCDA 
+      methodological process was adopted based on paraconsistent theory and following 
+      ISPOR recommended steps in conducting an MCDA study. A proof-of-concept exercise 
+      focusing on identifying and assessing the global value of first-line treatments 
+      for metastatic colorectal cancer (mCRC) was conducted to foster the development 
+      of the MCDA framework. RESULTS: On consultation with hospital-based HTA committee 
+      members, 11 perspectives were considered in an expert panel: medical oncology, 
+      oncologic surgery, radiotherapy, palliative care, pharmacist, health economist, 
+      epidemiologist, public health expert, health media expert, pharmaceutical 
+      industry, and patient advocate. The highest weights were assigned to the criteria 
+      "overall survival" (mean 0.22), "burden of disease" (mean 0.21) and "adverse 
+      events" (mean 0.20), and the lowest weights were given to "progression-free 
+      survival" and "cost of treatment" (mean 0.18 for both). FOLFIRI and mFlox scored 
+      the highest global value score of 0.75, followed by mFOLFOX6 with a global value 
+      score of 0.71. mIFL was ranked last with a global value score of 0.62. The 
+      paraconsistent analysis (para-analysis) of 6 first-line treatments for mCRC 
+      indicated that FOLFIRI and mFlox were the appropriate options for reimbursement 
+      in the context of this study. CONCLUSION: The Paraconsistent Value Framework is 
+      proposed as a step beyond the current MCDA practices, in order to improve means 
+      of dealing with individual expert perspectives in hospital-based HTA of cancer 
+      treatments.
+FAU - Campolina, Alessandro Gonçalves
+AU  - Campolina AG
+AUID- ORCID: 0000-0002-0233-0797
+AD  - Departamento de Medicina Preventiva, Faculdade de Medicina FMUSP, Universidade de 
+      Sao Paulo, Sao Paulo, SP, Brasil.
+AD  - Centro de Investigação Translacional em Oncologia, Instituto do Cancer do Estado 
+      de Sao Paulo, Faculdade de Medicina FMUSP, Universidade de Sao Paulo, Sao Paulo, 
+      SP, Brasil.
+FAU - Estevez-Diz, Maria Del Pilar
+AU  - Estevez-Diz MDP
+AD  - Departamento de Radiologia e Oncologia, Instituto do Cancer do Estado de Sao 
+      Paulo, Faculdade de Medicina FMUSP, Universidade de Sao Paulo, Sao Paulo, SP, 
+      Brasil.
+FAU - Abe, Jair Minoro
+AU  - Abe JM
+AUID- ORCID: 0000-0003-2088-9065
+AD  - Graduate Program in Production Engineering, Paulista University, São Paulo, SP, 
+      Brasil.
+FAU - de Soárez, Patrícia Coelho
+AU  - de Soárez PC
+AD  - Departamento de Medicina Preventiva, Faculdade de Medicina FMUSP, Universidade de 
+      Sao Paulo, Sao Paulo, SP, Brasil.
+LA  - eng
+PT  - Journal Article
+PT  - Research Support, Non-U.S. Gov't
+DEP - 20220525
+PL  - United States
+TA  - PLoS One
+JT  - PloS one
+JID - 101285081
+SB  - IM
+MH  - Biomedical Technology
+MH  - Decision Making
+MH  - *Decision Support Techniques
+MH  - Hospitals
+MH  - Humans
+MH  - *Neoplasms
+MH  - Technology Assessment, Biomedical/methods
+PMC - PMC9132343
+COIS- The authors have declared that no competing interests exist.
+EDAT- 2022/05/26 06:00
+MHDA- 2022/05/28 06:00
+CRDT- 2022/05/25 13:43
+PHST- 2021/10/30 00:00 [received]
+PHST- 2022/05/02 00:00 [accepted]
+PHST- 2022/05/25 13:43 [entrez]
+PHST- 2022/05/26 06:00 [pubmed]
+PHST- 2022/05/28 06:00 [medline]
+AID - PONE-D-21-33200 [pii]
+AID - 10.1371/journal.pone.0268584 [doi]
+PST - epublish
+SO  - PLoS One. 2022 May 25;17(5):e0268584. doi: 10.1371/journal.pone.0268584. 
+      eCollection 2022.
+
+PMID- 35087262
+OWN - NLM
+STAT- PubMed-not-MEDLINE
+LR  - 20220921
+IS  - 0959-6526 (Print)
+IS  - 1879-1786 (Electronic)
+IS  - 0959-6526 (Linking)
+VI  - 316
+DP  - 2021 Sep 20
+TI  - Supporting contaminated sites management with Multiple Criteria Decision 
+      Analysis: Demonstration of a regulation-consistent approach.
+PG  - 1-10
+LID - 10.1016/j.jclepro.2021.128347 [doi]
+AB  - This study proposes a set of key decision-making features of the contaminated 
+      site remediation process to assist in selecting the most appropriate decision 
+      support method(s). Using a case study consistent with the requirements of the 
+      U.S. regulation for contaminated sites management, this article shows that 
+      suitable Multiple Criteria Decision Analysis methods can be selected based on a 
+      dynamic and evolving problem structuring. The selected methods belong to the 
+      family of PROMETHEE methods and can provide ranking recommendations of the 
+      considered alternatives using variable structures of the criteria, evaluation of 
+      the alternatives and exploitation of the preference model. It was found that in 
+      order to support a quick and up-to-date application of powerful decision support 
+      techniques in the process of remediation of contaminated sites, decision analysts 
+      and stakeholders should interact and co-develop the process. This research also 
+      displays how such interactions can guarantee a transparent and traceable decision 
+      recommendation so that stakeholders can better understand why some alternatives 
+      perform comprehensively better than others when a multitude of inputs is used in 
+      the decision-making process.
+FAU - Cinelli, Marco
+AU  - Cinelli M
+AD  - Institute of Computing Science, Poznan University of Technology, Piotrowo 2, 
+      60-965, Poznan, Poland.
+AD  - Environmental Decision Analytics Branch - Land Remediation and Technology 
+      Division, Center for Environmental Solutions and Emergency Response, Office of 
+      Research and Development, U.S. Environmental Protection Agency, Cincinnati, 
+      45268, Ohio, USA.
+FAU - Gonzalez, Michael A
+AU  - Gonzalez MA
+AD  - Environmental Decision Analytics Branch - Land Remediation and Technology 
+      Division, Center for Environmental Solutions and Emergency Response, Office of 
+      Research and Development, U.S. Environmental Protection Agency, Cincinnati, 
+      45268, Ohio, USA.
+FAU - Ford, Robert
+AU  - Ford R
+AD  - Contaminated Sites and Sediments Branch - Land Remediation and Technology 
+      Division, Center for Environmental Solutions and Emergency Response, Office of 
+      Research and Development, U.S. Environmental Protection Agency, Cincinnati, 
+      45268, Ohio, USA.
+FAU - McKernan, John
+AU  - McKernan J
+AD  - Emerging Contaminants and Technologies Branch - Land Remediation and Technology 
+      Division, Center for Environmental Solutions and Emergency Response, Office of 
+      Research and Development, U.S. Environmental Protection Agency, Cincinnati, 
+      45268, Ohio, USA.
+FAU - Corrente, Salvatore
+AU  - Corrente S
+AD  - Department of Economics and Business, University of Catania, Corso Italia, 55, 
+      95129, Italy.
+FAU - Kadziński, Miłosz
+AU  - Kadziński M
+AD  - Institute of Computing Science, Poznan University of Technology, Piotrowo 2, 
+      60-965, Poznan, Poland.
+FAU - Słowiński, Roman
+AU  - Słowiński R
+AD  - Institute of Computing Science, Poznan University of Technology, Piotrowo 2, 
+      60-965, Poznan, Poland.
+AD  - Systems Research Institute, Polish Academy of Sciences, Newelska 6, 01-447, 
+      Warsaw, Poland.
+LA  - eng
+GR  - EPA999999/Intramural EPA/United States
+PT  - Journal Article
+PL  - Netherlands
+TA  - J Clean Prod
+JT  - Journal of cleaner production
+JID - 101538287
+PMC - PMC8788621
+MID - NIHMS1762309
+OTO - NOTNLM
+OT  - Decision support
+OT  - Environmental management
+OT  - Impact assessment
+OT  - Multiple criteria decision analysis
+OT  - Site remediation
+EDAT- 2022/01/29 06:00
+MHDA- 2022/01/29 06:01
+CRDT- 2022/01/28 05:53
+PHST- 2022/01/28 05:53 [entrez]
+PHST- 2022/01/29 06:00 [pubmed]
+PHST- 2022/01/29 06:01 [medline]
+AID - 10.1016/j.jclepro.2021.128347 [doi]
+PST - ppublish
+SO  - J Clean Prod. 2021 Sep 20;316:1-10. doi: 10.1016/j.jclepro.2021.128347.
+
+PMID- 31980090
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20201222
+LR  - 20201222
+IS  - 1873-2860 (Electronic)
+IS  - 0933-3657 (Linking)
+VI  - 102
+DP  - 2020 Jan
+TI  - A methodology based on multiple criteria decision analysis for combining 
+      antibiotics in empirical therapy.
+PG  - 101751
+LID - S0933-3657(18)30591-8 [pii]
+LID - 10.1016/j.artmed.2019.101751 [doi]
+AB  - BACKGROUND: The current situation of critical progression in resistance to more 
+      effective antibiotics has forced the reuse of old highly toxic antibiotics and, 
+      for several reasons, the extension of the indications of combined antibiotic 
+      therapy as alternative options to broad spectrum empirical mono-therapy. A key 
+      aspect for selecting an appropriate and adequate antimicrobial therapy is that 
+      prescription must be based on local epidemiology and knowledge since many 
+      aspects, such as prevalence of microorganisms and effectiveness of 
+      antimicrobials, change from hospitals, or even areas and services within a single 
+      hospital. Therefore, the selection of combinations of antibiotics requires the 
+      application of a methodology that provides objectivity, completeness and 
+      reproducibility to the analysis of the detailed microbiological, epidemiological, 
+      pharmacological information on which to base a rational and reasoned choice. 
+      METHODS: We proposed a methodology for decision making that uses a multiple 
+      criteria decision analysis (MCDA) to support the clinician in the selection of an 
+      efficient combined empiric therapy. The MCDA includes a multi-objective 
+      constrained optimization model whose criteria are the maximum efficacy of 
+      therapy, maximum activity, the minimum activity overlapping, the minimum use of 
+      restricted antibiotics, the minimum toxicity of antibiotics and the activity 
+      against the most prevalent and virulent bacteria. The decision process can be 
+      defined in 4 steps: (1) selection of clinical situation of interest, (2) 
+      definition of local optimization criteria, (3) definition of constraints for 
+      reducing combinations, (4) manual sorting of solutions according to patient's 
+      clinical conditions, and (5) selection of a combination. EXPERIMENTS AND RESULTS: 
+      In order to show the application of the methodology to a clinical case, we 
+      carried out experiments with antibiotic susceptibility tests in blood samples 
+      taken during a five years period at a university hospital. The validation of the 
+      results consists of a manual review of the combinations and experiments carried 
+      out by an expert physician that has explained the most relevant solutions 
+      proposed according to current clinical knowledge and their use. CONCLUSION: We 
+      show that with the decision process proposed, the physician is able to select the 
+      best combined therapy according to different criteria such as maximum efficacy, 
+      activity and minimum toxicity. A method for the recommendation of combined 
+      antibiotic therapy developed on the basis of a multi-objective optimization model 
+      may assist the physicians in the search for alternatives to the use of 
+      broad-spectrum antibiotics or restricted antibiotics for empirical therapy. The 
+      decision proposed can be easily reproduced for any local epidemiology and any 
+      different clinical settings.
+CI  - Copyright © 2019 Elsevier B.V. All rights reserved.
+FAU - Campos, Manuel
+AU  - Campos M
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain. Electronic 
+      address: manuelcampos@um.es.
+FAU - Jimenez, Fernando
+AU  - Jimenez F
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain.
+FAU - Sanchez, Gracia
+AU  - Sanchez G
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain.
+FAU - Juarez, Jose M
+AU  - Juarez JM
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain.
+FAU - Morales, Antonio
+AU  - Morales A
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain.
+FAU - Canovas-Segura, Bernardo
+AU  - Canovas-Segura B
+AD  - Computer Science Faculty, University of Murcia, Murcia, Spain.
+FAU - Palacios, Francisco
+AU  - Palacios F
+AD  - University Hospital of Getafe, Madrid, Spain.
+LA  - eng
+PT  - Journal Article
+PT  - Research Support, Non-U.S. Gov't
+DEP - 20191113
+PL  - Netherlands
+TA  - Artif Intell Med
+JT  - Artificial intelligence in medicine
+JID - 8915031
+RN  - 0 (Anti-Bacterial Agents)
+SB  - IM
+MH  - Anti-Bacterial Agents/adverse effects/*therapeutic use
+MH  - Bacterial Infections/drug therapy
+MH  - *Decision Support Techniques
+MH  - *Drug Therapy, Combination
+MH  - Humans
+MH  - Microbial Sensitivity Tests
+MH  - Models, Theoretical
+MH  - Reproducibility of Results
+OTO - NOTNLM
+OT  - Clinical decision support
+OT  - Combination therapy
+OT  - Empiric antimicrobial therapy
+OT  - Multiobjective-optimization
+OT  - Multiple criteria decision analysis
+EDAT- 2020/01/26 06:00
+MHDA- 2020/12/23 06:00
+CRDT- 2020/01/26 06:00
+PHST- 2018/09/27 00:00 [received]
+PHST- 2019/09/24 00:00 [revised]
+PHST- 2019/11/01 00:00 [accepted]
+PHST- 2020/01/26 06:00 [entrez]
+PHST- 2020/01/26 06:00 [pubmed]
+PHST- 2020/12/23 06:00 [medline]
+AID - S0933-3657(18)30591-8 [pii]
+AID - 10.1016/j.artmed.2019.101751 [doi]
+PST - ppublish
+SO  - Artif Intell Med. 2020 Jan;102:101751. doi: 10.1016/j.artmed.2019.101751. Epub 
+      2019 Nov 13.
+
+PMID- 29993963
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20190429
+LR  - 20190429
+IS  - 2168-2208 (Electronic)
+IS  - 2168-2194 (Linking)
+VI  - 23
+IP  - 1
+DP  - 2019 Jan
+TI  - Multiple-Criteria Decision Analysis-Based Multifactor Dimensionality Reduction 
+      for Detecting Gene-Gene Interactions.
+PG  - 416-426
+LID - 10.1109/JBHI.2018.2790951 [doi]
+AB  - Gene-gene interactions (GGIs) are important markers for determining 
+      susceptibility to a disease. Multifactor dimensionality reduction (MDR) is a 
+      popular algorithm for detecting GGIs and primarily adopts the correct 
+      classification rate (CCR) to assess the quality of a GGI. However, CCR 
+      measurement alone may not successfully detect certain GGIs because of potential 
+      model preferences and disease complexities. In this study, multiple-criteria 
+      decision analysis (MCDA) based on MDR was named MCDA-MDR and proposed for 
+      detecting GGIs. MCDA facilitates MDR to simultaneously adopt multiple measures 
+      within the two-way contingency table of MDR to assess GGIs; the CCR and rule 
+      utility measure were employed. Cross-validation consistency was adopted to 
+      determine the most favorable GGIs among the Pareto sets. Simulation studies were 
+      conducted to compare the detection success rates of the MDR-only-based measure 
+      and MCDA-MDR, revealing that MCDA-MDR had superior detection success rates. The 
+      Wellcome Trust Case Control Consortium dataset was analyzed using MCDA-MDR to 
+      detect GGIs associated with coronary artery disease, and MCDA-MDR successfully 
+      detected numerous significant GGIs (p < 0.001). MCDA-MDR performance assessment 
+      revealed that the applied MCDA successfully enhanced the GGI detection success 
+      rate of the MDR-based method compared with MDR alone.
+FAU - Yang, Cheng-Hong
+AU  - Yang CH
+FAU - Lin, Yu-Da
+AU  - Lin YD
+FAU - Chuang, Li-Yeh
+AU  - Chuang LY
+LA  - eng
+PT  - Journal Article
+PT  - Research Support, Non-U.S. Gov't
+DEP - 20180108
+PL  - United States
+TA  - IEEE J Biomed Health Inform
+JT  - IEEE journal of biomedical and health informatics
+JID - 101604520
+SB  - IM
+MH  - *Algorithms
+MH  - Computational Biology/*methods
+MH  - Computer Simulation
+MH  - Epistasis, Genetic/*genetics
+MH  - Humans
+MH  - *Models, Genetic
+MH  - Polymorphism, Single Nucleotide/*genetics
+EDAT- 2018/07/12 06:00
+MHDA- 2019/04/30 06:00
+CRDT- 2018/07/12 06:00
+PHST- 2018/07/12 06:00 [pubmed]
+PHST- 2019/04/30 06:00 [medline]
+PHST- 2018/07/12 06:00 [entrez]
+AID - 10.1109/JBHI.2018.2790951 [doi]
+PST - ppublish
+SO  - IEEE J Biomed Health Inform. 2019 Jan;23(1):416-426. doi: 
+      10.1109/JBHI.2018.2790951. Epub 2018 Jan 8.
+
+PMID- 27021745
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20160817
+LR  - 20220330
+IS  - 1524-4733 (Electronic)
+IS  - 1098-3015 (Linking)
+VI  - 19
+IP  - 2
+DP  - 2016 Mar-Apr
+TI  - Multiple Criteria Decision Analysis for Health Care Decision Making--Emerging 
+      Good Practices: Report 2 of the ISPOR MCDA Emerging Good Practices Task Force.
+PG  - 125-37
+LID - S1098-3015(15)30015-2 [pii]
+LID - 10.1016/j.jval.2015.12.016 [doi]
+AB  - Health care decisions are complex and involve confronting trade-offs between 
+      multiple, often conflicting objectives. Using structured, explicit approaches to 
+      decisions involving multiple criteria can improve the quality of decision making. 
+      A set of techniques, known under the collective heading, multiple criteria 
+      decision analysis (MCDA), are useful for this purpose. In 2014, ISPOR established 
+      an Emerging Good Practices Task Force. The task force's first report defined 
+      MCDA, provided examples of its use in health care, described the key steps, and 
+      provided an overview of the principal methods of MCDA. This second task force 
+      report provides emerging good-practice guidance on the implementation of MCDA to 
+      support health care decisions. The report includes: a checklist to support the 
+      design, implementation and review of an MCDA; guidance to support the 
+      implementation of the checklist; the order in which the steps should be 
+      implemented; illustrates how to incorporate budget constraints into an MCDA; 
+      provides an overview of the skills and resources, including available software, 
+      required to implement MCDA; and future research directions.
+CI  - Copyright © 2016 International Society for Pharmacoeconomics and Outcomes 
+      Research (ISPOR). Published by Elsevier Inc. All rights reserved.
+FAU - Marsh, Kevin
+AU  - Marsh K
+AD  - Evidera, London, UK. Electronic address: kevin.marsh@evidera.com.
+FAU - IJzerman, Maarten
+AU  - IJzerman M
+AD  - Department of Health Technology & Services Research, University of Twente, 
+      Enschede, The Netherlands.
+FAU - Thokala, Praveen
+AU  - Thokala P
+AD  - University of Sheffield, Sheffield, UK.
+FAU - Baltussen, Rob
+AU  - Baltussen R
+AD  - Radboud Institute for Health Sciences, Nijmegen, The Netherlands.
+FAU - Boysen, Meindert
+AU  - Boysen M
+AD  - National Institute for Health and Care Excellence, Manchester, UK.
+FAU - Kaló, Zoltán
+AU  - Kaló Z
+AD  - Department of Health Policy and Health Economics, Eötvös Loránd University 
+      (ELTE), Budapest, Hungary; Syreon Research Institute, Budapest, Hungary.
+FAU - Lönngren, Thomas
+AU  - Lönngren T
+AD  - NDA Group AB, UK and Sweden.
+FAU - Mussen, Filip
+AU  - Mussen F
+AD  - Janssen Pharmaceutical Companies of Johnson & Johnson, Antwerp, Belgium.
+FAU - Peacock, Stuart
+AU  - Peacock S
+AD  - Canadian Centre for Applied Research in Cancer Control, British Columbia Cancer 
+      Agency, Vancouver, BC, Canada; Leslie Diamond Chair in Cancer Survivorship, Simon 
+      Fraser University, Vancouver, Canada.
+FAU - Watkins, John
+AU  - Watkins J
+AD  - Premera Blue Cross, Bothell, WA, USA; University of Washington, Seattle, WA, USA.
+FAU - Devlin, Nancy
+AU  - Devlin N
+AD  - Office of Health Economics, London, UK.
+CN  - ISPOR Task Force
+LA  - eng
+PT  - Guideline
+PT  - Journal Article
+PT  - Review
+DEP - 20160307
+PL  - United States
+TA  - Value Health
+JT  - Value in health : the journal of the International Society for Pharmacoeconomics 
+      and Outcomes Research
+JID - 100883818
+SB  - IM
+MH  - *Advisory Committees
+MH  - Budgets
+MH  - Checklist
+MH  - Cooperative Behavior
+MH  - Cost-Benefit Analysis
+MH  - *Decision Support Techniques
+MH  - Guidelines as Topic
+MH  - *Health Care Costs/standards
+MH  - Health Care Rationing/*economics/standards
+MH  - Humans
+MH  - Insurance, Health, Reimbursement
+MH  - Interdisciplinary Communication
+MH  - Models, Economic
+MH  - Models, Statistical
+MH  - Quality-Adjusted Life Years
+MH  - Technology Assessment, Biomedical/*economics/standards
+OTO - NOTNLM
+OT  - MCDA
+OT  - decision making
+OT  - healthcare
+OT  - multiple criteria decision analysis
+EDAT- 2016/03/30 06:00
+MHDA- 2016/08/18 06:00
+CRDT- 2016/03/30 06:00
+PHST- 2015/12/21 00:00 [received]
+PHST- 2015/12/22 00:00 [accepted]
+PHST- 2016/03/30 06:00 [entrez]
+PHST- 2016/03/30 06:00 [pubmed]
+PHST- 2016/08/18 06:00 [medline]
+AID - S1098-3015(15)30015-2 [pii]
+AID - 10.1016/j.jval.2015.12.016 [doi]
+PST - ppublish
+SO  - Value Health. 2016 Mar-Apr;19(2):125-37. doi: 10.1016/j.jval.2015.12.016. Epub 
+      2016 Mar 7.
+
+PMID- 33733971
+OWN - NLM
+STAT- MEDLINE
+DCOM- 20211015
+LR  - 20220531
+IS  - 1473-4877 (Electronic)
+IS  - 0300-7995 (Linking)
+VI  - 37
+IP  - 6
+DP  - 2021 Jun
+TI  - Value-based decision-making for orphan drugs with multiple criteria decision 
+      analysis: burosumab for the treatment of X-linked hypophosphatemia.
+PG  - 1021-1030
+LID - 10.1080/03007995.2021.1904861 [doi]
+AB  - OBJECTIVE: Burosumab is an orphan medicinal product (OMP) approved in Europe for 
+      the treatment of X-linked hypophosphatemia (XLH). The aim of this study was to 
+      assess the value of burosumab versus conventional therapy for the treatment of 
+      paediatric XLH, through a multi-criteria decision analysis (MCDA) framework for 
+      health technology assessment (HTA) of OMPs in Portugal. METHODS: The MCDA 
+      framework considered 14 criteria related to disease burden, therapeutic value and 
+      economic burden. A multidisciplinary panel of national stakeholders participated 
+      in a two-phase exercise. In the first phase, relative weights and part-worth 
+      utilities for the criteria and their levels were elicited and a reimbursement 
+      likelihood function was calibrated through adaptive conjoint analysis. In the 
+      second phase, burosumab and conventional therapy were assessed against the 
+      criteria, providing a global value score (0-100) and reimbursement likelihood 
+      (0-100%) for both. RESULTS: Of the 14 criteria, disease burden, therapeutic value 
+      and economic burden criteria represented 27.29%, 57.17% and 15.53% of the total 
+      weight in the decision, respectively. All disease burden and some therapeutic 
+      value criteria, typically not included in traditional HTA, represented 47.88% of 
+      the total weight. Burosumab was unanimously considered superior to conventional 
+      therapy, with an average (range) global value score of 84.96 (82.48-86.54) 
+      against 48.06 (43.37-57.68), and reimbursement likelihood of 97.50% 
+      (96.78%-98.32%) against 43.66% (31.48%-68.73%), respectively. CONCLUSIONS: MCDA 
+      represents a powerful tool in HTA decision-making for OMPs. The results of this 
+      MCDA acknowledge burosumab as a disease-modifying drug, deemed superior to 
+      conventional therapy for the treatment of paediatric XLH.
+FAU - Vandewalle, Björn
+AU  - Vandewalle B
+AD  - Exigo Consultores, Lisbon, Portugal.
+FAU - Amorim, Miguel
+AU  - Amorim M
+AD  - Exigo Consultores, Lisbon, Portugal.
+FAU - Ramos, Diogo
+AU  - Ramos D
+AD  - Exigo Consultores, Lisbon, Portugal.
+FAU - Azevedo, Sofia
+AU  - Azevedo S
+AD  - Exigo Consultores, Lisbon, Portugal.
+FAU - Alves, Inês
+AU  - Alves I
+AD  - Associação Nacional de Displasias Ósseas, Évora, Portugal.
+FAU - Francisco, Telma
+AU  - Francisco T
+AD  - Centro Hospitalar Universitário Lisboa Central, Lisbon, Portugal.
+FAU - Pinto, Helena
+AU  - Pinto H
+AD  - Centro Hospitalar Universitário de São João, Porto, Portugal.
+FAU - Sousa, Sérgio
+AU  - Sousa S
+AD  - Centro Hospitalar e Universitário de Coimbra, Coimbra, Portugal.
+LA  - eng
+PT  - Journal Article
+PT  - Research Support, Non-U.S. Gov't
+DEP - 20210401
+PL  - England
+TA  - Curr Med Res Opin
+JT  - Current medical research and opinion
+JID - 0351014
+RN  - 0 (Antibodies, Monoclonal, Humanized)
+RN  - G9WJT6RD29 (burosumab)
+SB  - IM
+MH  - Antibodies, Monoclonal, Humanized/*therapeutic use
+MH  - Child
+MH  - Decision Support Techniques
+MH  - *Familial Hypophosphatemic Rickets/drug therapy
+MH  - Humans
+MH  - *Orphan Drug Production
+MH  - Technology Assessment, Biomedical
+OTO - NOTNLM
+OT  - Burosumab
+OT  - X-linked hypophosphatemia
+OT  - health technology assessment
+OT  - multiple criteria decision analysis
+OT  - orphan medicinal products
+EDAT- 2021/03/19 06:00
+MHDA- 2021/10/16 06:00
+CRDT- 2021/03/18 12:28
+PHST- 2021/03/19 06:00 [pubmed]
+PHST- 2021/10/16 06:00 [medline]
+PHST- 2021/03/18 12:28 [entrez]
+AID - 10.1080/03007995.2021.1904861 [doi]
+PST - ppublish
+SO  - Curr Med Res Opin. 2021 Jun;37(6):1021-1030. doi: 10.1080/03007995.2021.1904861. 
+      Epub 2021 Apr 1.
