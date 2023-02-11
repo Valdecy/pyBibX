@@ -2608,7 +2608,11 @@ class pbx_probe():
         else:
             mode = 'markers'
             size = 10
-        if (node_size > 0):
+        if (node_labels == True and node_size > 0):
+            mode = 'markers+text'
+            size = node_size
+        elif (node_labels == False and node_size > 0):
+            mode = 'markers'
             size = node_size
         self.__adjacency_matrix_ref(1, False)
         adjacency_matrix = self.matrix_r.values
@@ -2826,7 +2830,11 @@ class pbx_probe():
         elif (node_labels == False and node_size == -1):
             mode = 'markers'
             size = 10
-        if (node_size > 0):
+        elif (node_labels == True and node_size > 0):
+            mode = 'markers+text'
+            size = node_size
+        elif (node_labels == False and node_size > 0):
+            mode = 'markers'
             size = node_size
         self.__adjacency_matrix_ref(min_count, local_nodes)
         adjacency_matrix = self.matrix_r.values
@@ -2919,7 +2927,11 @@ class pbx_probe():
         else:
             mode = 'markers'
             size = 10
-        if (node_size > 0):
+        if (node_labels == True and node_size > 0):
+            mode = 'markers+text'
+            size = node_size
+        elif (node_labels == False and node_size > 0):
+            mode = 'markers'
             size = node_size
         if   (adj_type == 'aut'):
             self.__adjacency_matrix_aut(min_count)
@@ -3385,7 +3397,11 @@ class pbx_probe():
         elif (node_labels == False and node_size == -1):
             mode = 'markers'
             size = 10
-        if (node_size > 0):
+        elif (node_labels == True and node_size > 0):
+            mode = 'markers+text'
+            size = node_size
+        elif (node_labels == False and node_size > 0):
+            mode = 'markers'
             size = node_size
         self.__adjacency_matrix_ref(min_count, True)
         adjacency_matrix = self.matrix_r.values
