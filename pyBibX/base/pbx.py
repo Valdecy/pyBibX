@@ -2303,7 +2303,7 @@ class pbx_probe():
         return dtm
    
     # Function: Projection
-    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True):
+    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True, method = 'tsvd'):
         if   (corpus_type == 'abs'):
             corpus = self.data['abstract']
             corpus = corpus.tolist()
@@ -2320,8 +2320,11 @@ class pbx_probe():
             corpus = corpus.tolist()
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
-        dtm           = self.dtm_tf_idf(corpus)
-        decomposition = tsvd(n_components = n_components, random_state = 1001)
+        dtm = self.dtm_tf_idf(corpus)
+        if (method.lower() == 'umap'):
+            decomposition = UMAP(n_components = n_components, random_state = 1001)
+        else:
+            decomposition = tsvd(n_components = n_components, random_state = 1001)
         if (len(custom_projection) == 0):
             transformed = decomposition.fit_transform(dtm)
         elif (custom_projection.shape[0] == self.data.shape[0] and custom_projection.shape[1] >= 2):
