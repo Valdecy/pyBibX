@@ -520,51 +520,73 @@ class pbx_probe():
         return report_dt
 
     # Function: Filter
-    def filter_bib(self, doc_type = [], year_str = -1, year_end = -1, sources = [], core = -1, country = [], language = []):
+    def filter_bib(self, doc_type = [], year_str = -1, year_end = -1, sources = [], core = -1, country = [], language = [], abstract = False):
         docs = []
         if (len(doc_type) > 0):
             for item in doc_type:
                 if (sum(self.data['document_type'].isin([item])) > 0):
                     docs.append(item) 
-            self.data = self.data[self.data['document_type'].isin(docs)]
-            if (year_str > -1):
-                self.data = self.data[self.data['year'] >= str(year_str)]
-            if (year_end > -1):
-                self.data = self.data[self.data['year'] <= str(year_end)]
-            if (len(sources) > 0):
-                val       = ['j_'+str(i) for i in range(0, len(self.u_jou))]
-                dict_jou  = dict(zip(self.u_jou, val))
-                src_idx   = [i for i in range(0, len(self.jou)) if any(x in sources for x in [dict_jou[self.jou[i][0]]] )] 
-                if (len(src_idx) > 0):
-                    self.data = self.data.iloc[src_idx, :]
-            if (core == 1 or core == 2 or core == 3 or core == 12 or core == 23):
-                key   = self.u_jou
-                value = self.jou_count
-                idx   = sorted(range(len(value)), key = value.__getitem__)
-                idx.reverse()
-                key   = [key[i]   for i in idx]
-                value = [value[i] for i in idx]
-                value = [sum(value[:i]) for i in range(1, len(value)+1)]
-                c1    = int(value[-1]*(1/3))
-                c2    = int(value[-1]*(2/3))
-                if (core ==  1):
-                    key = [key[i] for i in range(0, len(key)) if value[i] <= c1]
-                if (core ==  2):
-                    key = [key[i] for i in range(0, len(key)) if value[i] > c1 and value[i] <= c2]
-                if (core ==  3):
-                   key = [key[i] for i in range(0, len(key)) if value[i] > c2]
-                if (core == 12):
-                    key = [key[i] for i in range(0, len(key)) if value[i] <= c2]
-                if (core == 23):
-                    key = [key[i] for i in range(0, len(key)) if value[i] > c1]
-                self.data = self.data[self.data['abbrev_source_title'].isin(key)]
-            if (len(country) > 0):
-                ctr_idx   = [i for i in range(0, len(self.ctr)) if any(x in country for x in self.ctr[i])] 
-                if (len(ctr_idx) > 0):
-                    self.data = self.data.iloc[ctr_idx, :]
-            if (len(language) > 0):
-                self.data = self.data[self.data['language'].isin(language)]
-        self.__make_bib()
+                    self.data = self.data[self.data['document_type'].isin(docs)]
+                    self.data = self.data.reset_index(drop = True)
+                    self.__make_bib(verbose = False)
+        if (year_str > -1):
+            self.data = self.data[self.data['year'] >= str(year_str)]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
+        if (year_end > -1):
+            self.data = self.data[self.data['year'] <= str(year_end)]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
+        if (len(sources) > 0):
+            src_idx = []
+            for source in sources:
+                for i in range(0, len(self.jou)):
+                    if (source == self.jou[i][0]):
+                        src_idx.append(i)
+            if (len(src_idx) > 0):
+                self.data = self.data.iloc[src_idx, :]
+                self.data = self.data.reset_index(drop = True)
+                self.__make_bib(verbose = False)
+        if (core == 1 or core == 2 or core == 3 or core == 12 or core == 23):
+            key   = self.u_jou
+            value = self.jou_count
+            idx   = sorted(range(len(value)), key = value.__getitem__)
+            idx.reverse()
+            key   = [key[i]   for i in idx]
+            value = [value[i] for i in idx]
+            value = [sum(value[:i]) for i in range(1, len(value)+1)]
+            c1    = int(value[-1]*(1/3))
+            c2    = int(value[-1]*(2/3))
+            if (core ==  1):
+                key = [key[i] for i in range(0, len(key)) if value[i] <= c1]
+            if (core ==  2):
+                key = [key[i] for i in range(0, len(key)) if value[i] > c1 and value[i] <= c2]
+            if (core ==  3):
+               key = [key[i] for i in range(0, len(key)) if value[i] > c2]
+            if (core == 12):
+                key = [key[i] for i in range(0, len(key)) if value[i] <= c2]
+            if (core == 23):
+                key = [key[i] for i in range(0, len(key)) if value[i] > c1]
+            sources   = self.data['abbrev_source_title'].str.lower()
+            self.data = self.data[sources.isin(key)]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
+        if (len(country) > 0):
+            ctr_idx   = [i for i in range(0, len(self.ctr)) if any(x in country for x in self.ctr[i])] 
+            if (len(ctr_idx) > 0):
+                self.data = self.data.iloc[ctr_idx, :]
+                self.data = self.data.reset_index(drop = True)
+                self.__make_bib(verbose = False)
+        if (len(language) > 0):
+            self.data = self.data[self.data['language'].isin(language)]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
+        if (abstract == True):
+            self.data = self.data[self.data['abstract'] != 'UNKNOW']
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
+        self.__update_vb()
+        self.__make_bib(verbose = True)
         return
     
     #from functools import lru_cache
@@ -861,9 +883,9 @@ class pbx_probe():
                         #f_list[i] = f_list[i].replace(' [editor]', '')
                         #f_list[i] = f_list[i].replace(' [book]', '')
                         #f_list[i] = f_list[i].replace(' [bookaccession]', '')
-        lhs     = []
-        rhs     = []
-        doc     = 0
+        lhs = []
+        rhs = []
+        doc = 0
         for i in range(0, len(f_list)):
           if (f_list[i].find('@') == 0 or f_list[i][:4].lower() == 'pmid'):  
             lhs.append('doc_start')
@@ -1071,7 +1093,20 @@ class pbx_probe():
                 data.iloc[idx[i], -1] = idx_val[i]
         data = data.reindex(sorted(data.columns), axis = 1)
         return data, entries
-
+    
+    # Function: Update Verbose
+    def __update_vb(self):
+        self.vb   = []
+        self.vb.append('A Total of ' + str(self.data.shape[0]) + ' Documents Remains' )
+        types     = list(self.data['document_type'])
+        u_types   = list(set(types))
+        u_types.sort()
+        string_vb = ''
+        self.vb.append(string_vb)
+        for tp in u_types:
+            string_vb = tp + ' = ' + str(types.count(tp))
+            self.vb.append(string_vb)
+        return
     ##############################################################################
     
     # Function: Get Entries
@@ -1116,11 +1151,11 @@ class pbx_probe():
     
     # Function: Get Past Citations per Year
     def __get_past_citations_year(self):
-        df       = self.data[['author', 'title', 'doi', 'year', 'references']]
-        df       = df.sort_values(by = ['year'])
-        df       = df.reset_index(drop = True)
-        c_count  = [0]*df.shape[0]
-        c_year   = list(df['year'])
+        df      = self.data[['author', 'title', 'doi', 'year', 'references']]
+        df      = df.sort_values(by = ['year'])
+        df      = df.reset_index(drop = True)
+        c_count = [0]*df.shape[0]
+        c_year  = list(df['year'])
         for i in range(0, df.shape[0]):
             title = df.iloc[i, 1]
             for j in range(i, len(self.ref)):
@@ -1493,7 +1528,6 @@ class pbx_probe():
                                 marker      = dict(color = 'rgba(246, 78, 139, 0.6)', line = dict(color = 'black', width = 1))
                                ),
                         )
-        
         fig.update_yaxes(autorange = 'reversed')
         fig.update_layout(paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)')
         fig.show()
@@ -1580,7 +1614,6 @@ class pbx_probe():
                     itens[0] = itens[0]+'<br>'+item[i]
                 nid_list_a.append(itens)
         nid_list_a = [txt[0] for txt in nid_list_a]
-        #nid_list_a = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in nid_list_a]
         for i in range(0, len(Xv)-1):
             if (Xv[i] == Xv[i+1]):
                 Xe.append(Xv[i]*1.00)
@@ -1740,7 +1773,7 @@ class pbx_probe():
                                                type           = 'category'
                                               )
                            )
-        fig   = go.Figure(data = traces, layout = layout)
+        fig = go.Figure(data = traces, layout = layout)
         fig.show()
         return     
 
@@ -1991,7 +2024,6 @@ class pbx_probe():
         plt.title(title, loc = 'center')
         plt.xlabel(x_lbl)
         plt.ylabel(y_lbl)
-        #plt.tight_layout()
         plt.show()
         return
     
@@ -2732,16 +2764,16 @@ class pbx_probe():
         iso_3 = [iso_3[i] for i in range(0, len(vals)) if vals[i] > 0]
         text  = [ text[i] for i in range(0, len(vals)) if vals[i] > 0]
         vals  = [ vals[i] for i in range(0, len(vals)) if vals[i] > 0]
-        rows, cols       = np.where(adjacency_matrix >= 1)
-        edges            = list(zip(rows.tolist(), cols.tolist()))
-        nids_list        = ['id:                        ' +self.dict_ctr_id[text[i]]+'<br>'+
-                            'country:               '     +text[i].upper()+'<br>' +
-                            'collaborators:      '        +str(vals[i])
-                             for i in range(0, len(lat_))]
-        Xa               = []
-        Ya               = []
-        Xb               = []
-        Yb               = []
+        rows, cols = np.where(adjacency_matrix >= 1)
+        edges      = list(zip(rows.tolist(), cols.tolist()))
+        nids_list  = ['id:                        ' +self.dict_ctr_id[text[i]]+'<br>'+
+                      'country:               '     +text[i].upper()+'<br>' +
+                      'collaborators:      '        +str(vals[i])  
+                      for i in range(0, len(lat_))]
+        Xa         = []
+        Ya         = []
+        Xb         = []
+        Yb         = []
         for i in range(0, len(edges)):
             srt, end = edges[i]
             srt      = 'c_'+str(srt)
@@ -2760,8 +2792,8 @@ class pbx_probe():
                         Yb.append(self.country_lat_long[srt_][1])
                         Yb.append(self.country_lat_long[end_][1])
                         Yb.append(None)
-            srt      = self.country_names.index(srt)
-            end      = self.country_names.index(end)
+            srt = self.country_names.index(srt)
+            end = self.country_names.index(end)
             Xa.append(self.country_lat_long[srt][0]) 
             Xa.append(self.country_lat_long[end][0]) 
             Xa.append(None)
@@ -3712,7 +3744,7 @@ class pbx_probe():
         return self 
     
     # Function: Graph Topics - Projected Topics 
-    def graph_topics_projection(self, view = 'browser'):
+    def graph_topics_projection(self, view = 'browser', method = 'tsvd'):
         if (view == 'browser'):
             pio.renderers.default = 'browser'
         topics_label = []
@@ -3728,7 +3760,10 @@ class pbx_probe():
             embeddings = self.topic_model.c_tf_idf.toarray()
         except:
             embeddings = self.topic_model.c_tf_idf_.toarray()
-        decomposition = tsvd(n_components = 2, random_state = 1001)
+        if (method.lower() == 'umap'):
+            decomposition = UMAP(n_components = 2, random_state = 1001)
+        else:
+            decomposition = tsvd(n_components = 2, random_state = 1001)
         transformed   = decomposition.fit_transform(embeddings)
         fig           = go.Figure(go.Scatter(x           = transformed[:,0],
                                              y           = transformed[:,1],
@@ -3742,8 +3777,8 @@ class pbx_probe():
                                              name        = ''
                                              ),
                                   )
-        x_range = (transformed[:,0].min() - abs((transformed[:,0].min()) * .15), transformed[:,0].max() + abs((transformed[:,0].max()) * .15))
-        y_range = (transformed[:,1].min() - abs((transformed[:,1].min()) * .15), transformed[:,1].max() + abs((transformed[:,1].max()) * .15))
+        x_range = (transformed[:,0].min() - abs((transformed[:,0].min()) * .35), transformed[:,0].max() + abs((transformed[:,0].max()) * .35))
+        y_range = (transformed[:,1].min() - abs((transformed[:,1].min()) * .35), transformed[:,1].max() + abs((transformed[:,1].max()) * .35))
         fig.update_xaxes(range = x_range, showticklabels = False)
         fig.update_yaxes(range = y_range, showticklabels = False)
         fig.add_shape(type = 'line', x0 = sum(x_range)/2, y0 = y_range[0], x1 = sum(x_range)/2, y1 = y_range[1], line = dict(color = 'rgb(0, 0, 0)', width = 0.5))
