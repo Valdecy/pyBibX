@@ -8,12 +8,12 @@ General Capabilities:
 - a) Works with **Scopus** (.bib files), **WOS** (.bib files) and **PubMed** (.txt files) databases 
 - b) Identification and Removal of duplicates
 - c) Identification of documents per type
-- d) Generates an **EDA** (Exploratory Data Analysis) Report: Publications Timespan, Total Number of Countries, Total Number of Institutions, Total Number of Sources, Total Number of References, Total Number of Languages (and also the number of docs for each language), Total Number of Documents, Average Documents per Author, Average Documents per Institution, Average Documents per Source, Average Documents per Year, Total Number of Authors, Total Number of Authors Keywords, Total Number of Authors Keywords Plus, Total Single-Authored Documents, Total Multi-Authored Documents, Average Collaboration Index, Max H-Index, Total Number of Citations, Average Citations per Author, Average Citations per Institution, Average Citations per Document, Average Citations per Source
-- e) Creates an **ID** (Identification) for each Document, Authors, Sources, Institutions, Countries, Authors' Keywords, Keywords Plus. The IDs can be used in graphs/plots to obtain a cleaner visualization
+- d) Generates an **EDA (Exploratory Data Analysis)** Report: Publications Timespan, Total Number of Countries, Total Number of Institutions, Total Number of Sources, Total Number of References, Total Number of Languages (and also the number of docs for each language), Total Number of Documents, Average Documents per Author, Average Documents per Institution, Average Documents per Source, Average Documents per Year, Total Number of Authors, Total Number of Authors Keywords, Total Number of Authors Keywords Plus, Total Single-Authored Documents, Total Multi-Authored Documents, Average Collaboration Index, Max H-Index, Total Number of Citations, Average Citations per Author, Average Citations per Institution, Average Citations per Document, Average Citations per Source
+- e) Creates an **ID (Identification)** for each Document, Authors, Sources, Institutions, Countries, Authors' Keywords, Keywords Plus. The IDs can be used in graphs/plots to obtain a cleaner visualization
 - f) Creates a **WordCloud** from the Abstracts, Titles, Authors Keywords or Keywords Plus
 - g) Creates a **N-Gram Bar Plot (interactive plot)** from the Abstracts, Titles, Authors Keywords or Keywords Plus
-- h) Creates a **Projection** of the documents based on the Abstracts, Titles, Authors Keywords or Keywords Plus
-- i) Creates an **Evolution Plot** based on Abstracts, Titles, Sources, Authors Keywords or Keywords Plus
+- h) Creates a **Projection (interactive plot)** of the documents based on the Abstracts, Titles, Authors Keywords or Keywords Plus
+- i) Creates an **Evolution Plot (interactive plot)** based on Abstracts, Titles, Sources, Authors Keywords or Keywords Plus
 - j) Creates a **Sankey Plot (interactive plot)** with any combination of the following keys: Authors, Countries, Institutions, Journals, Auhors_Keywords, Keywords_Plus, and/or Languages
 - k) Creates a **TreeMap** from the Authors, Countries, Institutions, Journals, Auhors_Keywords, or Keywords_Plus
 - l) Creates an **Authors Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each author
@@ -26,18 +26,18 @@ Network Capabilities:
 - d) **World MAP Collaboration Analysis (interactive plot)** between Countries in a Map
 
 NLP (Natural Language Processing) Capabilities:
-- a) **Topic Modelling** using BERTopic to cluster documents by theme
+- a) **Topic Modelling** using BERTopic to cluster documents by topic
 - b) Visualize topics distribution
 - c) Visualize topics by the most representative words
 - d) Visualize documents projection and clusterization by topic
 - e) Visualize topics heatmap
-- f) Find the most representative documents from each theme
+- f) Find the most representative documents from each topic
 - g) Find the most representative topics according to a word
 - i) **Abstractive Text Summarization** using PEGASUS on a set of selected documents or all documents
 - j) **Extractive Text Summarization** using BERT on a set of selected documents or all documents
 
 Correction and Manipulation Capabilities:
-- a) Filter the .bib or .txt file by Year, Sources, Bradford Law Cores, Countries, and/or Languages
+- a) Filter the .bib or .txt file by Year, Sources, Bradford Law Cores, Countries, Languages and/or Abstracts (Documents with Abstracts)
 - b) Merge Authors, Institutions, Countries, Languages and/or Sources that have multiple entries 
 - c) Merge different or same database files one at a time. The preference of information preservation is given to the old database, so the order of merging matters (see Examples 04 and 05)
 
