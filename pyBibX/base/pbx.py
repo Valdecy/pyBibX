@@ -3640,10 +3640,10 @@ class pbx_probe():
 ############################################################################
 
     # Function: Topics - Create
-    def topics_creation(self, stop_words = ['en']):
+    def topics_creation(self, stop_words = ['en'], rmv_custom_words = []):
         umap_model              = UMAP(n_neighbors = 15, n_components = 5, min_dist = 0.0, metric = 'cosine', random_state = 1001)
         self.topic_model        = BERTopic(umap_model = umap_model, calculate_probabilities = True)
-        self.topic_corpus       = self.clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False)
+        self.topic_corpus       = self.clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words, verbose = False)
         self.topics, self.probs = self.topic_model.fit_transform(self.topic_corpus)
         self.topic_info         = self.topic_model.get_topic_info()
         print(self.topic_info)
