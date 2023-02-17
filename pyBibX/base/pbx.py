@@ -2356,8 +2356,7 @@ class pbx_probe():
         if (embeddings == True):
             model = SentenceTransformer('all-MiniLM-L6-v2')
             embds = model.encode(corpus)
-        if (tf_idf == True):
-            dtm = self.dtm_tf_idf(corpus)
+        dtm = self.dtm_tf_idf(corpus)
         if (method.lower() == 'umap'):
             decomposition = UMAP(n_components = n_components, random_state = 1001)
         else:
