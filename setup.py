@@ -22,6 +22,7 @@ setup(
         'pandas',
         'plotly',
         'sentencepiece',
+        'sentence-transformers',
         'squarify',
         'sklearn',
         'torch', 
