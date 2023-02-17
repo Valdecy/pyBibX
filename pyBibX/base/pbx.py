@@ -33,7 +33,8 @@ from collections import Counter
 from difflib import SequenceMatcher
 from matplotlib import pyplot as plt                       
 plt.style.use('bmh')
-#from scipy.spatial import ConvexHull                       
+#from scipy.spatial import ConvexHull   
+from sentence_transformers import SentenceTransformer                    
 from sklearn.cluster import KMeans                          
 from sklearn.decomposition import TruncatedSVD as tsvd      
 from sklearn.feature_extraction.text import CountVectorizer 
@@ -2335,7 +2336,7 @@ class pbx_probe():
         return dtm
    
     # Function: Projection
-    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True, method = 'tsvd'):
+    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True, embeddings = False, method = 'tsvd'):
         if   (corpus_type == 'abs'):
             corpus = self.data['abstract']
             corpus = corpus.tolist()
@@ -2352,25 +2353,32 @@ class pbx_probe():
             corpus = corpus.tolist()
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
-        dtm = self.dtm_tf_idf(corpus)
+        if (embeddings == True):
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            embds = model.encode(corpus)
+        if (tf_idf == True):
+            dtm = self.dtm_tf_idf(corpus)
         if (method.lower() == 'umap'):
             decomposition = UMAP(n_components = n_components, random_state = 1001)
         else:
             decomposition = tsvd(n_components = n_components, random_state = 1001)
-        if (len(custom_projection) == 0):
+        if (len(custom_projection) == 0 and embeddings == False):
             transformed = decomposition.fit_transform(dtm)
+        elif (len(custom_projection) == 0 and embeddings == True):
+            transformed = decomposition.fit_transform(embds)
         elif (custom_projection.shape[0] == self.data.shape[0] and custom_projection.shape[1] >= 2):
             transformed = np.copy(custom_projection)
-        if (len(custom_label) > 0):
+        if (len(custom_label) == 0):
+            cluster = KMeans(n_clusters = n_clusters, init = 'k-means++', n_init = 100, max_iter = 10, random_state = 1001)
+            if (tf_idf == True and embeddings == False):
+                cluster.fit(dtm)
+            else:
+                cluster.fit(transformed)
+            labels  = cluster.labels_
+            n       = len(set(labels.tolist()))
+        elif (len(custom_label) > 0):
             labels = [item for item in custom_label]
             n      = len(set(labels))
-        cluster = KMeans(n_clusters = n_clusters, init = 'k-means++', n_init = 100, max_iter = 10, random_state = 1001)
-        if (tf_idf == True):
-            cluster.fit(dtm)
-        else:
-            cluster.fit(transformed)
-        labels  = cluster.labels_
-        n       = len(set(labels.tolist()))
         n_trace = []
         for i in range(0, n):
             labels_c    = []
@@ -3639,10 +3647,36 @@ class pbx_probe():
 
 ############################################################################
 
+    # Function: Sentence Embeddings # 'abs', 'title', 'kwa', 'kwp'
+    def create_embeddings(self, stop_words = ['en'], rmv_custom_words = [], corpus_type = 'abs'):
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        if  (corpus_type == 'abs'):
+            corpus = self.data['abstract']
+            corpus = corpus.tolist()
+            corpus = self.clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+        elif (corpus_type == 'title'):
+            corpus = self.data['title']
+            corpus = corpus.tolist()
+            corpus = self.clear_text(corpus, stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words)
+        elif (corpus_type == 'kwa'): 
+            corpus = self.data['author_keywords']
+            corpus = corpus.tolist()
+        elif (corpus_type == 'kwp'):
+            corpus = self.data['keywords']
+            corpus = corpus.tolist()
+        self.embds = model.encode(corpus)
+        return self  
+
+############################################################################
+
     # Function: Topics - Create
-    def topics_creation(self, stop_words = ['en'], rmv_custom_words = []):
-        umap_model              = UMAP(n_neighbors = 15, n_components = 5, min_dist = 0.0, metric = 'cosine', random_state = 1001)
-        self.topic_model        = BERTopic(umap_model = umap_model, calculate_probabilities = True)
+    def topics_creation(self, stop_words = ['en'], rmv_custom_words = [], embeddings = False):
+        umap_model = UMAP(n_neighbors = 15, n_components = 5, min_dist = 0.0, metric = 'cosine', random_state = 1001)
+        if (embeddings ==  False):
+            self.topic_model = BERTopic(umap_model = umap_model, calculate_probabilities = True)
+        else:
+            sentence_model   = SentenceTransformer('all-MiniLM-L6-v2')
+            self.topic_model = BERTopic(umap_model = umap_model, calculate_probabilities = True, embedding_model = sentence_model)
         self.topic_corpus       = self.clear_text(self.data['abstract'], stop_words = stop_words, lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = rmv_custom_words, verbose = False)
         self.topics, self.probs = self.topic_model.fit_transform(self.topic_corpus)
         self.topic_info         = self.topic_model.get_topic_info()
