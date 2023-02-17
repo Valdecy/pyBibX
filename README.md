@@ -33,6 +33,7 @@ NLP (Natural Language Processing) Capabilities:
 - e) Visualize topics heatmap
 - f) Find the most representative documents from each topic
 - g) Find the most representative topics according to a word
+- h) Creates **Embeddings** from Abstracts, Titles, Authors Keywords or Keywords Plus
 - i) **Abstractive Text Summarization** using PEGASUS on a set of selected documents or all documents
 - j) **Extractive Text Summarization** using BERT on a set of selected documents or all documents
 
@@ -76,6 +77,10 @@ This section indicates the libraries that inspired pyBibX
 * Metaknowledge (http://www.networkslab.org/metaknowledge)
 - a) Github: https://github.com/UWNETLAB/metaknowledge
 - b) Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
+
+* SentenceTransformers (https://www.sbert.net/)
+- a) Github: https://github.com/UKPLab/sentence-transformers
+- b) Paper: REIMERS, N.; GUREVYCH, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. arXiv. doi: https://arxiv.org/abs/1908.10084
 
 * PEGASUS (https://ai.googleblog.com/2020/06/pegasus-state-of-art-model-for.html?m=1)
 - a) Github: https://github.com/huggingface/transformers
