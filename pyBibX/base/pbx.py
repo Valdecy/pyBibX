@@ -1116,7 +1116,7 @@ class pbx_probe():
             e = self.data[entry][i]
             if (isinstance(e, str) == True):
                 strg = e.split(s)
-                strg = [item.strip() for item in strg]
+                strg = [item.strip() for item in strg if item.strip() != 'note']
                 strg = [' '.join(item.split()) for item in strg]
                 if (lower == True):
                     strg = [item.lower() for item in strg]
