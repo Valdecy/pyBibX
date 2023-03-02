@@ -1433,9 +1433,8 @@ class pbx_probe():
         plt.show()
         return
     
-    # Function: Get Top N-Grams
-    #hhhh
-    def get_top_ngrams(self, view = 'browser', entry = 'kwp', ngrams = 1, stop_words = [], wordsn = 15):
+    # Function: Get Top N-Grams 
+    def get_top_ngrams(self, view = 'browser', entry = 'kwp', ngrams = 1, stop_words = [], rmv_custom_words = [], wordsn = 15):
         sw_full = []
         if (view == 'browser'):
             pio.renderers.default = 'browser'
@@ -1510,6 +1509,8 @@ class pbx_probe():
                 sw      = f_lines.split('\n')
                 sw      = list(filter(None, sw))
                 sw_full.extend(sw)
+        if (len(rmv_custom_words) > 0):
+            sw_full.extend(rmv_custom_words)
         vec          = CountVectorizer(stop_words = frozenset(sw_full), ngram_range = (ngrams, ngrams)).fit(corpora)
         bag_of_words = vec.transform(corpora)
         sum_words    = bag_of_words.sum(axis = 0)
@@ -1674,12 +1675,12 @@ class pbx_probe():
         return
     
     # Function: Evolution per Year
-    def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], target_word = [], topn = 10, start = 2010, end = 2022):
+    def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, start = 2010, end = 2022):
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
-        if (start < self.date_str):
+        if (start < self.date_str or start == -1):
             start = self.date_str
-        if (end > self.date_end):
+        if (end > self.date_end or end == -1):
             end = self.date_end
         y_idx = [i for i in range(0, self.data.shape[0]) if int(self.data.loc[i, 'year']) >= start and int(self.data.loc[i, 'year']) <= end]
         if (len(rmv_custom_words) == 0):
@@ -1687,11 +1688,17 @@ class pbx_probe():
         else:
             rmv_custom_words.append('unknow') 
         if   (key == 'kwp'):
-            u_ent, ent = self.u_kid, self.kid
+            #u_ent, ent = self.u_kid, self.kid
+            u_ent = [item for item in self.u_kid]
+            ent   = [item for item in self.kid]
         elif (key == 'kwa'):
-            u_ent, ent = self.u_auk, self.auk
+            #u_ent, ent = self.u_auk, self.auk
+            u_ent = [item for item in self.u_auk]
+            ent   = [item for item in self.auk]
         elif (key == 'jou'):
-            u_ent, ent = self.u_jou, self.jou
+            #u_ent, ent = self.u_jou, self.jou
+            u_ent = [item for item in self.u_jou]
+            ent   = [item for item in self.jou]
         elif (key == 'abs'):
             abs_  = self.data['abstract'].tolist()
             abs_  = ['the' if i not in y_idx else  abs_[i] for i in range(0, len(abs_))]
@@ -1731,15 +1738,15 @@ class pbx_probe():
         dict_y = dict(zip(years, list(range(0, len(years)))))
         themes = self.__get_counts_year(u_ent, ent)
         w_idx  = []
-        if (len(target_word) > 0):
-            posit  = -1
-            for word in target_word:
-                if (word.lower() in u_ent):
-                    posit = u_ent.index(word.lower())
-                if (posit > 0):
-                    w_idx.append(posit)
-            if (len(w_idx) > 0):
-                themes = themes.iloc[w_idx, :]
+        #if (len(target_word) > 0):
+            #posit  = -1
+            #for word in target_word:
+                #if (word.lower() in u_ent):
+                    #posit = u_ent.index(word.lower())
+                #if (posit > 0):
+                    #w_idx.append(posit)
+            #if (len(w_idx) > 0):
+                #themes = themes.iloc[w_idx, :]
         for j in range(dict_y[start], dict_y[end]+1):
             theme_vec = themes.iloc[:, j]
             theme_vec = theme_vec[theme_vec > 0]
