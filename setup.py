@@ -21,6 +21,7 @@ setup(
         'numpy',
         'pandas',
         'plotly',
+        'scipy',
         'sentencepiece',
         'sentence-transformers',
         'squarify',
