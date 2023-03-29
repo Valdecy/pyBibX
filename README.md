@@ -84,7 +84,7 @@ This section indicates the libraries that inspired pyBibX
 
 * PEGASUS (https://ai.googleblog.com/2020/06/pegasus-state-of-art-model-for.html?m=1)
 - a) Github: https://github.com/huggingface/transformers
-- b) Paper: ZHANG, J,; ZHAO, Y.; SALEH, M.; LIU, P.J. (2019). PEGASUS: Pre-training with Extracted Gap-sentences for Abstractive Summarization. arXiv. doi: https://doi.org/10.48550/arXiv.1912.08777
+- b) Paper: ZHANG, J.; ZHAO, Y.; SALEH, M.; LIU, P.J. (2019). PEGASUS: Pre-training with Extracted Gap-sentences for Abstractive Summarization. arXiv. doi: https://doi.org/10.48550/arXiv.1912.08777
 
 And to all the people that helped to improve or correct the code. Thank you very much!
 
