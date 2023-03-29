@@ -44,7 +44,7 @@ from summarizer import Summarizer
 from transformers import PegasusForConditionalGeneration
 from transformers import PegasusTokenizer
 from umap import UMAP  
-from wordcloud import WordCloud                             
+from wordcloud import WordCloud                           
 
 ############################################################################
 
@@ -1511,7 +1511,10 @@ class pbx_probe():
                 sw_full.extend(sw)
         if (len(rmv_custom_words) > 0):
             sw_full.extend(rmv_custom_words)
-        vec          = CountVectorizer(stop_words = frozenset(sw_full), ngram_range = (ngrams, ngrams)).fit(corpora)
+        try:
+            vec = CountVectorizer(stop_words = frozenset(sw_full), ngram_range = (ngrams, ngrams)).fit(corpora)
+        except: 
+            vec = CountVectorizer(stop_words = sw_full, ngram_range = (ngrams, ngrams)).fit(corpora)
         bag_of_words = vec.transform(corpora)
         sum_words    = bag_of_words.sum(axis = 0)
         words_freq   = [(word, sum_words[0, idx]) for word, idx in vec.vocabulary_.items()]
