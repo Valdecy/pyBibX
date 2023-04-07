@@ -3929,7 +3929,7 @@ class pbx_probe():
                 print('Document ID' + str(i) + ' Number of Characters: ' + str(len(abstracts.iloc[i])))
         if (len(corpus) > 0):
             print('')
-            print('Total Number of Valid Abstracts: ', len(corpus))
+            print('Total Number of Valid Abstracts: ', len(corpus)/2)
             print('')
             if (join_articles == False):
                 for i, abstract in enumerate(corpus):
