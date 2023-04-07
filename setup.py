@@ -6,7 +6,7 @@ long_description = (this_directory / 'README.md').read_text()
 
 setup(
     name='pyBibX',
-    version='1.7.0',
+    version='1.7.3',
     license='GNU',
     author='Valdecy Pereira',
     author_email='valdecy.pereira@gmail.com',
@@ -31,10 +31,11 @@ setup(
         'torchaudio',
         'transformers',
         'umap-learn',
+        'openai',
         'wordcloud'
     ],
     zip_safe=True,
-    description='A Bibliometric and Scientometric Library',
+    description='A Bibliometric and Scientometric Library Powered with Artificial Intelligence Tools',
     long_description=long_description,
     long_description_content_type='text/markdown',
 )
