@@ -12,7 +12,8 @@
 
 # Required Libraries
 import networkx as nx             
-import numpy as np                
+import numpy as np   
+import openai              
 import pandas as pd               
 import plotly.graph_objects as go
 import plotly.subplots as ps      
@@ -604,6 +605,17 @@ class pbx_probe():
                            #)
         #return min_dist(0, 0)
         
+    # Function: Clean DOI entries
+    def clean_doi(doi):
+        valid_chars = set('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./-_:')
+        cleaned_doi = ''
+        for char in doi:
+            if char in valid_chars:
+                cleaned_doi = cleaned_doi + char
+            else:
+                break
+        return cleaned_doi
+    
     # Function: Get Duplicates Index
     def find_duplicates(self, u_list):
         duplicates = []
@@ -990,6 +1002,10 @@ class pbx_probe():
           if (lhs[i] == 'doc_start'):
             count = count + 1
           else:
+            #if (lhs[i] == 'doi'):
+                #data.iloc[count, labels_dict[lhs[i]]] = self.clean_doi(rhs[i])
+            #else:
+                #data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
             data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
         entries = list(data.columns)
         
@@ -3887,6 +3903,43 @@ class pbx_probe():
             summary   = 'No abstracts were found in the selected set of documents'
         return summary
     
+    # Function: Abstractive Text Summarization
+    def summarize_abst_chatgpt(self, article_ids = [], join_articles = False, api_key = 'your_api_key_here', query = 'from the following scientific abstracts, summarize the main information in a single paragraph using around 250 words'):
+        def query_chatgpt(prompt, model = 'text-davinci-002', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 100,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        openai.api_key = api_key
+        abstracts      = self.data['abstract']
+        corpus         = []
+        if (len(article_ids) == 0):
+            article_ids = [i for i in range(0, abstracts.shape[0])]
+        else:
+            article_ids = [int(item) for item in article_ids]
+        for i in range(0, abstracts.shape[0]):
+            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+                corpus.append('Abstract (Document ID' + str(i) + '):\n\n')
+                corpus.append(abstracts.iloc[i])
+                print('Document ID' + str(i) + ' Number of Characters: ' + str(len(abstracts.iloc[i])))
+        if (len(corpus) > 0):
+            print('')
+            print('Total Number of Valid Abstracts: ', len(corpus))
+            print('')
+            if (join_articles == False):
+                for i, abstract in enumerate(corpus):
+                    prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
+            else:    
+                corpus = ' '.join(corpus)
+                prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
+            summary = query_chatgpt(prompt)
+        return summary
+
     # Function: Extractive Text Summarization
     def summarize_ext_bert(self, article_ids = []):
         abstracts = self.data['abstract']
