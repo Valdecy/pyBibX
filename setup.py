@@ -6,7 +6,7 @@ long_description = (this_directory / 'README.md').read_text()
 
 setup(
     name='pyBibX',
-    version='1.7.3',
+    version='1.7.5',
     license='GNU',
     author='Valdecy Pereira',
     author_email='valdecy.pereira@gmail.com',
