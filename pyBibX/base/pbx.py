@@ -378,6 +378,13 @@ class pbx_probe():
     
     # Function: Prepare .bib File
     def __make_bib(self, verbose = True):
+        self.ask_gpt_ap         = -1
+        self.ask_gpt_bp         = -1
+        self.ask_gpt_ep         = -1
+        self.ask_gpt_ng         = -1
+        self.ask_gpt_rt         = -1
+        self.ask_gpt_sk         = -1
+        self.ask_gpt_wd         = -1
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
         self.date_end           = int(self.dy.max())
@@ -775,7 +782,7 @@ class pbx_probe():
     
     # Function: EDA .bib docs
     def eda_bib(self):
-        report = []
+        report         = []
         report.append(['Timespan', str(self.date_str)+'-'+str(self.date_end)])
         report.append(['Total Number of Countries', len(self.u_ctr)])
         report.append(['Total Number of Institutions', len(self.u_uni)])
@@ -807,7 +814,8 @@ class pbx_probe():
         report.append(['Average Citations per Document', self.av_c_doc])
         report.append(['Average Citations per Source', round(sum(self.jou_cit)/len(self.jou_cit), 2)])
         report.append(['-//-', '-//-'])
-        report_df = pd.DataFrame(report, columns = ['Main Information', 'Results'])
+        self.ask_gpt_rt = pd.DataFrame(report, columns = ['Main Information', 'Results'])
+        report_df       = pd.DataFrame(report, columns = ['Main Information', 'Results'])
         return report_df
 
     ##############################################################################
@@ -1442,6 +1450,7 @@ class pbx_probe():
                               height           = 800
                               )
         wordcloud.generate(corpora)
+        self.ask_gpt_wd = wordcloud.words_
         plt.figure(figsize = (size_x, size_y), facecolor = 'k')
         plt.imshow(wordcloud)
         plt.axis('off')
@@ -1541,14 +1550,15 @@ class pbx_probe():
         for word, freq in common_words:
             words.append(word)
             freqs.append(freq) 
-        df  = pd.DataFrame({'Word': words, 'Freq': freqs})
-        fig = go.Figure(go.Bar(
-                                x           = df['Freq'],
-                                y           = df['Word'],
-                                orientation = 'h',
-                                marker      = dict(color = 'rgba(246, 78, 139, 0.6)', line = dict(color = 'black', width = 1))
-                               ),
-                        )
+        df              = pd.DataFrame({'Word': words, 'Freq': freqs})
+        self.ask_gpt_ng = pd.DataFrame({'Word': words, 'Freq': freqs})
+        fig             = go.Figure(go.Bar(
+                                            x           = df['Freq'],
+                                            y           = df['Word'],
+                                            orientation = 'h',
+                                            marker      = dict(color = 'rgba(246, 78, 139, 0.6)', line = dict(color = 'black', width = 1))
+                                           ),
+                                    )
         fig.update_yaxes(autorange = 'reversed')
         fig.update_layout(paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)')
         fig.show()
@@ -1597,7 +1607,7 @@ class pbx_probe():
     
     # Function: Authors' Productivity Plot
     def authors_productivity(self, view = 'browser', topn = 20): 
-        if (view == 'browser' ):
+        if (view == 'browser'):
             pio.renderers.default = 'browser'
         if (topn > len(self.u_aut)):
             topn = len(self.u_aut)
@@ -1622,6 +1632,8 @@ class pbx_probe():
                 n_id[n][j].append( 'id: '+str(i)+' ('+name+', '+self.data.loc[i, 'year']+')')
                 Xv.append(n)
                 Yv.append(j)
+        self.ask_gpt_ap = productivity.copy(deep = True)
+        self.ask_gpt_ap = self.ask_gpt_ap.loc[(self.ask_gpt_ap.sum(axis = 1) != 0), (self.ask_gpt_ap.sum(axis = 0) != 0)]
         node_list_a = [ str(int(productivity.iloc[Xv[i], Yv[i]])) for i in range(0, len(Xv)) ]
         nid_list    = [ n_id[Xv[i]][Yv[i]] for i in range(0, len(Xv)) ]
         nid_list_a  = []
@@ -1695,7 +1707,7 @@ class pbx_probe():
     
     # Function: Evolution per Year
     def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, start = 2010, end = 2022):
-        if (view == 'browser' ):
+        if (view == 'browser'):
             pio.renderers.default = 'browser'
         if (start < self.date_str or start == -1):
             start = self.date_str
@@ -1707,15 +1719,12 @@ class pbx_probe():
         else:
             rmv_custom_words.append('unknow') 
         if   (key == 'kwp'):
-            #u_ent, ent = self.u_kid, self.kid
             u_ent = [item for item in self.u_kid]
             ent   = [item for item in self.kid]
         elif (key == 'kwa'):
-            #u_ent, ent = self.u_auk, self.auk
             u_ent = [item for item in self.u_auk]
             ent   = [item for item in self.auk]
         elif (key == 'jou'):
-            #u_ent, ent = self.u_jou, self.jou
             u_ent = [item for item in self.u_jou]
             ent   = [item for item in self.jou]
         elif (key == 'abs'):
@@ -1756,7 +1765,7 @@ class pbx_probe():
         years  = list(range(self.date_str, self.date_end+1))
         dict_y = dict(zip(years, list(range(0, len(years)))))
         themes = self.__get_counts_year(u_ent, ent)
-        w_idx  = []
+        #w_idx  = []
         #if (len(target_word) > 0):
             #posit  = -1
             #for word in target_word:
@@ -1766,6 +1775,7 @@ class pbx_probe():
                     #w_idx.append(posit)
             #if (len(w_idx) > 0):
                 #themes = themes.iloc[w_idx, :]
+        self.ask_gpt_ep = ''
         for j in range(dict_y[start], dict_y[end]+1):
             theme_vec = themes.iloc[:, j]
             theme_vec = theme_vec[theme_vec > 0]
@@ -1774,21 +1784,23 @@ class pbx_probe():
                 theme_vec = theme_vec.iloc[:topn] 
                 idx       = theme_vec.index.tolist()
                 names     = [u_ent[item] for item in idx]
-                if (len(w_idx) > 0):
-                    values = [themes.loc[item, j] for item in idx]
-                else:
-                    values = [themes.iloc[item, j] for item in idx]
-                n_val     = [names[i]+' ('+str(int(values[i]))+')' for i in range(0, len(names))]
-                data      = go.Bar(x                = [years[j]]*len(values), 
-                                   y                = values, 
-                                   text             = names, 
-                                   hoverinfo        = 'text',
-                                   textangle        = 0,
-                                   textfont_size    = 10,
-                                   hovertext        = n_val,
-                                   insidetextanchor = 'middle',
-                                   marker_color     = self.__hex_rgba(hxc = self.color_names[j], alpha = 0.70)
-                                   )
+                values    = [themes.loc[item, j] for item in idx]
+                #if (len(w_idx) > 0):
+                    #values = [themes.loc[item, j] for item in idx]
+                #else:
+                    #values = [themes.iloc[item, j] for item in idx]
+                n_val           = [names[i]+' ('+str(int(values[i]))+')' for i in range(0, len(names))]
+                self.ask_gpt_ep = self.ask_gpt_ep + ' ' + str(years[j]) + ': ' + ', '.join(n_val)
+                data            = go.Bar(x                = [years[j]]*len(values), 
+                                         y                = values, 
+                                         text             = names, 
+                                         hoverinfo        = 'text',
+                                         textangle        = 0,
+                                         textfont_size    = 10,
+                                         hovertext        = n_val,
+                                         insidetextanchor = 'middle',
+                                         marker_color     = self.__hex_rgba(hxc = self.color_names[j], alpha = 0.70)
+                                         )
                 traces.append(data)
         layout = go.Layout(barmode      = 'stack', 
                            showlegend   = False,
@@ -2027,9 +2039,12 @@ class pbx_probe():
             title = 'Top '+ str(topn)+" - Authors' Keywords per Documents"
             x_lbl = 'Documents'
             y_lbl = "Authors' Keywords"
-        w_1 = 0.135
-        w_2 = 0.045
-        w_s = np.arange(len(value) / 8, step = 0.125)
+        data_tuples       = list(zip(key, value))
+        self.ask_gpt_bp   = pd.DataFrame(data_tuples, columns = [x_lbl, y_lbl])
+        self.ask_gpt_bp_t = title
+        w_1               = 0.135
+        w_2               = 0.045
+        w_s               = np.arange(len(value) / 8, step = 0.125)
         plt.figure(figsize = [size_x, size_y])
         if (statistic.lower() == 'dpy' or statistic.lower() == 'cpy' or statistic.lower() == 'ppy' or statistic.lower() == 'ltk'):
             plt.bar(w_s, value, color = '#dce6f2', width = w_1/2, edgecolor = '#c3d5e8')
@@ -2061,7 +2076,7 @@ class pbx_probe():
             idx.reverse()
             u_lst = [u_lst[i] for i in idx]
             return u_lst   
-        if (view == 'browser' ):
+        if (view == 'browser'):
             pio.renderers.default = 'browser'
         u_keys = ['aut', 'cout', 'inst', 'jou', 'kwa', 'kwp', 'lan']
         u_name = ['Authors', 'Countries', 'Institutions', 'Journals', 'Auhors_Keywords', 'Keywords_Plus', 'Languages']
@@ -2162,6 +2177,12 @@ class pbx_probe():
             while (len(self.color_names) < len(sk_s)):
                 self.color_names.append(self.color_names[count])
                 count = count + 1
+        self.ask_gpt_sk = pd.DataFrame(list(zip(sk_s, sk_t, sk_v)), columns = ['Node From', 'Node To', 'Connection Weigth'])
+        for i in range(0, len(sk_s)):
+            source                     = label[self.ask_gpt_sk.iloc[i, 0]]
+            target                     = label[self.ask_gpt_sk.iloc[i, 1]]
+            self.ask_gpt_sk.iloc[i, 0] = source
+            self.ask_gpt_sk.iloc[i, 1] = target
         link = dict(source = sk_s, target = sk_t,   value = sk_v, color = self.color_names)
         node = dict(label  = label,   pad = 10, thickness = 15,   color = 'white')
         data = go.Sankey(
@@ -2661,10 +2682,13 @@ class pbx_probe():
 
     # Function: Network Similarities 
     def network_sim(self, view = 'browser', sim_type = 'coup', node_size = -1, node_labels = False, cut_coup = 0.3, cut_cocit = 5):
+        sim = ''
         if   (sim_type == 'coup'):
             cut = cut_coup
+            sim = 'Bibliographic Coupling'
         elif (sim_type == 'cocit'):
             cut = cut_cocit
+            sim = 'Co-Citation'
         if (view == 'browser' ):
             pio.renderers.default = 'browser'
         if (node_labels == True):
@@ -2715,7 +2739,8 @@ class pbx_probe():
                 year  = int(self.dy[ int(name) ])
                 n_id  = self.data.loc[int(name), 'author']+' ('+self.data.loc[int(name), 'year']+'). '+self.data.loc[int(name), 'title']+'. '+self.data.loc[int(name), 'journal']+'. doi:'+self.data.loc[int(name), 'doi']+'. '
                 S.add_node(name, color = color, year = year, n_id = n_id )
-        self.sim_table = pd.DataFrame(np.zeros((len(edges), 2)), columns = ['Pair Node', 'Sim('+sim_type+')'])
+        self.sim_table   = pd.DataFrame(np.zeros((len(edges), 2)), columns = ['Pair Node', 'Sim('+sim_type+')'])
+        self.ask_gpt_sim = pd.DataFrame(np.zeros((len(edges), 3)), columns = ['Node 1', 'Node 2', 'Simimilarity ('+sim+') Between Nodes'])
         for i in range(0, len(edges)):
             srt, end = edges[i]
             srt_     = str(srt)
@@ -2723,8 +2748,11 @@ class pbx_probe():
             if ( end_ != '-1' ):
                 wght = round(adjacency_matrix[srt, end], 3)
                 S.add_edge(srt_, end_, weight = wght)
-                self.sim_table.iloc[i, 0] = '('+srt_+','+end_+')'
-                self.sim_table.iloc[i, 1] = wght
+                self.sim_table.iloc[i, 0]   = '('+srt_+','+end_+')'
+                self.sim_table.iloc[i, 1]   = wght
+                self.ask_gpt_sim.iloc[i, 0] = 'Paper ID: '+srt_
+                self.ask_gpt_sim.iloc[i, 1] = 'Paper ID: '+end_
+                self.ask_gpt_sim.iloc[i, 2] = wght
         generator      = nx.algorithms.community.girvan_newman(S)
         community      = next(generator)
         community_list = sorted(map(sorted, community))
@@ -2782,7 +2810,7 @@ class pbx_probe():
 
     # Function: Map from Country Adjacency Matrix
     def network_adj_map(self, view = 'browser', connections = True, country_lst = []):
-        if (view == 'browser' ):
+        if (view == 'browser'):
             pio.renderers.default = 'browser'
         lat_  = [self.country_lat_long[i][0] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
         lon_  = [self.country_lat_long[i][1] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
@@ -2797,8 +2825,9 @@ class pbx_probe():
         iso_3 = [iso_3[i] for i in range(0, len(vals)) if vals[i] > 0]
         text  = [ text[i] for i in range(0, len(vals)) if vals[i] > 0]
         vals  = [ vals[i] for i in range(0, len(vals)) if vals[i] > 0]
-        rows, cols = np.where(adjacency_matrix >= 1)
-        edges      = list(zip(rows.tolist(), cols.tolist()))
+        rows, cols       = np.where(adjacency_matrix >= 1)
+        edges            = list(zip(rows.tolist(), cols.tolist()))
+        self.ask_gpt_map = pd.DataFrame(edges, columns = ['Country 1', 'Country 2']) 
         nids_list  = ['id:                        ' +self.dict_ctr_id[text[i]]+'<br>'+
                       'country:               '     +text[i].upper()+'<br>' +
                       'collaborators:      '        +str(vals[i])  
@@ -2813,6 +2842,8 @@ class pbx_probe():
             end      = 'c_'+str(end)
             srt      = self.dict_id_ctr[srt]
             end      = self.dict_id_ctr[end]
+            self.ask_gpt_map.iloc[i, 0] = srt
+            self.ask_gpt_map.iloc[i, 1] = end
             if (len(country_lst) > 0):
                 country_lst = [item.lower() for item in country_lst]
                 for j in range(0, len(country_lst)):
@@ -2935,17 +2966,18 @@ class pbx_probe():
             end_     = self.labels_r[end]
             if ( end_ != '-1' ):
                 G.add_edge(srt_, end_)
-        color          = [G.nodes[n]['color'] if len(G.nodes[n]) > 0 else 'black' for n in G.nodes()]
-        self.pos       = nx.circular_layout(G)
-        self.node_list = list(G.nodes)
-        self.edge_list = list(G.edges)
-        self.nids_list = [G.nodes[n]['n_id'] for n in G.nodes()]
-        self.nids_list = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in self.nids_list]
-        self.nids_list = ['id: '+self.node_list[i]+'<br>'+self.nids_list[i] for i in range(0, len(self.nids_list))]
-        self.Xn        = [self.pos[k][0] for k in self.node_list]
-        self.Yn        = [self.pos[k][1] for k in self.node_list]
-        Xa             = []
-        Ya             = []
+        self.ask_gpt_nad = pd.DataFrame(G.edges, columns = ['Paper', 'Cited Reference'])
+        color            = [G.nodes[n]['color'] if len(G.nodes[n]) > 0 else 'black' for n in G.nodes()]
+        self.pos         = nx.circular_layout(G)
+        self.node_list   = list(G.nodes)
+        self.edge_list   = list(G.edges)
+        self.nids_list   = [G.nodes[n]['n_id'] for n in G.nodes()]
+        self.nids_list   = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in self.nids_list]
+        self.nids_list   = ['id: '+self.node_list[i]+'<br>'+self.nids_list[i] for i in range(0, len(self.nids_list))]
+        self.Xn          = [self.pos[k][0] for k in self.node_list]
+        self.Yn          = [self.pos[k][1] for k in self.node_list]
+        Xa               = []
+        Ya               = []
         for edge in self.edge_list:
             Xa.append(self.pos[edge[0]][0]*0.97)
             Xa.append(self.pos[edge[1]][0]*0.97)
@@ -2984,7 +3016,9 @@ class pbx_probe():
 
     # Function: Network from Adjacency Matrix 
     def network_adj(self, view = 'browser', adj_type = 'aut', min_count = 2, node_size = -1, node_labels = False, label_type = 'id', centrality = None): 
-        if (view == 'browser' ):
+        adj_ = ''
+        cen_ = 'Girvan-Newman Community Algorithm'
+        if (view == 'browser'):
             pio.renderers.default = 'browser'
         if (node_labels == True):
             mode = 'markers+text'
@@ -3002,22 +3036,27 @@ class pbx_probe():
             self.__adjacency_matrix_aut(min_count)
             adjacency_matrix = self.matrix_a.values
             dict_            = self.dict_id_aut
+            adj_             = 'Author'
         elif (adj_type == 'cout'):
             self.__adjacency_matrix_ctr(min_count)
             adjacency_matrix = self.matrix_a.values
             dict_            = self.dict_id_ctr
+            adj_             = 'Country'
         elif (adj_type == 'inst'):
             self.__adjacency_matrix_inst(min_count)
             adjacency_matrix = self.matrix_a.values
             dict_            = self.dict_id_uni
+            adj_             = 'Institution'
         elif (adj_type == 'kwa'):
             self.__adjacency_matrix_kwa(min_count)
             adjacency_matrix = self.matrix_a.values
             dict_            = self.dict_id_kwa
+            adj_             = 'Author Keywords'
         elif (adj_type == 'kwp'):
             self.__adjacency_matrix_kwp(min_count)
             adjacency_matrix = self.matrix_a.values
             dict_            = self.dict_id_kwp
+            adj_             = 'Keywords Plus'
         rows, cols = np.where(adjacency_matrix >= 1)
         edges      = list(zip(rows.tolist(), cols.tolist()))
         u_cols     = list(set(cols.tolist()))
@@ -3070,48 +3109,63 @@ class pbx_probe():
             end_     = self.labels_a[end]
             if ( end_ != '-1'):
                 self.H.add_edge(srt_, end_)
-        if   (centrality == 'degree'): 
+        dict_cen = []
+        if (centrality == 'degree'): 
             value            = nx.algorithms.centrality.degree_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Degree'])
             self.table_centr = self.table_centr.sort_values('Degree', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Degree Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'load'):
             value            = nx.algorithms.centrality.load_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Load'])
             self.table_centr = self.table_centr.sort_values('Load', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Load Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'betw'):
             value            = nx.algorithms.centrality.betweenness_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Betweenness'])
             self.table_centr = self.table_centr.sort_values('Betweenness', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Betweenness Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'close'):
             value            = nx.algorithms.centrality.closeness_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Closeness'])
             self.table_centr = self.table_centr.sort_values('Closeness', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Closeness Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'eigen'):
             value            = nx.algorithms.centrality.eigenvector_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Eigenvector'])
             self.table_centr = self.table_centr.sort_values('Eigenvector', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Eigenvector Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'katz'):
             value            = nx.algorithms.centrality.katz_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Katz'])
             self.table_centr = self.table_centr.sort_values('Katz', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Katz Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         elif (centrality == 'harmonic'):
             value            = nx.algorithms.centrality.harmonic_centrality(self.H)
             color            = [value[n] for n in self.H.nodes()]
             self.table_centr = pd.DataFrame(value.items(), columns = ['Node', 'Harmonic'])
             self.table_centr = self.table_centr.sort_values('Harmonic', ascending = False)
             self.table_centr.insert(0, 'Name', [dict_[self.table_centr.iloc[i, 0]] for i in range(0, self.table_centr.shape[0])])
+            cen_             = 'Harmonic Centrality'
+            dict_cen         = dict(zip(self.table_centr.iloc[:,-2], self.table_centr.iloc[:,-1]))
         else:
             generator        = nx.algorithms.community.girvan_newman(self.H)
             community        = next(generator)
@@ -3125,6 +3179,24 @@ class pbx_probe():
         self.pos_a       = nx.spring_layout(self.H, seed = 42, scale = 1000)
         self.node_list_a = list(self.H.nodes)
         self.edge_list_a = list(self.H.edges)
+        if (cen_ == 'Girvan-Newman Community Algorithm'):
+            self.ask_gpt_adj = pd.DataFrame((np.zeros((len(self.H.edges), 4))), columns = ['Node 1'+' ('+adj_+')', 'Node 2'+' ('+adj_+')', 'Node 1 Cluster', 'Node 2 Cluster'])
+        else:
+            self.ask_gpt_adj = pd.DataFrame((np.zeros((len(self.H.edges), 4))), columns = ['Node 1'+' ('+adj_+')', 'Node 2'+' ('+adj_+')', 'Node 1' + ' ('+cen_+')', 'Node 2' + ' ('+cen_+')'])
+        if (cen_ == 'Girvan-Newman Community Algorithm'):
+            for i in range(0, self.ask_gpt_adj.shape[0]):
+                srt, end                    = list(self.H.edges)[i]
+                self.ask_gpt_adj.iloc[i, 0] = 'ID: ' + srt
+                self.ask_gpt_adj.iloc[i, 1] = 'ID: ' + end
+                self.ask_gpt_adj.iloc[i, 2] = self.H.nodes[srt]['n_cls']
+                self.ask_gpt_adj.iloc[i, 3] = self.H.nodes[end]['n_cls']
+        else:
+            for i in range(0, self.ask_gpt_adj.shape[0]):
+                srt, end                    = list(self.H.edges)[i]
+                self.ask_gpt_adj.iloc[i, 0] = 'ID: ' + srt
+                self.ask_gpt_adj.iloc[i, 1] = 'ID: ' + end
+                self.ask_gpt_adj.iloc[i, 2] = dict_cen[srt]
+                self.ask_gpt_adj.iloc[i, 3] = dict_cen[end]    
         if (adj_type == 'aut'):
             docs_list_a      = [self.H.nodes[n]['n_doc'] for n in self.H.nodes()]
             auts_list_a      = [self.H.nodes[n]['n_coa'] for n in self.H.nodes()]
@@ -3137,7 +3209,7 @@ class pbx_probe():
                                 'documents:         '        +str(docs_list_a[i])+'<br>'+
                                 'collaborators:      '       +str(auts_list_a[i])+'<br>'+
                                 'local h-index:       '      +str(lhid_list_a[i]) 
-                                for i in range(0, len(self.nids_list_a))]
+                                for i in range(0, len(self.nids_list_a))]     
         elif (adj_type == 'cout'):  
             auts_list_a      = [self.H.nodes[n]['n_coa'] for n in self.H.nodes()]
             clst_list_a      = [self.H.nodes[n]['n_cls'] for n in self.H.nodes()]
@@ -3528,11 +3600,16 @@ class pbx_probe():
             end_     = self.labels_r[end]
             if ( end_ != '-1' ):
                 G.add_edge(srt_, end_)
-        node_list = list(G.nodes)
-        edge_list = list(G.edges)
-        nids_list = [G.nodes[n]['n_id'] for n in G.nodes()]
-        nids_list = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in nids_list]
-        nids_list = ['id: '+node_list[i]+'<br>'+nids_list[i] for i in range(0, len(nids_list))]
+        self.ask_gpt_hist = pd.DataFrame(G.edges, columns = ['Paper ID (Year)', 'References (Year)'])
+        for i in range(0, self.ask_gpt_hist.shape[0]):
+            self.ask_gpt_hist.iloc[i, 0] = str(self.ask_gpt_hist.iloc[i, 0]) + ' (' + str(G.nodes[self.ask_gpt_hist.iloc[i,0]]['year']) + ')'
+            self.ask_gpt_hist.iloc[i, 1] = str(self.ask_gpt_hist.iloc[i, 1]) + ' (' + str(G.nodes[self.ask_gpt_hist.iloc[i,1]]['year']) + ')'
+        self.ask_gpt_hist = self.ask_gpt_hist[self.ask_gpt_hist.apply(lambda row: len(row.unique()) > 1, axis = 1)]
+        node_list         = list(G.nodes)
+        edge_list         = list(G.edges)
+        nids_list         = [G.nodes[n]['n_id'] for n in G.nodes()]
+        nids_list         = ['<br>'.join(textwrap.wrap(txt, width = 50)) for txt in nids_list]
+        nids_list         = ['id: '+node_list[i]+'<br>'+nids_list[i] for i in range(0, len(nids_list))]
         for edge in edge_list:
             Xa.append(dict_y[G.nodes[edge[0]]['year']]) 
             Xa.append(dict_y[G.nodes[edge[1]]['year']])
@@ -3929,7 +4006,7 @@ class pbx_probe():
                 print('Document ID' + str(i) + ' Number of Characters: ' + str(len(abstracts.iloc[i])))
         if (len(corpus) > 0):
             print('')
-            print('Total Number of Valid Abstracts: ', len(corpus)/2)
+            print('Total Number of Valid Abstracts: ', int(len(corpus)/2))
             print('')
             if (join_articles == False):
                 for i, abstract in enumerate(corpus):
@@ -3938,6 +4015,8 @@ class pbx_probe():
                 corpus = ' '.join(corpus)
                 prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
             summary = query_chatgpt(prompt)
+        else:
+            summary    = 'No abstracts were found in the selected set of documents'
         return summary
 
     # Function: Extractive Text Summarization
@@ -3961,5 +4040,264 @@ class pbx_probe():
         else:
             summary    = 'No abstracts were found in the selected set of documents'
         return summary
+
+############################################################################
+
+    # Function: Ask chatGPT about Authors Productivity by Year
+    def ask_chatgpt_ap(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to authors productivity by year'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus = ''
+        for author, row in self.ask_gpt_ap.iterrows():
+            years        = [(year, row[year]) for year in row.index if row[year] > 0]
+            paper_counts = ', '.join([f'({year}: {count} paper{"s" if count > 1 else ""})' for year, count in years])
+            corpus       = corpus +  f'{author} {paper_counts}\n'
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask chatGPT about Bar Plots 
+    def ask_chatgpt_bp(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_bp.to_string(index = False)    
+        openai.api_key = api_key
+        prompt         = query + ' regarding ' + self.ask_gpt_bp_t + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask chatGPT about Citation Analysis 
+    def ask_chatgpt_citation(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_nad.to_string(index = False)    
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Collaboration Analysis
+    def ask_chatgpt_colab(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following network information, knowing that Node 1 is connected with Node 2'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_adj.to_string(index = False)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about EDA Report 
+    def ask_chatgpt_eda(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_rt.to_string(index = False)    
+        lines          = corpus.split('\n')
+        corpus         = '\n'.join(' '.join(line.split()) for line in lines)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask chatGPT about Evolution Plot
+    def ask_chatgpt_ep(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to words apperance by year'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_ep
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Citation Analysis 
+    def ask_chatgpt_hist(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the most influential references, also discover if there is relevant network connections'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus = []
+        for i in range(0, self.ask_gpt_hist.shape[0]):
+            corpus.append('Paper ' + self.ask_gpt_hist.iloc[i,0] + ' Cites Paper ' + self.ask_gpt_hist.iloc[i,1])
+        corpus         = ', '.join(corpus)    
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Map Analysis 
+    def ask_chatgpt_map(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_map.to_string(index = False)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about N-Grms 
+    def ask_chatgpt_ngrams(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the n-grams and their frequency'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_ng.to_string(index = False)  
+        lines          = corpus.split('\n')
+        corpus         = '\n'.join(' '.join(line.split()) for line in lines)  
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Sankey Diagram
+    def ask_chatgpt_sankey(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information from a network called Sankey'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_sk.to_string(index = False)   
+        lines          = corpus.split('\n')
+        corpus         = '\n'.join(' '.join(line.split()) for line in lines)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Similarity Analysis 
+    def ask_chatgpt_sim(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = self.ask_gpt_sim.to_string(index = False)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask chatGPT about Wordcloud 
+    def ask_chatgpt_wordcloud(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information'):
+        def query_chatgpt(prompt, model = 'text-davinci-003', n = 1):
+            response = openai.Completion.create(
+                                                engine      = model,
+                                                prompt      = prompt,
+                                                max_tokens  = 2000,
+                                                n           = n,
+                                                stop        = None,
+                                                temperature = 0.8
+                                                )
+            return response.choices[0].text.strip()
+        corpus         = pd.DataFrame.from_dict(self.ask_gpt_wd, orient = 'index', columns = ['Frequency'])    
+        corpus         = corpus.reset_index().rename(columns = {'index': 'Word'})
+        corpus         = corpus.to_string(index = False)
+        lines          = corpus.split('\n')
+        corpus         = '\n'.join(' '.join(line.split()) for line in lines)
+        openai.api_key = api_key
+        prompt         = query + ':\n\n' + f'{corpus}\n'
+        prompt         = prompt[:char_limit]
+        analyze        = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
 
 ############################################################################
