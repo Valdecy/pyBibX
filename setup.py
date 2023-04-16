@@ -6,7 +6,7 @@ long_description = (this_directory / 'README.md').read_text()
 
 setup(
     name='pyBibX',
-    version='2.9.1',
+    version='2.9.3',
     license='GNU',
     author='Valdecy Pereira',
     author_email='valdecy.pereira@gmail.com',
@@ -22,10 +22,10 @@ setup(
         'pandas',
         'plotly',
         'scipy',
+        'scikit-learn',
         'sentencepiece',
         'sentence-transformers',
         'squarify',
-        'sklearn',
         'torch', 
         'torchvision',
         'torchaudio',
