@@ -3981,15 +3981,15 @@ class pbx_probe():
         return summary
     
     # Function: Abstractive Text Summarization
-    def summarize_abst_chatgpt(self, article_ids = [], join_articles = False, api_key = 'your_api_key_here', query = 'from the following scientific abstracts, summarize the main information in a single paragraph using around 250 words'):
-        def query_chatgpt(prompt, model = 'text-davinci-002', n = 1):
+    def summarize_abst_chatgpt(self, article_ids = [], join_articles = False, api_key = 'your_api_key_here', query = 'from the following scientific abstracts, summarize the main information in a single paragraph using around 250 words', model = 'text-davinci-003', max_tokens = 250, n = 1, temperature = 0.8):
+        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
             response = openai.Completion.create(
                                                 engine      = model,
                                                 prompt      = prompt,
-                                                max_tokens  = 100,
+                                                max_tokens  = max_tokens,
                                                 n           = n,
                                                 stop        = None,
-                                                temperature = 0.8
+                                                temperature = temperature
                                                 )
             return response.choices[0].text.strip()
         openai.api_key = api_key
