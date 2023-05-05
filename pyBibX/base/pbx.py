@@ -925,6 +925,10 @@ class pbx_probe():
             rhs.append(f_list[i].split('=')[1].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip())
           elif (f_list[i].find(' ') == 0 and i!= 0 and rhs[-1] != 'doc_start'):
             rhs[-1] = rhs[-1]+' '+f_list[i].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip()
+        if (db == 'scopus' and 'abbrev_source_title' not in lhs and 'journal' in lhs):
+            for i in range(0, len(lhs)):
+                if (lhs[i] == 'journal'):
+                    lhs[i] = 'abbrev_source_title'
         if (db == 'wos'):
             for i in range(0, len(lhs)):
                 if (lhs[i] == 'affiliation'):
