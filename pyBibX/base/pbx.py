@@ -929,6 +929,14 @@ class pbx_probe():
             for i in range(0, len(lhs)):
                 if (lhs[i] == 'journal'):
                     lhs[i] = 'abbrev_source_title'
+        if (db == 'wos' and 'journal-iso' not in lhs and 'journal' in lhs):
+            for i in range(0, len(lhs)):
+                if (lhs[i] == 'journal'):
+                    lhs[i] = 'journal-iso'
+        if (db == 'pubmed' and 'ta' not in lhs and 'jt' in lhs):
+            for i in range(0, len(lhs)):
+                if (lhs[i] == 'jt'):
+                    lhs[i] = 'ta'
         if (db == 'wos'):
             for i in range(0, len(lhs)):
                 if (lhs[i] == 'affiliation'):
