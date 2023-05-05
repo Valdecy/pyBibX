@@ -79,7 +79,7 @@ This section indicates the libraries that inspired pyBibX
 
 * chatGPT (https://chat.openai.com/chat)
 - a) Github: https://github.com/openai
-- b) Paper: ECOFFET, A. (2023). GPT-4 Technical Report. arXiv. doi: https://doi.org/10.48550/arXiv.2303.08774
+- b) Paper: OPENAI. (2023). GPT-4 Technical Report. arXiv. doi: https://doi.org/10.48550/arXiv.2303.08774
 
 * Metaknowledge (http://www.networkslab.org/metaknowledge)
 - a) Github: https://github.com/UWNETLAB/metaknowledge
