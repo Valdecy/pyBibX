@@ -782,7 +782,7 @@ class pbx_probe():
     
     # Function: EDA .bib docs
     def eda_bib(self):
-        report         = []
+        report = []
         report.append(['Timespan', str(self.date_str)+'-'+str(self.date_end)])
         report.append(['Total Number of Countries', len(self.u_ctr)])
         report.append(['Total Number of Institutions', len(self.u_uni)])
@@ -796,8 +796,8 @@ class pbx_probe():
         for i in range(0, self.doc_types.shape[0]):
             report.append(['--'+self.doc_types.index[i], self.doc_types[i]])
         report.append(['Average Documents per Author',self. av_doc_aut])
-        report.append(['Average Documents per Institution', round(sum(self.uni_count)/len(self.uni_count), 2)])
-        report.append(['Average Documents per Source', round(sum(self.jou_count)/len(self.jou_count), 2)])
+        report.append(['Average Documents per Institution', round(sum(self.uni_count)/len(self.uni_count), 2) if len(self.uni_count) > 0 else 0])
+        report.append(['Average Documents per Source', round(sum(self.jou_count)/len(self.jou_count), 2) if len(self.jou_count) > 0 else 0])
         report.append(['Average Documents per Year', self.av_d_year])
         report.append(['-//-', '-//-'])
         report.append(['Total Number of Authors', len(self.u_aut)])
@@ -809,10 +809,10 @@ class pbx_probe():
         report.append(['Max H-Index', max(self.aut_h)])
         report.append(['-//-', '-//-'])
         report.append(['Total Number of Citations', sum(self.citation)])
-        report.append(['Average Citations per Author', round(sum(self.citation)/len(self.u_aut), 2)])
-        report.append(['Average Citations per Institution', round(sum(self.citation)/len(self.u_uni), 2)])
+        report.append(['Average Citations per Author', round(sum(self.citation)/len(self.u_aut), 2) if len(self.u_aut) > 0 else 0])
+        report.append(['Average Citations per Institution', round(sum(self.citation)/len(self.u_uni), 2) if len(self.u_uni) > 0 else 0])
         report.append(['Average Citations per Document', self.av_c_doc])
-        report.append(['Average Citations per Source', round(sum(self.jou_cit)/len(self.jou_cit), 2)])
+        report.append(['Average Citations per Source', round(sum(self.jou_cit)/len(self.jou_cit), 2) if len(self.jou_cit) > 0 else 0])
         report.append(['-//-', '-//-'])
         self.ask_gpt_rt = pd.DataFrame(report, columns = ['Main Information', 'Results'])
         report_df       = pd.DataFrame(report, columns = ['Main Information', 'Results'])
@@ -2248,37 +2248,16 @@ class pbx_probe():
         if (lowercase == True):
             if (verbose == True):
                 print('Lower Case: Working...')
-            corpus = [str(x).lower() for x in  corpus]
+            corpus = [str(x).lower().replace("’","'") for x in  corpus]
             if (verbose == True):
                 print('Lower Case: Done!')
-        # Replace Accents 
-        if (rmv_accents == True):
-            if (verbose == True):
-                print('Removing Accents: Working...')
-            for i in range(0, len(corpus)):
-                text = corpus[i]
-                try:
-                    text = unicode(text, 'utf-8')
-                except NameError: 
-                    pass
-                text      = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode('utf-8')
-                corpus[i] = str(text)
-            if (verbose == True):
-                print('Removing Accents: Done!')
         # Remove Punctuation & Special Characters
         if (rmv_special_chars == True):
             if (verbose == True):
                 print('Removing Special Characters: Working...')
-            corpus = [re.sub(r"[^a-zA-Z0-9]+", ' ', i) for i in corpus]
+            corpus = [re.sub(r"[^a-zA-Z0-9']+", ' ', i) for i in corpus]
             if (verbose == True):
                 print('Removing Special Characters: Done!')
-        # Remove Numbers
-        if (rmv_numbers == True):
-            if (verbose == True):
-                print('Removing Numbers: Working...')
-            corpus = [re.sub('[0-9]', ' ', i) for i in corpus] 
-            if (verbose == True):
-                print('Removing Numbers: Done!')
         # Remove Stopwords
         if (len(stop_words) > 0):
             for sw_ in stop_words: 
@@ -2347,7 +2326,7 @@ class pbx_probe():
                 print('Removing Stopwords: Working...')
             for i in range(0, len(corpus)):
                text      = corpus[i].split()
-               text      = [x for x in text if x not in sw_full]
+               text      = [x.replace(' ', '') for x in text if x.replace(' ', '') not in sw_full]
                corpus[i] = ' '.join(text) 
                if (verbose == True):
                    print('Removing Stopwords: ' + str(i + 1) +  ' of ' + str(len(corpus)) )
@@ -2359,12 +2338,33 @@ class pbx_probe():
                 print('Removing Custom Words: Working...')
             for i in range(0, len(corpus)):
                text      = corpus[i].split()
-               text      = [x for x in text if x not in rmv_custom_words]
+               text      = [x.replace(' ', '') for x in text if x.replace(' ', '') not in rmv_custom_words]
                corpus[i] = ' '.join(text) 
                if (verbose == True):
                    print('Removing Custom Words: ' + str(i + 1) +  ' of ' + str(len(corpus)) )
             if (verbose == True):
                 print('Removing Custom Word: Done!')
+        # Replace Accents 
+        if (rmv_accents == True):
+            if (verbose == True):
+                print('Removing Accents: Working...')
+            for i in range(0, len(corpus)):
+                text = corpus[i]
+                try:
+                    text = unicode(text, 'utf-8')
+                except NameError: 
+                    pass
+                text      = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode('utf-8')
+                corpus[i] = str(text)
+            if (verbose == True):
+                print('Removing Accents: Done!')
+        # Remove Numbers
+        if (rmv_numbers == True):
+            if (verbose == True):
+                print('Removing Numbers: Working...')
+            corpus = [re.sub('[0-9]', ' ', i) for i in corpus] 
+            if (verbose == True):
+                print('Removing Numbers: Done!')
         for i in range(0, len(corpus)):
             corpus[i] = ' '.join(corpus[i].split())
         return corpus
