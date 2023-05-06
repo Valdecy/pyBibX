@@ -666,7 +666,7 @@ class pbx_probe():
                print(str(key)+': '+str('; '.join(value)))
         return fuzzy_dict
 
-    # Function: Merge Datatbase
+    # Function: Merge Database
     def merge_database(self, file_bib, db, del_duplicated):
         old_vb   = [item for item in self.vb]
         old_size = self.data.shape[0]
