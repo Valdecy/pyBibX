@@ -6,9 +6,9 @@ A Bibliometric and Scientometric python library that uses the raw files generate
 
 To export the correct file formats from Scopus, Web of Science, and PubMed, follow these steps:
 
-- a) Scopus: Search, select articles, click "Export," choose "BibTeX," select all fields, click "Export" again.
-- b) WoS: Search, select articles, click "Export," choose "Save to Other File Formats," select "BibTeX," select all fields, click "Send."
-- c) PubMed: Search, select articles, click "Save," choose "PubMed" format, click "Save" to download a .txt file. 
+- a) **Scopus**: Search, select articles, click "Export," choose "BibTeX," select all fields, click "Export" again.
+- b) **WoS**: Search, select articles, click "Export," choose "Save to Other File Formats," select "BibTeX," select all fields, click "Send."
+- c) **PubMed**: Search, select articles, click "Save," choose "PubMed" format, click "Save" to download a .txt file. 
 
 General Capabilities:
 - a) Works with **Scopus** (.bib files), **WOS** (.bib files) and **PubMed** (.txt files) databases 
