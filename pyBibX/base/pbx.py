@@ -54,20 +54,16 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.data_base         =  db
-        self.institution_names =  [ 'academy', 'center', 'centre', 'chuo kikuu', 'college', 'conservatory', 'egyetemi'
-                                    'escola', 'escuela', 'eyunivesithi', 'faculdade', 'facultad', 'fakultet', 'fakultät'
-                                    'foundation', 'gradevinski', 'hochschule', 'hogeschool', 'háskóli', 'högskola', 'ibmec'
-                                    'inivèsite', 'institut', 'institute of technology', 'inyuvesi', 'iskola', 'iunivesite'
-                                    'jaamacad', "jami'a", 'kolej', 'koulu', 'kulanui', 'lab.', 'laborat', 'mahadum', 'medical'
-                                    'observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic'
-                                    'prifysgol', 'research', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur'
-                                    'sveučilište', 'szkoła', 'technological', 'uff', 'unibersidad', 'unibertsitatea', 'univ'
-                                    'universidad', 'universidade', 'universitas', 'universitat', 'universitate', 'universitato'
-                                    'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 'university'
-                                    'università', 'universität', 'université', 'universitāte', 'univerza', 'univerzita'
-                                    'univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 'yliopisto'
-                                    'yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite'
-                                    'πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
+        self.institution_names =  [ 'chuo kikuu', 'egyetemi', 'eyunivesithi', 'háskóli', 'inivèsite', 'inyuvesi', 'iunivesite',
+                                    'jaamacad', "jami'a", 'kulanui', 'mahadum', 'oilthigh', 'ollscoile', 'oniversite', 'prifysgol',
+                                    'sveučilište', 'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade',
+                                    'universitas', 'universitat', 'universitate', 'universitato', 'universiteit', 'universitet',
+                                    'universitetas', 'universiti', 'università', 'universität', 'université', 'universite',
+                                    'universitāte', 'univerza', 'univerzita', 'univerzitet', 'univesithi', 'uniwersytet',
+                                    'vniuersitatis', 'whare wananga', 'yliopisto', 'yunifasiti', 'yunivesite', 'yunivhesiti',
+                                    'zanko', 'ülikool', 'üniversite', 'πανεπιστήμιο', 'универзитет', 'университет', 'універсітэт',
+                                    'university', 'academy', 'institut', 'supérieur', 'ibmec', 'uff', 'gradevinski', 'lab.', 
+                                    'politecnico', 'research', 'laborat', 'college'
                                   ]
 
 
