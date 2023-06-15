@@ -11,6 +11,7 @@
 ############################################################################
 
 # Required Libraries
+import chardet
 import networkx as nx             
 import numpy as np   
 import openai              
@@ -53,17 +54,23 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.data_base         =  db
-        self.institution_names =  [ 'chuo kikuu', 'egyetemi', 'eyunivesithi', 'háskóli', 'inivèsite', 'inyuvesi', 'iunivesite',
-                                    'jaamacad', "jami'a", 'kulanui', 'mahadum', 'oilthigh', 'ollscoile', 'oniversite', 'prifysgol',
-                                    'sveučilište', 'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade',
-                                    'universitas', 'universitat', 'universitate', 'universitato', 'universiteit', 'universitet',
-                                    'universitetas', 'universiti', 'università', 'universität', 'université', 'universite',
-                                    'universitāte', 'univerza', 'univerzita', 'univerzitet', 'univesithi', 'uniwersytet',
-                                    'vniuersitatis', 'whare wananga', 'yliopisto', 'yunifasiti', 'yunivesite', 'yunivhesiti',
-                                    'zanko', 'ülikool', 'üniversite', 'πανεπιστήμιο', 'универзитет', 'университет', 'універсітэт',
-                                    'university', 'academy', 'institut', 'supérieur', 'ibmec', 'uff', 'gradevinski', 'lab.', 
-                                    'politecnico', 'research', 'laborat', 'college'
+        self.institution_names =  [ 'academy', 'center', 'centre', 'chuo kikuu', 'college', 'conservatory', 'egyetemi'
+                                    'escola', 'escuela', 'eyunivesithi', 'faculdade', 'facultad', 'fakultet', 'fakultät'
+                                    'foundation', 'gradevinski', 'hochschule', 'hogeschool', 'háskóli', 'högskola', 'ibmec'
+                                    'inivèsite', 'institut', 'institute of technology', 'inyuvesi', 'iskola', 'iunivesite'
+                                    'jaamacad', "jami'a", 'kolej', 'koulu', 'kulanui', 'lab.', 'laborat', 'mahadum', 'medical'
+                                    'observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic'
+                                    'prifysgol', 'research', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur'
+                                    'sveučilište', 'szkoła', 'technological', 'uff', 'unibersidad', 'unibertsitatea', 'univ'
+                                    'universidad', 'universidade', 'universitas', 'universitat', 'universitate', 'universitato'
+                                    'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 'university'
+                                    'università', 'universität', 'université', 'universitāte', 'univerza', 'univerzita'
+                                    'univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 'yliopisto'
+                                    'yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite'
+                                    'πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
                                   ]
+
+
         self.language_names  =    { 'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 'arm': 'Armenian', 
                                     'aze': 'Azerbaijani', 'bos': 'Bosnian', 'bul': 'Bulgarian', 'cat': 'Catalan', 'chi': 'Chinese', 
                                     'cze': 'Czech', 'dan': 'Danish', 'dut': 'Dutch', 'eng': 'English', 'epo': 'Esperanto', 
@@ -1128,6 +1135,17 @@ class pbx_probe():
             idx_val = [data.loc[i, 'da'][:4] for i in idx]
             for i in range(0, len(idx)):
                 data.iloc[idx[i], -1] = idx_val[i]
+        if ('affiliation' in data.columns and 'affiliation_' in data.columns):
+            filtered_indices = data[(data['affiliation'] == 'UNKNOW') & (data['affiliation_'] != 'UNKNOW')].index
+            filtered_indices = list(filtered_indices)
+            for i in filtered_indices:
+                s         = data.loc[i, 'affiliation_']
+                parts     = s.split('.')
+                parts[0]  = re.sub(r'.*?\(Corresponding Author\), ', '', parts[0]) 
+                new_parts = [part.split(',', 1)[-1].strip() for part in parts[1:] if ',' in part]
+                new_parts.insert(0, parts[0])
+                new_s     = '. '.join(new_parts)
+                data.loc[i, 'affiliation'] =  new_s
         data = data.reindex(sorted(data.columns), axis = 1)
         return data, entries
     
@@ -1485,66 +1503,68 @@ class pbx_probe():
             corpora = self.data['title']
         if (len(stop_words) > 0):
             for sw_ in stop_words: 
-                if   (sw_ == 'ar' or sw_ == 'ara'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Arabic.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Arabic.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'bn' or sw_ == 'ben'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bengali.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Bengali.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'bg' or sw_ == 'bul'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bulgarian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Bulgarian.txt', 'r',     encoding = 'utf8')
-                elif (sw_ == 'cs' or sw_ == 'cze' or sw_ == 'ces'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Czech.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Czech.txt', 'r',         encoding = 'utf8')
-                elif (sw_ == 'en' or sw_ == 'eng'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-English.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-English.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fi' or sw_ == 'fin'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Finnish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Finnish.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fr' or sw_ == 'fre' or sw_ == 'fra'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-French.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-French.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'de' or sw_ == 'ger' or sw_ == 'deu'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-German.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-German.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'hi' or sw_ == 'hin'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hind.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Hindi.txt', 'r',         encoding = 'utf8')
-                elif (sw_ == 'hu' or sw_ == 'hun'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hungarian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Hungarian.txt', 'r',     encoding = 'utf8')
-                elif (sw_ == 'it' or sw_ == 'ita'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Italian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Italian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'mr' or sw_ == 'mar'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Marathi.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Marathi.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fa' or sw_ == 'per' or sw_ == 'fas'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Persian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Persian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'pl' or sw_ == 'pol'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Polish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Polish.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'pt-br' or sw_ == 'por-br'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Portuguese-br.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Portuguese-br.txt', 'r', encoding = 'utf8')
-                elif (sw_ == 'ro' or sw_ == 'rum' or sw_ == 'ron'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Romanian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Romanian.txt', 'r',      encoding = 'utf8')
-                elif (sw_ == 'ru' or sw_ == 'rus'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Russian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Russian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'es' or sw_ == 'spa'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Spanish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Spanish.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'sv' or sw_ == 'swe'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Swedish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Swedish.txt', 'r',       encoding = 'utf8')
-                f_lines = f_file.read()
-                sw      = f_lines.split('\n')
-                sw      = list(filter(None, sw))
+                if   (sw_ == 'ar' or sw_ == 'ara' or sw_ == 'arabic'):
+                    name = 'Stopwords-Arabic.txt'
+                elif (sw_ == 'bn' or sw_ == 'ben' or sw_ == 'bengali'):
+                    name = 'Stopwords-Bengali.txt'
+                elif (sw_ == 'bg' or sw_ == 'bul' or sw_ == 'bulgarian'):
+                    name = 'Stopwords-Bulgarian.txt'
+                elif (sw_ == 'zh' or sw_ == 'chi' or sw_ == 'chinese'):
+                    name = 'Stopwords-Chinese.txt'
+                elif (sw_ == 'cs' or sw_ == 'cze' or sw_ == 'ces' or sw_ == 'czech'):
+                    name = 'Stopwords-Czech.txt'
+                elif (sw_ == 'en' or sw_ == 'eng' or sw_ == 'english'):
+                    name = 'Stopwords-English.txt'
+                elif (sw_ == 'fi' or sw_ == 'fin' or sw_ == 'finnish'):
+                    name = 'Stopwords-Finnish.txt'
+                elif (sw_ == 'fr' or sw_ == 'fre' or sw_ == 'fra' or sw_ == 'french'):
+                    name = 'Stopwords-French.txt'
+                elif (sw_ == 'de' or sw_ == 'ger' or sw_ == 'deu' or sw_ == 'german'):
+                    name = 'Stopwords-German.txt'
+                elif (sw_ == 'el' or sw_ == 'gre' or sw_ == 'greek'):
+                    name = 'Stopwords-Greek.txt'
+                elif (sw_ == 'he' or sw_ == 'heb' or sw_ == 'hebrew'):
+                    name = 'Stopwords-Hebrew.txt'
+                elif (sw_ == 'hi' or sw_ == 'hin' or sw_ == 'hind'):
+                    name = 'Stopwords-Hind.txt'
+                elif (sw_ == 'hu' or sw_ == 'hun' or sw_ == 'hungarian'):
+                    name = 'Stopwords-Hungarian.txt'
+                elif (sw_ == 'it' or sw_ == 'ita' or sw_ == 'italian'):
+                    name = 'Stopwords-Italian.txt'
+                elif (sw_ == 'ja' or sw_ == 'jpn' or sw_ == 'japanese'):
+                    name = 'Stopwords-Japanese.txt'
+                elif (sw_ == 'ko' or sw_ == 'kor' or sw_ == 'korean'):
+                    name = 'Stopwords-Korean.txt'
+                elif (sw_ == 'mr' or sw_ == 'mar' or sw_ == 'marathi'):
+                    name = 'Stopwords-Marathi.txt'
+                elif (sw_ == 'fa' or sw_ == 'per' or sw_ == 'fas' or sw_ == 'persian'):
+                    name = 'Stopwords-Persian.txt'
+                elif (sw_ == 'pl' or sw_ == 'pol' or sw_ == 'polish'):
+                    name = 'Stopwords-Polish.txt'
+                elif (sw_ == 'pt-br' or sw_ == 'por-br' or sw_ == 'portuguese-br'):
+                    name = 'Stopwords-Portuguese-br.txt'
+                elif (sw_ == 'ro' or sw_ == 'rum' or sw_ == 'ron' or sw_ == 'romanian'):
+                    name = 'Stopwords-Romanian.txt'
+                elif (sw_ == 'ru' or sw_ == 'rus' or sw_ == 'russian'):
+                    name = 'Stopwords-Russian.txt'
+                elif (sw_ == 'sk' or sw_ == 'slo' or sw_ == 'slovak'):
+                    name = 'Stopwords-Slovak.txt'
+                elif (sw_ == 'es' or sw_ == 'spa' or sw_ == 'spanish'):
+                    name = 'Stopwords-Spanish.txt'
+                elif (sw_ == 'sv' or sw_ == 'swe' or sw_ == 'swedish'):
+                    name = 'Stopwords-Swedish.txt'
+                elif (sw_ == 'th' or sw_ == 'tha' or sw_ == 'thai'):
+                    name = 'Stopwords-Thai.txt'
+                elif (sw_ == 'uk' or sw_ == 'ukr' or sw_ == 'ukrainian'):
+                    name = 'Stopwords-Ukrainian.txt'
+                with pkg_resources.open_binary(stws, name) as file:
+                    raw_data = file.read()
+                result   = chardet.detect(raw_data)
+                encoding = result['encoding']
+                with pkg_resources.open_text(stws, name, encoding = encoding) as file:
+                    content = file.read().split('\n')
+                content = [line.rstrip('\r').rstrip('\n') for line in content]
+                sw      = list(filter(None, content))
                 sw_full.extend(sw)
         if (len(rmv_custom_words) > 0):
             sw_full.extend(rmv_custom_words)
@@ -2273,66 +2293,68 @@ class pbx_probe():
         # Remove Stopwords
         if (len(stop_words) > 0):
             for sw_ in stop_words: 
-                if   (sw_ == 'ar' or sw_ == 'ara'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Arabic.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Arabic.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'bn' or sw_ == 'ben'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bengali.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Bengali.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'bg' or sw_ == 'bul'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Bulgarian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Bulgarian.txt', 'r',     encoding = 'utf8')
-                elif (sw_ == 'cs' or sw_ == 'cze' or sw_ == 'ces'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Czech.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Czech.txt', 'r',         encoding = 'utf8')
-                elif (sw_ == 'en' or sw_ == 'eng'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-English.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-English.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fi' or sw_ == 'fin'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Finnish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Finnish.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fr' or sw_ == 'fre' or sw_ == 'fra'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-French.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-French.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'de' or sw_ == 'ger' or sw_ == 'deu'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-German.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-German.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'hi' or sw_ == 'hin'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hind.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Hindi.txt', 'r',         encoding = 'utf8')
-                elif (sw_ == 'hu' or sw_ == 'hun'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Hungarian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Hungarian.txt', 'r',     encoding = 'utf8')
-                elif (sw_ == 'it' or sw_ == 'ita'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Italian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Italian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'mr' or sw_ == 'mar'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Marathi.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Marathi.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'fa' or sw_ == 'per' or sw_ == 'fas'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Persian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Persian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'pl' or sw_ == 'pol'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Polish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Polish.txt', 'r',        encoding = 'utf8')
-                elif (sw_ == 'pt-br' or sw_ == 'por-br'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Portuguese-br.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Portuguese-br.txt', 'r', encoding = 'utf8')
-                elif (sw_ == 'ro' or sw_ == 'rum' or sw_ == 'ron'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Romanian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Romanian.txt', 'r',      encoding = 'utf8')
-                elif (sw_ == 'ru' or sw_ == 'rus'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Russian.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Russian.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'es' or sw_ == 'spa'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Spanish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Spanish.txt', 'r',       encoding = 'utf8')
-                elif (sw_ == 'sv' or sw_ == 'swe'):
-                    f_file = pkg_resources.open_text(stws, 'Stopwords-Swedish.txt', encoding = 'utf8')
-                    #f_file = open('../pyBibX/Stopwords-Swedish.txt', 'r',       encoding = 'utf8')
-                f_lines = f_file.read()
-                sw      = f_lines.split('\n')
-                sw      = list(filter(None, sw))
+                if   (sw_ == 'ar' or sw_ == 'ara' or sw_ == 'arabic'):
+                    name = 'Stopwords-Arabic.txt'
+                elif (sw_ == 'bn' or sw_ == 'ben' or sw_ == 'bengali'):
+                    name = 'Stopwords-Bengali.txt'
+                elif (sw_ == 'bg' or sw_ == 'bul' or sw_ == 'bulgarian'):
+                    name = 'Stopwords-Bulgarian.txt'
+                elif (sw_ == 'zh' or sw_ == 'chi' or sw_ == 'chinese'):
+                    name = 'Stopwords-Chinese.txt'
+                elif (sw_ == 'cs' or sw_ == 'cze' or sw_ == 'ces' or sw_ == 'czech'):
+                    name = 'Stopwords-Czech.txt'
+                elif (sw_ == 'en' or sw_ == 'eng' or sw_ == 'english'):
+                    name = 'Stopwords-English.txt'
+                elif (sw_ == 'fi' or sw_ == 'fin' or sw_ == 'finnish'):
+                    name = 'Stopwords-Finnish.txt'
+                elif (sw_ == 'fr' or sw_ == 'fre' or sw_ == 'fra' or sw_ == 'french'):
+                    name = 'Stopwords-French.txt'
+                elif (sw_ == 'de' or sw_ == 'ger' or sw_ == 'deu' or sw_ == 'german'):
+                    name = 'Stopwords-German.txt'
+                elif (sw_ == 'el' or sw_ == 'gre' or sw_ == 'greek'):
+                    name = 'Stopwords-Greek.txt'
+                elif (sw_ == 'he' or sw_ == 'heb' or sw_ == 'hebrew'):
+                    name = 'Stopwords-Hebrew.txt'
+                elif (sw_ == 'hi' or sw_ == 'hin' or sw_ == 'hind'):
+                    name = 'Stopwords-Hind.txt'
+                elif (sw_ == 'hu' or sw_ == 'hun' or sw_ == 'hungarian'):
+                    name = 'Stopwords-Hungarian.txt'
+                elif (sw_ == 'it' or sw_ == 'ita' or sw_ == 'italian'):
+                    name = 'Stopwords-Italian.txt'
+                elif (sw_ == 'ja' or sw_ == 'jpn' or sw_ == 'japanese'):
+                    name = 'Stopwords-Japanese.txt'
+                elif (sw_ == 'ko' or sw_ == 'kor' or sw_ == 'korean'):
+                    name = 'Stopwords-Korean.txt'
+                elif (sw_ == 'mr' or sw_ == 'mar' or sw_ == 'marathi'):
+                    name = 'Stopwords-Marathi.txt'
+                elif (sw_ == 'fa' or sw_ == 'per' or sw_ == 'fas' or sw_ == 'persian'):
+                    name = 'Stopwords-Persian.txt'
+                elif (sw_ == 'pl' or sw_ == 'pol' or sw_ == 'polish'):
+                    name = 'Stopwords-Polish.txt'
+                elif (sw_ == 'pt-br' or sw_ == 'por-br' or sw_ == 'portuguese-br'):
+                    name = 'Stopwords-Portuguese-br.txt'
+                elif (sw_ == 'ro' or sw_ == 'rum' or sw_ == 'ron' or sw_ == 'romanian'):
+                    name = 'Stopwords-Romanian.txt'
+                elif (sw_ == 'ru' or sw_ == 'rus' or sw_ == 'russian'):
+                    name = 'Stopwords-Russian.txt'
+                elif (sw_ == 'sk' or sw_ == 'slo' or sw_ == 'slovak'):
+                    name = 'Stopwords-Slovak.txt'
+                elif (sw_ == 'es' or sw_ == 'spa' or sw_ == 'spanish'):
+                    name = 'Stopwords-Spanish.txt'
+                elif (sw_ == 'sv' or sw_ == 'swe' or sw_ == 'swedish'):
+                    name = 'Stopwords-Swedish.txt'
+                elif (sw_ == 'th' or sw_ == 'tha' or sw_ == 'thai'):
+                    name = 'Stopwords-Thai.txt'
+                elif (sw_ == 'uk' or sw_ == 'ukr' or sw_ == 'ukrainian'):
+                    name = 'Stopwords-Ukrainian.txt'
+                with pkg_resources.open_binary(stws, name) as file:
+                    raw_data = file.read()
+                result   = chardet.detect(raw_data)
+                encoding = result['encoding']
+                with pkg_resources.open_text(stws, name, encoding = encoding) as file:
+                    content = file.read().split('\n')
+                content = [line.rstrip('\r').rstrip('\n') for line in content]
+                sw      = list(filter(None, content))
                 sw_full.extend(sw)
             if (verbose == True):
                 print('Removing Stopwords: Working...')
