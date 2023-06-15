@@ -16,6 +16,7 @@ setup(
     install_requires=[
         'bertopic',
         'bert-extractive-summarizer',
+        'chardet',
         'matplotlib',
         'networkx',
         'numpy',
