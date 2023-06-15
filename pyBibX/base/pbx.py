@@ -54,20 +54,26 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.data_base         =  db
-        self.institution_names =  [ 'chuo kikuu', 'egyetemi', 'eyunivesithi', 'háskóli', 'inivèsite', 'inyuvesi', 'iunivesite',
-                                    'jaamacad', "jami'a", 'kulanui', 'mahadum', 'oilthigh', 'ollscoile', 'oniversite', 'prifysgol',
-                                    'sveučilište', 'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade',
-                                    'universitas', 'universitat', 'universitate', 'universitato', 'universiteit', 'universitet',
-                                    'universitetas', 'universiti', 'università', 'universität', 'université', 'universite',
-                                    'universitāte', 'univerza', 'univerzita', 'univerzitet', 'univesithi', 'uniwersytet',
-                                    'vniuersitatis', 'whare wananga', 'yliopisto', 'yunifasiti', 'yunivesite', 'yunivhesiti',
-                                    'zanko', 'ülikool', 'üniversite', 'πανεπιστήμιο', 'универзитет', 'университет', 'універсітэт',
-                                    'university', 'academy', 'institut', 'supérieur', 'ibmec', 'uff', 'gradevinski', 'lab.', 
-                                    'politecnico', 'research', 'laborat', 'college'
+        self.institution_names =  [ 
+                                    'acad', 'academy', 'ctr', 'center', 'centre', 'chuo kikuu', 'cient', 'coll', 'college', 'conservatory', 
+                                    'egyetemi', 'escola', 'education', 'escuela', 'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 
+                                    'fakultät', 'fdn', 'fundacion', 'foundation', 'gradevinski', 'higher', 'hsch', 'hochschule', 'hgsk', 
+                                    'hogeschool',  'háskóli', 'högskola', 'ibmec', 'inivèsite', 'ist', 'istituto', 'institutional', 'int', 'inst', 
+                                    'institut', 'institute', 'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'jaamacad', "jami'a", 
+                                    'kolej', 'koulu', 'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'mahadum', 'med', 'medicine', 'medical', 
+                                    'observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 'prifysgol', 'rech', 
+                                    'recherche', 'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur', 'sveučilište', 
+                                    'szkoła', 'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 
+                                    'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade', 'universitas', 'universitat', 
+                                    'universitate', 'universitato', 'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 
+                                    'university', 'università', 'universität', 'université', 'universitāte', 'univerza', 'univerzita',
+                                    'univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 'yliopisto',
+                                    'yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite',
+                                    'πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
                                   ]
 
-
-        self.language_names  =    { 'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 'arm': 'Armenian', 
+        self.language_names  =    { 
+                                    'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 'arm': 'Armenian', 
                                     'aze': 'Azerbaijani', 'bos': 'Bosnian', 'bul': 'Bulgarian', 'cat': 'Catalan', 'chi': 'Chinese', 
                                     'cze': 'Czech', 'dan': 'Danish', 'dut': 'Dutch', 'eng': 'English', 'epo': 'Esperanto', 
                                     'est': 'Estonian', 'fin': 'Finnish', 'fre': 'French', 'geo': 'Georgian', 'ger': 'German', 
@@ -81,7 +87,8 @@ class pbx_probe():
                                     'swe': 'Swedish', 'tha': 'Thai', 'tur': 'Turkish', 'ukr': 'Ukrainian', 'und': 'Undetermined', 
                                     'vie': 'Vietnamese', 'wel': 'Welsh'
                                   }
-        self.country_names =      ['Afghanistan', 'Albania', 'Algeria', 'American Samoa', 'Andorra', 'Angola', 'Anguilla', 
+        self.country_names =      [
+                                   'Afghanistan', 'Albania', 'Algeria', 'American Samoa', 'Andorra', 'Angola', 'Anguilla', 
                                    'Antarctica', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Aruba', 'Australia', 'Austria', 
                                    'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 
                                    'Benin', 'Bermuda', 'Bhutan', 'Bolivia', 'Bonaire, Sint Eustatius and Saba', 
@@ -122,7 +129,8 @@ class pbx_probe():
                                    'Vanuatu', 'Venezuela', 'Viet Nam', 'Virgin Islands (British)', 'Virgin Islands (U.S.)', 
                                    'Wallis and Futuna', 'Western Sahara', 'Yemen', 'Zambia', 'Zimbabwe', 'Aland Islands'
                                   ]
-        self.country_alpha_2 =    ['AF', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ', 'BS', 
+        self.country_alpha_2 =    [
+                                   'AF', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ', 'BS', 
                                    'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BM', 'BT', 'BO', 'BQ', 'BA', 'BW', 'BV', 'BR', 'IO', 
                                    'BN', 'BG', 'BF', 'BI', 'CV', 'KH', 'CM', 'CA', 'KY', 'CF', 'TD', 'CL', 'CN', 'CX', 'CC', 'CO', 
                                    'KM', 'CD', 'CG', 'CK', 'CR', 'HR', 'CU', 'CW', 'CY', 'CZ', 'CI', 'DK', 'DJ', 'DM', 'DO', 'EC', 
@@ -139,7 +147,8 @@ class pbx_probe():
                                    'TT', 'TN', 'TR', 'TM', 'TC', 'TV', 'UG', 'UA', 'AE', 'GB', 'UM', 'US', 'UY', 'UZ', 'VU', 'VE', 
                                    'VN', 'VG', 'VI', 'WF', 'EH', 'YE', 'ZM', 'ZW', 'AX'
                                   ]
-        self.country_alpha_3 =    ['AFG', 'ALB', 'DZA', 'ASM', 'AND', 'AGO', 'AIA', 'ATA', 'ATG', 'ARG', 'ARM', 'ABW', 'AUS', 'AUT', 
+        self.country_alpha_3 =    [
+                                   'AFG', 'ALB', 'DZA', 'ASM', 'AND', 'AGO', 'AIA', 'ATA', 'ATG', 'ARG', 'ARM', 'ABW', 'AUS', 'AUT', 
                                    'AZE', 'BHS', 'BHR', 'BGD', 'BRB', 'BLR', 'BEL', 'BLZ', 'BEN', 'BMU', 'BTN', 'BOL', 'BES', 'BIH', 
                                    'BWA', 'BVT', 'BRA', 'IOT', 'BRN', 'BGR', 'BFA', 'BDI', 'CPV', 'KHM', 'CMR', 'CAN', 'CYM', 'CAF', 
                                    'TCD', 'CHL', 'CHN', 'CXR', 'CCK', 'COL', 'COM', 'COD', 'COG', 'COK', 'CRI', 'HRV', 'CUB', 'CUW', 
@@ -158,7 +167,8 @@ class pbx_probe():
                                    'TTO', 'TUN', 'TUR', 'TKM', 'TCA', 'TUV', 'UGA', 'UKR', 'ARE', 'GBR', 'UMI', 'USA', 'URY', 'UZB', 
                                    'VUT', 'VEN', 'VNM', 'VGB', 'VIR', 'WLF', 'ESH', 'YEM', 'ZMB', 'ZWE', 'ALA'
                                   ]
-        self.country_numeric =    [4, 8, 12, 16, 20, 24, 660, 10, 28, 32, 51, 533, 36, 40, 31, 44, 48, 50, 52, 112, 56, 84, 204, 60, 
+        self.country_numeric =    [
+                                    4, 8, 12, 16, 20, 24, 660, 10, 28, 32, 51, 533, 36, 40, 31, 44, 48, 50, 52, 112, 56, 84, 204, 60, 
                                    64, 68, 535, 70, 72, 74, 76, 86, 96, 100, 854, 108, 132, 116, 120, 124, 136, 140, 148, 152, 156, 
                                    162, 166, 170, 174, 180, 178, 184, 188, 191, 192, 531, 196, 203, 384, 208, 262, 212, 214, 218, 818, 
                                    222, 226, 232, 233, 748, 231, 238, 234, 242, 246, 250, 254, 258, 260, 266, 270, 268, 276, 288, 292, 
@@ -172,7 +182,8 @@ class pbx_probe():
                                    788, 792, 795, 796, 798, 800, 804, 784, 826, 581, 840, 858, 860, 548, 862, 704, 92, 850, 876, 732, 
                                    887, 894, 716, 248
                                   ] 
-        self.country_lat_long =   [(33.93911, 67.709953), (41.153332, 20.168331), (28.033886, 1.659626), (-14.270972, -170.132217), 
+        self.country_lat_long =   [
+                                   (33.93911, 67.709953), (41.153332, 20.168331), (28.033886, 1.659626), (-14.270972, -170.132217), 
                                    (42.546245, 1.601554), (-11.202692, 17.873887), (18.220554, -63.068615), (-75.250973, -0.071389), 
                                    (17.060816, -61.796428), (-38.416097, -63.616672), (40.069099, 45.038189), (12.52111, -69.968338), 
                                    (-25.274398, 133.775136), (47.516231, 14.550072), (40.143105, 47.576927), (25.03428, -77.39628), 
@@ -1342,6 +1353,7 @@ class pbx_probe():
                             break
         elif (self.data_base == 'wos'):
             for i in range(0, df.shape[0]): 
+               df[i]        = df[i].replace('(corresponding author),',',')
                affiliations = str(df[i]).strip().split('.')[:-1]
                for affiliation in affiliations:
                     for j in range(0, len(self.aut[i])):
@@ -1349,7 +1361,20 @@ class pbx_probe():
                             if (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
                                 if (affiliation.strip() not in inst[i]):
                                     inst[i].append(affiliation.strip().replace('\&', 'and'))
-                                break            
+                                break  
+                            elif (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') not in affiliation.lower()):
+                                if (',' in self.aut[i][j]):
+                                    name_parts = self.aut[i][j].lower().replace('.', '').split(', ')
+                                    last_name  = name_parts[0]
+                                    initials   = [part[0] for part in name_parts[1:]]
+                                else:
+                                    name_parts  = self.aut[i][j].split()
+                                    initials    = name_parts[0][0]
+                                    last_name   = name_parts[-1]
+                                if (last_name in affiliation.lower() and  all(initial in affiliation.lower() for initial in initials)):
+                                    if (affiliation.strip() not in inst[i]):
+                                        inst[i].append(affiliation.strip().replace('\&', 'and'))
+                                    break 
             for i in range(0, len(inst)):
                 for j in range(0, len(inst[i])):
                     item = inst[i][j].split(',')
@@ -1364,6 +1389,7 @@ class pbx_probe():
             while len(self.aut[i]) > len(inst_[i]):
                 if (len(inst_[i]) == 0):
                     inst_[i].append('UNKNOW')
+                    print(self.aut[i],  inst_[i])
                 inst_[i].append(inst_[i][-1])
             if (len(inst_[i]) == 0):
                 inst_[i].append('UNKNOW')
