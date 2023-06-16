@@ -943,6 +943,10 @@ class pbx_probe():
             for i in range(0, len(lhs)):
                 if (lhs[i] == 'journal'):
                     lhs[i] = 'abbrev_source_title'
+        if (db == 'scopus'):
+            for i in range(0, len(lhs)):
+                if (lhs[i] == 'type'):
+                    lhs[i] = 'document_type'
         if (db == 'wos' and 'journal-iso' not in lhs and 'journal' in lhs):
             for i in range(0, len(lhs)):
                 if (lhs[i] == 'journal'):
@@ -1153,6 +1157,11 @@ class pbx_probe():
                 new_parts.insert(0, parts[0])
                 new_s     = '. '.join(new_parts)
                 data.loc[i, 'affiliation'] =  new_s
+        if ('affiliation' in data.columns and 'affiliations' in data.columns):
+            filtered_indices = data[(data['affiliation'] == 'UNKNOW') & (data['affiliations'] != 'UNKNOW')].index
+            filtered_indices = list(filtered_indices)
+            for i in filtered_indices:
+                data.loc[i, 'affiliation'] =  data.loc[i, 'affiliations']
         data = data.reindex(sorted(data.columns), axis = 1)
         return data, entries
     
@@ -1389,7 +1398,6 @@ class pbx_probe():
             while len(self.aut[i]) > len(inst_[i]):
                 if (len(inst_[i]) == 0):
                     inst_[i].append('UNKNOW')
-                    print(self.aut[i],  inst_[i])
                 inst_[i].append(inst_[i][-1])
             if (len(inst_[i]) == 0):
                 inst_[i].append('UNKNOW')
