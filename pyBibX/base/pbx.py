@@ -542,8 +542,12 @@ class pbx_probe():
         return report_dt
 
     # Function: Filter
-    def filter_bib(self, doc_type = [], year_str = -1, year_end = -1, sources = [], core = -1, country = [], language = [], abstract = False):
+    def filter_bib(self, documents = [], doc_type = [], year_str = -1, year_end = -1, sources = [], core = -1, country = [], language = [], abstract = False):
         docs = []
+        if (len(documents) > 0):
+            self.data = self.data.iloc[documents, :]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
         if (len(doc_type) > 0):
             for item in doc_type:
                 if (sum(self.data['document_type'].isin([item])) > 0):
@@ -1241,18 +1245,12 @@ class pbx_probe():
     
     # Function: Get Countries
     def __get_countries(self):
-        if ('affiliation' in self.data.columns and 'affiliations' in self.data.columns and 'affiliation_' in self.data.columns):
-            df = self.data['affiliation']
-            df = pd.Series(np.zeros(self.data.shape[0]))
-            for i in range(0, self.data.shape[0]):
-                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
-                    df[i] = self.data.loc[i, 'affiliation']
-                elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                    df[i] = self.data.loc[i, 'affiliation_']
-        elif ('affiliation' in self.data.columns and 'affiliations' in self.data.columns):
-            df = self.data['affiliation']
-        elif ('affiliation' in self.data.columns and 'affiliation_' in self.data.columns):
-            df = self.data['affiliation_']
+        df = pd.Series(np.zeros(self.data.shape[0]))
+        for i in range(0, self.data.shape[0]):
+            if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                df[i] = self.data.loc[i, 'affiliation']
+            elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                df[i] = self.data.loc[i, 'affiliation_']
         df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
         df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
         df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
@@ -1315,20 +1313,13 @@ class pbx_probe():
   
     # Function: Get Institutions
     def __get_institutions(self):
-        if ('affiliation' in self.data.columns and 'affiliations' in self.data.columns and 'affiliation_' in self.data.columns):
-            df = self.data['affiliation']
-            df = pd.Series(np.zeros(self.data.shape[0]))
-            for i in range(0, self.data.shape[0]):
-                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
-                    df[i] = self.data.loc[i, 'affiliation']
-                elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                    df[i] = self.data.loc[i, 'affiliation_']
-        elif ('affiliation' in self.data.columns and 'affiliations' in self.data.columns):
-            df = self.data['affiliation']
-            df = df.str.lower()
-        elif ('affiliation' in self.data.columns and 'affiliation_' in self.data.columns):
-            df = self.data['affiliation_']
-            df = df.str.lower()
+        df = pd.Series(np.zeros(self.data.shape[0]))
+        for i in range(0, self.data.shape[0]):
+            if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                df[i] = self.data.loc[i, 'affiliation']
+            elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                df[i] = self.data.loc[i, 'affiliation_']
+        df = df.str.lower()
         for i in range(0, len(self.aut)):
             for j in range(0, len(self.aut[i])):
                 df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
@@ -1614,7 +1605,7 @@ class pbx_probe():
         fig.update_yaxes(autorange = 'reversed')
         fig.update_layout(paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)')
         fig.show()
-        return
+        return 
     
     # Function: Tree Map
     def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10): 
@@ -1755,7 +1746,7 @@ class pbx_probe():
         fig_aut.update_traces(textfont_size = 10, textfont_color = 'white') 
         fig_aut.update_yaxes(autorange = 'reversed')
         fig_aut.show() 
-        return
+        return 
     
     # Function: Evolution per Year
     def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, start = 2010, end = 2022):
