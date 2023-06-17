@@ -53,7 +53,6 @@ from wordcloud import WordCloud
 # pbx Class
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
-        self.data_base         =  db
         self.institution_names =  [ 
                                     'acad', 'academy', 'ctr', 'center', 'centre', 'chuo kikuu', 'cient', 'coll', 'college', 'conservatory', 
                                     'egyetemi', 'escola', 'education', 'escuela', 'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 
@@ -1242,60 +1241,65 @@ class pbx_probe():
     
     # Function: Get Countries
     def __get_countries(self):
-        if   (self.data_base == 'scopus' or self.data_base == 'pubmed'):
+        if ('affiliation' in self.data.columns and 'affiliations' in self.data.columns and 'affiliation_' in self.data.columns):
             df = self.data['affiliation']
-            df = df.str.lower()
-        elif (self.data_base == 'wos'):
+            df = pd.Series(np.zeros(self.data.shape[0]))
+            for i in range(0, self.data.shape[0]):
+                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                    df[i] = self.data.loc[i, 'affiliation']
+                elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                    df[i] = self.data.loc[i, 'affiliation_']
+        elif ('affiliation' in self.data.columns and 'affiliations' in self.data.columns):
+            df = self.data['affiliation']
+        elif ('affiliation' in self.data.columns and 'affiliation_' in self.data.columns):
             df = self.data['affiliation_']
-            df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
-            df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
-            df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
-            df = df.str.replace('Bosnia & Herceg', 'Bosnia and Herzegovina',      case = False, regex = True)
-            df = df.str.replace('Cent Afr Republ', 'Central African Republic',    case = False, regex = True)
-            df = df.str.replace('Dominican Rep',   'Dominican Republic',          case = False, regex = True)
-            df = df.str.replace('Equat Guinea',    'Equatorial Guinea',           case = False, regex = True)
-            df = df.str.replace('Fr Austr Lands',  'French Southern Territories', case = False, regex = True)
-            df = df.str.replace('Fr Polynesia',    'French Polynesia',            case = False, regex = True)
-            df = df.str.replace('Malagasy Republ', 'Madagascar',                  case = False, regex = True)
-            df = df.str.replace('Mongol Peo Rep',  'Mongolia',                    case = False, regex = True)
-            df = df.str.replace('Neth Antilles',   'Saint Martin',                case = False, regex = True)
-            df = df.str.replace('North Ireland',   'Ireland',                     case = False, regex = True)
-            df = df.str.replace('Peoples R China', 'China',                       case = False, regex = True)
-            df = df.str.replace('Rep of Georgia',  'Georgia',                     case = False, regex = True)
-            df = df.str.replace('Sao Tome E Prin', 'Sao Tome and Principe',       case = False, regex = True)
-            df = df.str.replace('St Kitts & Nevi', 'Saint Kitts and Nevis',       case = False, regex = True)
-            df = df.str.replace('Trinid & Tobago', 'Trinidad and Tobago',         case = False, regex = True)
-            df = df.str.replace('U Arab Emirates', 'United Arab Emirates',        case = False, regex = True)
-            df = df.str.lower()
-            for i in range(0, len(self.aut)):
-                for j in range(0, len(self.aut[i])):
-                    df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
+        df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
+        df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
+        df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
+        df = df.str.replace('Bosnia & Herceg', 'Bosnia and Herzegovina',      case = False, regex = True)
+        df = df.str.replace('Cent Afr Republ', 'Central African Republic',    case = False, regex = True)
+        df = df.str.replace('Dominican Rep',   'Dominican Republic',          case = False, regex = True)
+        df = df.str.replace('Equat Guinea',    'Equatorial Guinea',           case = False, regex = True)
+        df = df.str.replace('Fr Austr Lands',  'French Southern Territories', case = False, regex = True)
+        df = df.str.replace('Fr Polynesia',    'French Polynesia',            case = False, regex = True)
+        df = df.str.replace('Malagasy Republ', 'Madagascar',                  case = False, regex = True)
+        df = df.str.replace('Mongol Peo Rep',  'Mongolia',                    case = False, regex = True)
+        df = df.str.replace('Neth Antilles',   'Saint Martin',                case = False, regex = True)
+        df = df.str.replace('North Ireland',   'Ireland',                     case = False, regex = True)
+        df = df.str.replace('Peoples R China', 'China',                       case = False, regex = True)
+        df = df.str.replace('Rep of Georgia',  'Georgia',                     case = False, regex = True)
+        df = df.str.replace('Sao Tome E Prin', 'Sao Tome and Principe',       case = False, regex = True)
+        df = df.str.replace('St Kitts & Nevi', 'Saint Kitts and Nevis',       case = False, regex = True)
+        df = df.str.replace('Trinid & Tobago', 'Trinidad and Tobago',         case = False, regex = True)
+        df = df.str.replace('U Arab Emirates', 'United Arab Emirates',        case = False, regex = True)
+        df = df.str.lower()
+        for i in range(0, len(self.aut)):
+            for j in range(0, len(self.aut[i])):
+                df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
         ctrs = [[] for i in range(0, df.shape[0])]
-        if (self.data_base == 'scopus'):
-            for i in range(0, df.shape[0]):
+        for i in range(0, self.data.shape[0]):
+            if (self.data.loc[i, 'source'].lower() == 'scopus'):
                 affiliations = str(df[i]).strip().split(';')
                 for affiliation in affiliations:
                     for country in self.country_names:
                         if (country.lower() in affiliation.lower()):
                             ctrs[i].append(country)
                             break
-        if (self.data_base == 'pubmed'):
-            for i in range(0, df.shape[0]):
+            if (self.data.loc[i, 'source'].lower()  == 'pubmed'):
                 affiliations = str(df[i]).strip().split(',')
                 for affiliation in affiliations:
                     for country in self.country_names:
                         if (country.lower() in affiliation.lower()):
                             ctrs[i].append(country)
                             break
-        elif (self.data_base == 'wos'):
-           for i in range(0, df.shape[0]): 
-               affiliations = str(df[i]).strip().split('.')[:-1]
-               for affiliation in affiliations:
-                    for j in range(0, len(self.aut[i])):
-                        for country in self.country_names:
-                            if (country.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
-                                ctrs[i].append(country)
-                                break
+            if (self.data.loc[i, 'source'].lower()  == 'wos'):
+                affiliations = str(df[i]).strip().split('.')[:-1]
+                for affiliation in affiliations:
+                     for j in range(0, len(self.aut[i])):
+                         for country in self.country_names:
+                             if (country.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
+                                 ctrs[i].append(country)
+                                 break
         for i in range(0, len(ctrs)):
             while len(self.aut[i]) > len(ctrs[i]):
                 if (len(ctrs[i]) == 0):
@@ -1311,19 +1315,27 @@ class pbx_probe():
   
     # Function: Get Institutions
     def __get_institutions(self):
-        if   (self.data_base == 'scopus' or self.data_base == 'pubmed'):
+        if ('affiliation' in self.data.columns and 'affiliations' in self.data.columns and 'affiliation_' in self.data.columns):
+            df = self.data['affiliation']
+            df = pd.Series(np.zeros(self.data.shape[0]))
+            for i in range(0, self.data.shape[0]):
+                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                    df[i] = self.data.loc[i, 'affiliation']
+                elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                    df[i] = self.data.loc[i, 'affiliation_']
+        elif ('affiliation' in self.data.columns and 'affiliations' in self.data.columns):
             df = self.data['affiliation']
             df = df.str.lower()
-        elif (self.data_base == 'wos'):
+        elif ('affiliation' in self.data.columns and 'affiliation_' in self.data.columns):
             df = self.data['affiliation_']
             df = df.str.lower()
-            for i in range(0, len(self.aut)):
-                for j in range(0, len(self.aut[i])):
-                    df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
+        for i in range(0, len(self.aut)):
+            for j in range(0, len(self.aut[i])):
+                df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
         inst  = [[] for i in range(0, df.shape[0])]
         inst_ = [[] for i in range(0, df.shape[0])]
-        if  (self.data_base == 'scopus'):
-            for i in range(0, df.shape[0]):
+        for i in range(0, df.shape[0]):
+            if  (self.data.loc[i, 'source'].lower() == 'scopus'):
                 affiliations = str(df[i]).split(';')
                 for affiliation in affiliations:
                     for institution in self.institution_names:
@@ -1331,18 +1343,7 @@ class pbx_probe():
                             if (affiliation.strip() not in inst[i]):
                                 inst[i].append(affiliation.strip())
                             break
-            for i in range(0, len(inst)):
-                for j in range(0, len(inst[i])):
-                    item = inst[i][j].split(',')
-                    for institution in self.institution_names:
-                        idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
-                        if (len(idx) > 0):
-                            institution_name = item[idx[0]]
-                            institution_name = ' '.join(institution_name.split())
-                            inst_[i].append(institution_name)
-                            break
-        if  (self.data_base == 'pubmed'):
-            for i in range(0, df.shape[0]):
+            if  (self.data.loc[i, 'source'].lower() == 'pubmed'):
                 affiliations = str(df[i]).split(',')
                 for affiliation in affiliations:
                     for institution in self.institution_names:
@@ -1350,50 +1351,39 @@ class pbx_probe():
                             if (affiliation.strip() not in inst[i]):
                                 inst[i].append(affiliation.strip())
                             break
-            for i in range(0, len(inst)):
-                for j in range(0, len(inst[i])):
-                    item = inst[i][j].split(',')
-                    for institution in self.institution_names:
-                        idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
-                        if (len(idx) > 0):
-                            institution_name = item[idx[0]]
-                            institution_name = ' '.join(institution_name.split())
-                            inst_[i].append(institution_name)
-                            break
-        elif (self.data_base == 'wos'):
-            for i in range(0, df.shape[0]): 
-               df[i]        = df[i].replace('(corresponding author),',',')
-               affiliations = str(df[i]).strip().split('.')[:-1]
-               for affiliation in affiliations:
-                    for j in range(0, len(self.aut[i])):
-                        for institution in self.institution_names:
-                            if (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
-                                if (affiliation.strip() not in inst[i]):
-                                    inst[i].append(affiliation.strip().replace('\&', 'and'))
-                                break  
-                            elif (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') not in affiliation.lower()):
-                                if (',' in self.aut[i][j]):
-                                    name_parts = self.aut[i][j].lower().replace('.', '').split(', ')
-                                    last_name  = name_parts[0]
-                                    initials   = [part[0] for part in name_parts[1:]]
-                                else:
-                                    name_parts  = self.aut[i][j].split()
-                                    initials    = name_parts[0][0]
-                                    last_name   = name_parts[-1]
-                                if (last_name in affiliation.lower() and  all(initial in affiliation.lower() for initial in initials)):
-                                    if (affiliation.strip() not in inst[i]):
-                                        inst[i].append(affiliation.strip().replace('\&', 'and'))
-                                    break 
-            for i in range(0, len(inst)):
-                for j in range(0, len(inst[i])):
-                    item = inst[i][j].split(',')
-                    for institution in self.institution_names:
-                        idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
-                        if (len(idx) > 0):
-                            institution_name = item[idx[0]]
-                            institution_name = ' '.join(institution_name.split())
-                            inst_[i].append(institution_name)
-                            break
+            if (self.data.loc[i, 'source'].lower() == 'wos'):
+                df[i]        = df[i].replace('(corresponding author),',',')
+                affiliations = str(df[i]).strip().split('.')[:-1]
+                for affiliation in affiliations:
+                     for j in range(0, len(self.aut[i])):
+                         for institution in self.institution_names:
+                             if (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
+                                 if (affiliation.strip() not in inst[i]):
+                                     inst[i].append(affiliation.strip().replace('\&', 'and'))
+                                 break  
+                             elif (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') not in affiliation.lower()):
+                                 if (',' in self.aut[i][j]):
+                                     name_parts = self.aut[i][j].lower().replace('.', '').split(', ')
+                                     last_name  = name_parts[0]
+                                     initials   = [part[0] for part in name_parts[1:]]
+                                 else:
+                                     name_parts  = self.aut[i][j].split()
+                                     initials    = name_parts[0][0]
+                                     last_name   = name_parts[-1]
+                                 if (last_name in affiliation.lower() and  all(initial in affiliation.lower() for initial in initials)):
+                                     if (affiliation.strip() not in inst[i]):
+                                         inst[i].append(affiliation.strip().replace('\&', 'and'))
+                                     break 
+        for i in range(0, len(inst)):
+            for j in range(0, len(inst[i])):
+                item = inst[i][j].split(',')
+                for institution in self.institution_names:
+                    idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
+                    if (len(idx) > 0):
+                        institution_name = item[idx[0]]
+                        institution_name = ' '.join(institution_name.split())
+                        inst_[i].append(institution_name)
+                        break
         for i in range(0, len(inst_)):
             while len(self.aut[i]) > len(inst_[i]):
                 if (len(inst_[i]) == 0):
@@ -2703,12 +2693,16 @@ class pbx_probe():
                 except:
                     pass      
         self.labels_r = ['r_'+str(i) for i in range(0, self.matrix_r.shape[1])]
-        if   (self.data_base == 'scopus'):
-            keys = self.data['title'].tolist()
-            keys = [item.lower().replace('[','').replace(']','') for item in keys]
-        elif (self.data_base == 'wos'):
-            keys = self.data['doi'].tolist()
-            keys = [item.lower() for item in keys]
+        keys_1 = self.data['title'].tolist()
+        keys_1 = [item.lower().replace('[','').replace(']','') for item in keys_1]
+        keys_2 = self.data['doi'].tolist()
+        keys_2 = [item.lower() for item in keys_2]
+        keys   = [[] for item in keys_1]
+        for i in range(0, self.data.shape[0]):   
+            if   (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                keys[i] = keys_1[i]
+            elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                keys[i] = keys_2[i]
         insd_r = []
         insd_t = []
         corp   = []
@@ -4020,7 +4014,7 @@ class pbx_probe():
 ############################################################################
 
     # Function: Abstractive Text Summarization # Model Name List = https://huggingface.co/models?pipeline_tag=summarization&sort=downloads&search=pegasus
-    def summarize_abst_peg(self, article_ids = [], model_name = 'google/pegasus-xsum'):
+    def summarize_abst_peg(self, article_ids = [], model_name = 'google/pegasus-xsum', min_L = 100, max_L = 150):
         abstracts = self.data['abstract']
         corpus    = []
         if (len(article_ids) == 0):
@@ -4037,9 +4031,9 @@ class pbx_probe():
             corpus    = ' '.join(corpus)
             tokenizer = PegasusTokenizer.from_pretrained(model_name)
             pegasus   = PegasusForConditionalGeneration.from_pretrained(model_name)
-            tokens    = tokenizer(corpus, truncation = True, padding = 'longest', return_tensors = 'pt')
-            summary   = pegasus.generate(**tokens) # max_new_tokens = 1024, max_length = 1024, 
-            summary   = tokenizer.decode(summary[0])
+            tokens    = tokenizer.encode(corpus, return_tensors = 'pt', max_length = max_L, truncation = True)
+            summary   = pegasus.generate(tokens, min_length = min_L, max_length = max_L, length_penalty = 2.0, num_beams = 4, early_stopping = True)
+            summary   = tokenizer.decode(summary[0], skip_special_tokens = True)
         else:
             summary   = 'No abstracts were found in the selected set of documents'
         return summary
