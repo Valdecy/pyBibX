@@ -749,17 +749,23 @@ class pbx_probe():
     def merge_institution(self, get = [], replace_for = 'name'):
         for name in get:
             for i in range(0, self.data.shape[0]):
-                target = self.data.loc[i, 'affiliation'].lower()
+                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                    target = self.data.loc[i, 'affiliation'].lower()
+                elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                    target = self.data.loc[i, 'affiliation_'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'affiliation'] = target.replace(name, replace_for)
         self.__make_bib(verbose = False)
         return
-    
+                
     # Function: Merge Country
     def merge_country(self, get = [], replace_for = 'name'):
         for name in get:
             for i in range(0, self.data.shape[0]):
-                target = self.data.loc[i, 'affiliation'].lower()
+                if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
+                    target = self.data.loc[i, 'affiliation'].lower()
+                elif (self.data.loc[i, 'source'].lower() == 'wos'):
+                    target = self.data.loc[i, 'affiliation_'].lower()
                 if (name.lower() in target):
                     self.data.loc[i, 'affiliation'] = target.replace(name, replace_for)
         self.__make_bib(verbose = False)
@@ -1250,7 +1256,7 @@ class pbx_probe():
             if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
                 df[i] = self.data.loc[i, 'affiliation']
             elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                df[i] = self.data.loc[i, 'affiliation_']
+                df[i] = self.data.loc[i, 'affiliation_'].replace('(Corresponding Author)', '')
         df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
         df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
         df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
@@ -1273,7 +1279,8 @@ class pbx_probe():
         df = df.str.lower()
         for i in range(0, len(self.aut)):
             for j in range(0, len(self.aut[i])):
-                df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
+                for k in range(0, df.shape[0]):
+                    df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
         ctrs = [[] for i in range(0, df.shape[0])]
         for i in range(0, self.data.shape[0]):
             if (self.data.loc[i, 'source'].lower() == 'scopus'):
@@ -1322,7 +1329,8 @@ class pbx_probe():
         df = df.str.lower()
         for i in range(0, len(self.aut)):
             for j in range(0, len(self.aut[i])):
-                df = df.str.replace(self.aut[i][j], self.aut[i][j].replace('.', ''), regex = True)
+                for k in range(0, df.shape[0]):
+                    df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
         inst  = [[] for i in range(0, df.shape[0])]
         inst_ = [[] for i in range(0, df.shape[0])]
         for i in range(0, df.shape[0]):
