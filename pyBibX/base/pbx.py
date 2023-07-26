@@ -54,21 +54,21 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.institution_names =  [ 
-                                    'acad', 'academy', 'ctr', 'center', 'centre', 'chuo kikuu', 'cient', 'coll', 'college', 'conservatory', 
-                                    'egyetemi', 'escola', 'education', 'escuela', 'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 
-                                    'fakultät', 'fdn', 'fundacion', 'foundation', 'gradevinski', 'higher', 'hsch', 'hochschule', 'hgsk', 
-                                    'hogeschool',  'háskóli', 'högskola', 'ibmec', 'inivèsite', 'ist', 'istituto', 'institutional', 'int', 'inst', 
-                                    'institut', 'institute', 'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'jaamacad', "jami'a", 
-                                    'kolej', 'koulu', 'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'mahadum', 'med', 'medicine', 'medical', 
-                                    'observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 'prifysgol', 'rech', 
-                                    'recherche', 'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur', 'sveučilište', 
-                                    'szkoła', 'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 
-                                    'unibersidad', 'unibertsitatea', 'univ', 'universidad', 'universidade', 'universitas', 'universitat', 
-                                    'universitate', 'universitato', 'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 
-                                    'university', 'università', 'universität', 'université', 'universitāte', 'univerza', 'univerzita',
-                                    'univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 'yliopisto',
-                                    'yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite',
-                                    'πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
+                                    'acad', 'academy', 'akad', 'aachen', 'assoc', 'cambridge', 'ctr', 'cefet', 'center', 'centre', 'chuo kikuu', 
+                                    'cient', 'coll', 'college', 'colegio', 'conservatory', 'dept', 'egyetemi', 'escola', 'education', 'escuela', 
+                                    'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 'fakultät', 'fdn', 'fundacion', 'foundation', 
+                                    'gradevinski', 'higher', 'hsch', 'hochschule', 'hosp', 'hgsk', 'hogeschool',  'háskóli', 'högskola', 'ibmec', 
+                                    'inivèsite', 'ist', 'istituto', 'imd', 'institutional', 'int', 'inst',  'institut', 'institute', 
+                                    'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'jaamacad', "jami'a",  'kolej', 'koulu', 
+                                    'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'learning', 'mahadum', 'med', 'medicine', 'medical', 'observatory', 
+                                    'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 'prifysgol', 'rech', 'recherche', 
+                                    'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur', 'sveučilište', 'szkoła', 
+                                    'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 'uned', 'unibersidad', 'unibertsitatea', 
+                                    'univ', 'universidad', 'universidade', 'universitas', 'universitat', 'universitate', 'universitato', 
+                                    'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 'university', 'università', 
+                                    'universität', 'université', 'universitāte', 'univerza', 'univerzita','univerzitet', 'univesithi', 'uniwersytet', 
+                                    'vniuersitatis', 'whare wananga', 'yliopisto','yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 
+                                    'ülikool', 'üniversite','πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
                                   ]
 
         self.language_names  =    { 
@@ -127,7 +127,7 @@ class pbx_probe():
                                    'United States Minor Outlying Islands', 'United States of America', 'Uruguay', 'Uzbekistan', 
                                    'Vanuatu', 'Venezuela', 'Viet Nam', 'Virgin Islands (British)', 'Virgin Islands (U.S.)', 
                                    'Wallis and Futuna', 'Western Sahara', 'Yemen', 'Zambia', 'Zimbabwe', 'Aland Islands'
-                                  ]
+                                  ] 
         self.country_alpha_2 =    [
                                    'AF', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ', 'BS', 
                                    'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BM', 'BT', 'BO', 'BQ', 'BA', 'BW', 'BV', 'BR', 'IO', 
@@ -1257,11 +1257,14 @@ class pbx_probe():
                 df[i] = self.data.loc[i, 'affiliation']
             elif (self.data.loc[i, 'source'].lower() == 'wos'):
                 df[i] = self.data.loc[i, 'affiliation_'].replace('(Corresponding Author)', '')
+                if (',' in df[i] and ', ' not in df[i]):
+                    df[i] = df[i].replace(',', ', ')
         df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
         df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
         df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
         df = df.str.replace('Bosnia & Herceg', 'Bosnia and Herzegovina',      case = False, regex = True)
         df = df.str.replace('Cent Afr Republ', 'Central African Republic',    case = False, regex = True)
+        df = df.str.replace('Czech Republic',  'Czechia',                     case = False, regex = True)
         df = df.str.replace('Dominican Rep',   'Dominican Republic',          case = False, regex = True)
         df = df.str.replace('Equat Guinea',    'Equatorial Guinea',           case = False, regex = True)
         df = df.str.replace('Fr Austr Lands',  'French Southern Territories', case = False, regex = True)
@@ -1272,10 +1275,40 @@ class pbx_probe():
         df = df.str.replace('North Ireland',   'Ireland',                     case = False, regex = True)
         df = df.str.replace('Peoples R China', 'China',                       case = False, regex = True)
         df = df.str.replace('Rep of Georgia',  'Georgia',                     case = False, regex = True)
+        df = df.str.replace('Russia',          'Russian Federation',          case = False, regex = True)
         df = df.str.replace('Sao Tome E Prin', 'Sao Tome and Principe',       case = False, regex = True)
+        df = df.str.replace('Scotland',        'United Kingdom',              case = False, regex = True)
         df = df.str.replace('St Kitts & Nevi', 'Saint Kitts and Nevis',       case = False, regex = True)
         df = df.str.replace('Trinid & Tobago', 'Trinidad and Tobago',         case = False, regex = True)
         df = df.str.replace('U Arab Emirates', 'United Arab Emirates',        case = False, regex = True)
+        df = df.str.replace('USA',             'United States of America',    case = False, regex = True)
+        df = df.str.replace('VietNam',         'Viet Nam',                    case = False, regex = True)
+        #for i in range(0, df.shape[0]):
+            #df[i] = df[i].replace(' USA',            ' United States of America')
+            #df[i] = df[i].replace('ENGLAND',         'United Kingdom')
+            #df[i] = df[i].replace('Antigua & Barbu', 'Antigua and Barbuda')
+            #df[i] = df[i].replace('Bosnia & Herceg', 'Bosnia and Herzegovina')
+            #df[i] = df[i].replace('Cent Afr Republ', 'Central African Republic')
+            #df[i] = df[i].replace('Czech Republic',  'Czechia')
+            #df[i] = df[i].replace('Dominican Rep',   'Dominican Republic')
+            #df[i] = df[i].replace('England',         'United Kingdom')
+            #df[i] = df[i].replace('Equat Guinea',    'Equatorial Guinea')
+            #df[i] = df[i].replace('Fr Austr Lands',  'French Southern Territories')
+            #df[i] = df[i].replace('Fr Polynesia',    'French Polynesia')
+            #df[i] = df[i].replace('Malagasy Republ', 'Madagascar')
+            #df[i] = df[i].replace('Mongol Peo Rep',  'Mongolia')
+            #df[i] = df[i].replace('Neth Antilles',   'Saint Martin')
+            #df[i] = df[i].replace('North Ireland',   'Ireland')
+            #df[i] = df[i].replace('Peoples R China', 'China')
+            #df[i] = df[i].replace('Rep of Georgia',  'Georgia')
+            #df[i] = df[i].replace('Russia',          'Russian Federation')
+            #df[i] = df[i].replace('Sao Tome E Prin', 'Sao Tome and Principe')
+            #df[i] = df[i].replace('Scotland',        'United Kingdom')
+            #df[i] = df[i].replace('St Kitts & Nevi', 'Saint Kitts and Nevis')
+            #df[i] = df[i].replace('Trinid & Tobago', 'Trinidad and Tobago')
+            #df[i] = df[i].replace('U Arab Emirates', 'United Arab Emirates')
+            #df[i] = df[i].replace('USA',             'United States of America')
+            #df[i] = df[i].replace('VietNam',         'Viet Nam')
         df = df.str.lower()
         for i in range(0, len(self.aut)):
             for j in range(0, len(self.aut[i])):
