@@ -4136,15 +4136,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Authors Productivity by Year
     def ask_chatgpt_ap(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to authors productivity by year', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus = ''
         for author, row in self.ask_gpt_ap.iterrows():
             years        = [(year, row[year]) for year in row.index if row[year] > 0]
@@ -4160,15 +4169,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Bar Plots 
     def ask_chatgpt_bp(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_bp.to_string(index = False)    
         openai.api_key = api_key
         prompt         = query + ' regarding ' + self.ask_gpt_bp_t + ':\n\n' + f'{corpus}\n'
@@ -4180,15 +4198,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Citation Analysis 
     def ask_chatgpt_citation(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_nad.to_string(index = False)    
         openai.api_key = api_key
         prompt         = query + ':\n\n' + f'{corpus}\n'
@@ -4200,15 +4227,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Collaboration Analysis
     def ask_chatgpt_colab(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following network information, knowing that Node 1 is connected with Node 2', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_adj.to_string(index = False)
         openai.api_key = api_key
         prompt         = query + ':\n\n' + f'{corpus}\n'
@@ -4220,15 +4256,24 @@ class pbx_probe():
     # Function: Ask chatGPT about EDA Report 
     def ask_chatgpt_eda(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_rt.to_string(index = False)    
         lines          = corpus.split('\n')
         corpus         = '\n'.join(' '.join(line.split()) for line in lines)
@@ -4242,15 +4287,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Evolution Plot
     def ask_chatgpt_ep(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to words apperance by year', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_ep
         openai.api_key = api_key
         prompt         = query + ':\n\n' + f'{corpus}\n'
@@ -4262,15 +4316,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Citation Analysis 
     def ask_chatgpt_hist(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the most influential references, also discover if there is relevant network connections', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus = []
         for i in range(0, self.ask_gpt_hist.shape[0]):
             corpus.append('Paper ' + self.ask_gpt_hist.iloc[i,0] + ' Cites Paper ' + self.ask_gpt_hist.iloc[i,1])
@@ -4285,15 +4348,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Map Analysis 
     def ask_chatgpt_map(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_map.to_string(index = False)
         openai.api_key = api_key
         prompt         = query + ':\n\n' + f'{corpus}\n'
@@ -4305,15 +4377,24 @@ class pbx_probe():
     # Function: Ask chatGPT about N-Grms 
     def ask_chatgpt_ngrams(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the n-grams and their frequency', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_ng.to_string(index = False)  
         lines          = corpus.split('\n')
         corpus         = '\n'.join(' '.join(line.split()) for line in lines)  
@@ -4327,15 +4408,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Sankey Diagram
     def ask_chatgpt_sankey(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information from a network called Sankey', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_sk.to_string(index = False)   
         lines          = corpus.split('\n')
         corpus         = '\n'.join(' '.join(line.split()) for line in lines)
@@ -4349,15 +4439,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Similarity Analysis 
     def ask_chatgpt_sim(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = self.ask_gpt_sim.to_string(index = False)
         openai.api_key = api_key
         prompt         = query + ':\n\n' + f'{corpus}\n'
@@ -4369,15 +4468,24 @@ class pbx_probe():
     # Function: Ask chatGPT about Wordcloud 
     def ask_chatgpt_wordcloud(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            response = openai.Completion.create(
-                                                engine      = model,
-                                                prompt      = prompt,
-                                                max_tokens  = max_tokens,
-                                                n           = n,
-                                                stop        = None,
-                                                temperature = temperature
-                                                )
-            return response.choices[0].text.strip()
+            try: 
+                response = openai.ChatCompletion.create(
+                                                        model      = model,
+                                                        messages   = [{'role': 'user', 'content': prompt}],
+                                                        max_tokens = max_tokens
+                                                        )
+                response = response['choices'][0]['message']['content']
+            except:
+                response = openai.Completion.create(
+                                                    engine      = model,
+                                                    prompt      = prompt,
+                                                    max_tokens  = max_tokens,
+                                                    n           = n,
+                                                    stop        = None,
+                                                    temperature = temperature
+                                                    )
+                response = response.choices[0].text.strip()
+            return response
         corpus         = pd.DataFrame.from_dict(self.ask_gpt_wd, orient = 'index', columns = ['Frequency'])    
         corpus         = corpus.reset_index().rename(columns = {'index': 'Word'})
         corpus         = corpus.to_string(index = False)
