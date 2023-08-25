@@ -943,7 +943,7 @@ class pbx_probe():
                 lhs.append('source')
                 rhs.append('WoS')
             doc = doc + 1
-          if (f_list[i].find('=') != -1 and f_list[i].find(' ') != 0):
+          if ( (f_list[i].find('=') != -1 and f_list[i].find(' ') != 0) or (f_list[i].find('=') != -1 and f_list[i].find('=') == 15) ): # DBLP
             lhs.append(f_list[i].split('=')[0].lower().strip())
             rhs.append(f_list[i].split('=')[1].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip())
           elif (f_list[i].find(' ') == 0 and i!= 0 and rhs[-1] != 'doc_start'):
@@ -1216,17 +1216,20 @@ class pbx_probe():
         citation = [item.lower().replace('cited by ' , '') for item in list(series)] 
         citation = [item.lower().replace('cited by: ', '') for item in list(citation)] 
         for i in range(0, len(citation)):
-            idx = citation[i].find(';')
-            if (idx >= 0):
-                try:
-                    citation[i] = int(citation[i][:idx])
-                except:
-                    citation[i] = int(re.search(r'\d+', citation[i]).group())
+            if (citation[i] != 'unknow'):
+                idx = citation[i].find(';')
+                if (idx >= 0):
+                    try:
+                        citation[i] = int(citation[i][:idx])
+                    except:
+                        citation[i] = int(re.search(r'\d+', citation[i]).group())
+                else:
+                    try:
+                        citation[i] = int(citation[i])
+                    except:
+                        citation[i] = int(re.search(r'\d+', citation[i]).group()) 
             else:
-                try:
-                    citation[i] = int(citation[i])
-                except:
-                    citation[i] = int(re.search(r'\d+', citation[i]).group()) 
+                citation[i] = 0
         return citation
     
     # Function: Get Past Citations per Year
@@ -1259,6 +1262,8 @@ class pbx_probe():
                 df[i] = self.data.loc[i, 'affiliation_'].replace('(Corresponding Author)', '')
                 if (',' in df[i] and ', ' not in df[i]):
                     df[i] = df[i].replace(',', ', ')
+            elif (df[i] == 0):
+                df[i] = 'UNKNOW'
         df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
         df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
         df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
@@ -1359,6 +1364,8 @@ class pbx_probe():
                 df[i] = self.data.loc[i, 'affiliation']
             elif (self.data.loc[i, 'source'].lower() == 'wos'):
                 df[i] = self.data.loc[i, 'affiliation_']
+            elif (df[i] == 0):
+                df[i] = 'UNKNOW'
         df = df.str.lower()
         for i in range(0, len(self.aut)):
             for j in range(0, len(self.aut[i])):
