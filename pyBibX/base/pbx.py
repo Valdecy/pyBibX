@@ -1315,10 +1315,15 @@ class pbx_probe():
             #df[i] = df[i].replace('USA',             'United States of America')
             #df[i] = df[i].replace('VietNam',         'Viet Nam')
         df = df.str.lower()
-        for i in range(0, len(self.aut)):
-            for j in range(0, len(self.aut[i])):
-                for k in range(0, df.shape[0]):
-                    df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
+        #for i in range(0, len(self.aut)):
+            #for j in range(0, len(self.aut[i])):
+                #for k in range(0, df.shape[0]):
+                    #df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
+        replace_dict = {}
+        for sublist in self.aut:
+            for val in sublist:
+                replace_dict[val] = val.replace('.', '')
+        df.replace(replace_dict, inplace = True)
         ctrs = [[] for i in range(0, df.shape[0])]
         for i in range(0, self.data.shape[0]):
             if (self.data.loc[i, 'source'].lower() == 'scopus'):
@@ -1367,10 +1372,15 @@ class pbx_probe():
             elif (df[i] == 0):
                 df[i] = 'UNKNOW'
         df = df.str.lower()
-        for i in range(0, len(self.aut)):
-            for j in range(0, len(self.aut[i])):
-                for k in range(0, df.shape[0]):
-                    df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
+        #for i in range(0, len(self.aut)):
+            #for j in range(0, len(self.aut[i])):
+                #for k in range(0, df.shape[0]):
+                    #df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
+        replace_dict = {}
+        for sublist in self.aut:
+            for val in sublist:
+                replace_dict[val] = val.replace('.', '')
+        df.replace(replace_dict, inplace = True)
         inst  = [[] for i in range(0, df.shape[0])]
         inst_ = [[] for i in range(0, df.shape[0])]
         for i in range(0, df.shape[0]):
