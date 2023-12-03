@@ -37,7 +37,6 @@ from difflib import SequenceMatcher
 from matplotlib import pyplot as plt                       
 plt.style.use('bmh')
 #from scipy.spatial import ConvexHull   
-from openai import OpenAI
 from sentence_transformers import SentenceTransformer                    
 from sklearn.cluster import KMeans                          
 from sklearn.decomposition import TruncatedSVD as tsvd      
@@ -4135,11 +4134,11 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                  client   = OpenAI(api_key = api_key)
+                  client   = openai.OpenAI(api_key = api_key)
                   response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
                   response = response.choices[0].message.content
               except:
-                  client   = OpenAI(api_key = api_key)
+                  client   = openai.OpenAI(api_key = api_key)
                   response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
                   response = response.choices[0].text.strip()
             return response
@@ -4194,8 +4193,8 @@ class pbx_probe():
             years        = [(year, row[year]) for year in row.index if row[year] > 0]
             paper_counts = ', '.join([f'({year}: {count} paper{"s" if count > 1 else ""})' for year, count in years])
             corpus       = corpus +  f'{author} {paper_counts}\n'
-        prompt         = query + ':\n\n' + f'{corpus}\n'
-        prompt         = prompt[:char_limit]
+        prompt                   = query + ':\n\n' + f'{corpus}\n'
+        prompt                   = prompt[:char_limit]
        
         ##############################################################################
        
@@ -4227,13 +4226,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4280,13 +4279,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4333,13 +4332,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4386,13 +4385,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4441,13 +4440,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4494,13 +4493,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################
@@ -4550,13 +4549,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
@@ -4603,13 +4602,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
@@ -4658,13 +4657,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
@@ -4713,13 +4712,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
@@ -4766,13 +4765,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
@@ -4823,13 +4822,13 @@ class pbx_probe():
                   response = response.choices[0].text.strip()
             else:
               try:
-                client   = OpenAI(api_key = api_key)
-                response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                response = response.choices[0].message.content
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
               except:
-                client   = OpenAI(api_key = api_key)
-                response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                response = response.choices[0].text.strip()
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
             return response
         
         ##############################################################################        
