@@ -735,6 +735,18 @@ class pbx_probe():
         print('')
         print('############################################################################')
         return
+
+    # Function: Save Working Database
+    def save_database(self, sep = '\t', name = 'data.csv'):
+        self.data.to_csv(name, index = False)
+        return
+    
+    # Function: Load Working Database
+    def load_database(self, name = 'data.csv'):
+        data      = pd.read_csv(name, dtype = str)
+        self.data = data.copy(deep = True)
+        self.__make_bib(verbose = True)
+        return
     
     # Function: Merge Author
     def merge_author(self, get = [], replace_for = 'name'):
@@ -1188,6 +1200,7 @@ class pbx_probe():
             string_vb = tp + ' = ' + str(types.count(tp))
             self.vb.append(string_vb)
         return
+    
     ##############################################################################
     
     # Function: Get Entries
