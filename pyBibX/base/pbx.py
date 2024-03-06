@@ -1680,7 +1680,7 @@ class pbx_probe():
         return 
     
     # Function: Tree Map
-    def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10): 
+    def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10, txt_font_size = 12): 
         if   (entry == 'kwp'):
             labels = self.u_kid
             sizes  = self.kid_count 
@@ -1714,7 +1714,7 @@ class pbx_probe():
         sizes  = sizes[:topn] 
         cols   = [plt.cm.Spectral(i/float(len(labels))) for i in range(0, len(labels))]
         plt.figure(figsize = (size_x, size_y))
-        squarify.plot(sizes = sizes, label = labels, pad = True, color = cols, alpha = 0.75)
+        squarify.plot(sizes = sizes, label = labels, pad = True, color = cols, alpha = 0.75, text_kwargs = {'fontsize': txt_font_size})
         plt.title(title, loc = 'center')
         plt.axis('off')
         plt.show()
@@ -1821,7 +1821,7 @@ class pbx_probe():
         return 
     
     # Function: Evolution per Year
-    def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, start = 2010, end = 2022):
+    def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, txt_font_size = 10, start = 2010, end = 2022):
         if (view == 'browser'):
             pio.renderers.default = 'browser'
         if (start < self.date_str or start == -1):
@@ -1834,14 +1834,14 @@ class pbx_probe():
         else:
             rmv_custom_words.append('unknow') 
         if   (key == 'kwp'):
-            u_ent = [item for item in self.u_kid]
-            ent   = [item for item in self.kid]
+            u_ent = [item for item in self.u_kid if item not in rmv_custom_words]
+            ent   = [item for item in self.kid   if item not in rmv_custom_words]
         elif (key == 'kwa'):
-            u_ent = [item for item in self.u_auk]
-            ent   = [item for item in self.auk]
+            u_ent = [item for item in self.u_auk if item not in rmv_custom_words]
+            ent   = [item for item in self.auk   if item not in rmv_custom_words]
         elif (key == 'jou'):
-            u_ent = [item for item in self.u_jou]
-            ent   = [item for item in self.jou]
+            u_ent = [item for item in self.u_jou if item not in rmv_custom_words]
+            ent   = [item for item in self.jou   if item not in rmv_custom_words]
         elif (key == 'abs'):
             abs_  = self.data['abstract'].tolist()
             abs_  = ['the' if i not in y_idx else  abs_[i] for i in range(0, len(abs_))]
@@ -1911,7 +1911,7 @@ class pbx_probe():
                                          text             = names, 
                                          hoverinfo        = 'text',
                                          textangle        = 0,
-                                         textfont_size    = 10,
+                                         textfont_size    = txt_font_size,
                                          hovertext        = n_val,
                                          insidetextanchor = 'middle',
                                          marker_color     = self.__hex_rgba(hxc = self.color_names[j], alpha = 0.70)
