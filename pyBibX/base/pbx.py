@@ -30,6 +30,7 @@ try:
 except ImportError:
     import importlib_resources as pkg_resources
 from . import stws
+from . import helpers
 
 from bertopic import BERTopic                               
 from collections import Counter
@@ -409,11 +410,11 @@ class pbx_probe():
         self.av_c_doc           = round(sum(self.citation)/self.data.shape[0], 2)
         self.ref, self.u_ref    = self.__get_str(entry = 'references', s = ';',     lower = False, sorting = True)
         self.aut, self.u_aut    = self.__get_str(entry = 'author',     s = ' and ', lower = True,  sorting = True)
-        self.aut_h              = self.__h_index()
+        self.aut_h              = helpers.h_index_fast(self.u_aut, self.aut, self.citation, self.ref)
         self.aut_docs           = [len(item) for item in self.aut]
         self.aut_single         = len([item  for item in self.aut_docs if item == 1])
         self.aut_multi          = [item for item in self.aut_docs if item > 1]
-        self.aut_cit            = self.__get_counts(self.u_aut, self.aut, self.citation)
+        self.aut_cit            = helpers.get_counts_fast(self.u_aut, self.aut, np.array(self.citation, dtype=int))
         self.kid, self.u_kid    = self.__get_str(entry = 'keywords', s = ';', lower = True, sorting = True)
         if ('unknow' in self.u_kid):
             self.u_kid.remove('unknow')
@@ -441,22 +442,21 @@ class pbx_probe():
         idx.reverse()
         self.u_jou              = [self.u_jou[i] for i in idx]
         self.jou_count          = [self.jou_count[i] for i in idx]
-        self.jou_cit            = self.__get_counts(self.u_jou, self.jou, self.citation)
-        self.jou_cit            = self.__get_counts(self.u_jou, self.jou, self.citation)
+        self.jou_cit            = helpers.get_counts_fast(self.u_jou, self.jou, np.array(self.citation, dtype=int))
         self.lan, self.u_lan    = self.__get_str(entry = 'language', s = '.', lower = True, sorting = True) 
         lan_                    = [item for sublist in self.lan for item in sublist]
         self.lan_count          = [lan_.count(item) for item in self.u_lan]
         self.ctr, self.u_ctr    = self.__get_countries()
         ctr_                    = [self.ctr[i][j] for i in range(0, len(self.aut)) for j in range(0, len(self.aut[i]))]
         self.ctr_count          = [ctr_.count(item) for item in self.u_ctr]
-        self.ctr_cit            = self.__get_counts(self.u_ctr, self.ctr, self.citation)
+        self.ctr_cit            = helpers.get_counts_fast(self.u_ctr, self.ctr, np.array(self.citation, dtype=int))
         self.uni, self.u_uni    = self.__get_institutions() 
         uni_                    = [item for sublist in self.uni for item in sublist]
         self.uni_count          = [uni_.count(item) for item in self.u_uni]
-        self.uni_cit            = self.__get_counts(self.u_uni,self.uni, self.citation)
-        self.doc_aut            = self.__get_counts(self.u_aut, self.aut)
+        self.uni_cit            = helpers.get_counts_fast(self.u_uni, self.uni, np.array(self.citation, dtype=int))
+        self.doc_aut            = helpers.get_counts_fast(self.u_aut, self.aut,  np.array([], dtype=int))
         self.av_doc_aut         = round(sum(self.doc_aut)/len(self.doc_aut), 2)
-        self.t_c, self.s_c      = self.__total_and_self_citations()
+        self.t_c, self.s_c      = helpers.total_and_self_citations_fast(self.u_aut, self.aut, self.citation, self.ref)
         self.dy_ref             = self.__get_ref_year()
         self.natsort            = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)]  
         #self.ordinal            = lambda n: '%d%s'%(n, {1: 'st', 2: 'nd', 3: 'rd'}.get(n if n < 20 else n % 10, 'th')) # [ordinal(n) for n in range(1, 15)]
@@ -1460,19 +1460,6 @@ class pbx_probe():
             u_inst = u_inst[1:]
         return inst_, u_inst
     
-    # Function: Get Counts
-    def __get_counts(self, u_ent, ent, acc = []):
-        counts = []
-        for i in range(0, len(u_ent)):
-            ents = 0
-            for j in range(0, len(ent)):
-                if (u_ent[i] in ent[j] and len(acc) == 0):
-                    ents = ents + 1
-                elif (u_ent[i] in ent[j] and len(acc) > 0):
-                    ents = ents + acc[j]
-            counts.append(ents)
-        return counts
-    
     # Function: Get Count Year
     def __get_counts_year(self, u_ent, ent):
         years = list(range(self.date_str, self.date_end+1))
@@ -2316,46 +2303,6 @@ class pbx_probe():
 
     #############################################################################
     
-    # Function: Hirsch Index
-    def __h_index(self):
-        h_i = []
-        for researcher in self.u_aut:
-            doc = []
-            i   = 0
-            for researchers in self.aut:
-                if (researcher in researchers):
-                    doc.append(self.citation[i])
-                i = i + 1
-            for j in range(len(doc)-1, -1, -1):
-                count = len([element for element in doc if element >= j])
-                if (count >= j):
-                    h_i.append(j)
-                    break
-        return h_i
-    
-    # Function: Total and Self Citations
-    def __total_and_self_citations(self):
-        t_c = []
-        s_c = []
-        for researcher in self.u_aut:
-            doc = []
-            cit = 0
-            i1  = 0
-            i2  = 0
-            for researchers in self.aut:
-                if (researcher in researchers):
-                    doc.append(self.citation[i1])
-                    for reference in self.ref[i2]:
-                        if (researcher in reference.lower()):
-                            cit = cit + 1
-                i1 = i1 + 1
-            i2 = i2 + 1
-            t_c.append(sum(doc))
-            s_c.append(cit)
-        return t_c, s_c
-
-    #############################################################################
-
     # Function: Text Pre-Processing
     def clear_text(self, corpus, stop_words = ['en'], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [], verbose = False):
         sw_full = []
