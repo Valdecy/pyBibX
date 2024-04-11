@@ -1236,12 +1236,18 @@ class pbx_probe():
                     try:
                         citation[i] = int(citation[i][:idx])
                     except:
-                        citation[i] = int(re.search(r'\d+', citation[i]).group())
+                        try:
+                            citation[i] = int(re.search(r'\d+', citation[i]).group())
+                        except:
+                            citation[i] = 0
                 else:
                     try:
                         citation[i] = int(citation[i])
                     except:
-                        citation[i] = int(re.search(r'\d+', citation[i]).group()) 
+                        try:
+                            citation[i] = int(re.search(r'\d+', citation[i]).group())
+                        except:
+                            citation[i] = 0
             else:
                 citation[i] = 0
         return citation
