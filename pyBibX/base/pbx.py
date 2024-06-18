@@ -399,6 +399,8 @@ class pbx_probe():
         self.ask_gpt_rt         = -1
         self.ask_gpt_sk         = -1
         self.ask_gpt_wd         = -1
+        self.data['year']       = self.data['year'].replace('UNKNOW', '0')
+        #self.dy                 = pd.to_numeric(self.data['year'], errors = 'coerce', downcast = 'float').fillna('0')
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
         self.date_end           = int(self.dy.max())
