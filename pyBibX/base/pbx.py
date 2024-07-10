@@ -55,21 +55,24 @@ from wordcloud import WordCloud
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
         self.institution_names =  [ 
-                                    'acad', 'academy', 'akad', 'aachen', 'assoc', 'cambridge', 'ctr', 'cefet', 'center', 'centre', 'chuo kikuu', 
-                                    'cient', 'coll', 'college', 'colegio', 'conservatory', 'dept', 'egyetemi', 'escola', 'education', 'escuela', 
-                                    'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 'fakultät', 'fdn', 'fundacion', 'foundation', 
-                                    'gradevinski', 'higher', 'hsch', 'hochschule', 'hosp', 'hgsk', 'hogeschool',  'háskóli', 'högskola', 'ibmec', 
-                                    'inivèsite', 'ist', 'istituto', 'imd', 'institutional', 'int', 'inst',  'institut', 'institute', 
-                                    'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'jaamacad', "jami'a",  'kolej', 'koulu', 
-                                    'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'learning', 'mahadum', 'med', 'medicine', 'medical', 'observatory', 
-                                    'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 'prifysgol', 'rech', 'recherche', 
-                                    'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 'supérieur', 'sveučilište', 'szkoła', 
-                                    'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 'uned', 'unibersidad', 'unibertsitatea', 
-                                    'univ', 'universidad', 'universidade', 'universitas', 'universitat', 'universitate', 'universitato', 
-                                    'universite', 'universiteit', 'universitet', 'universitetas', 'universiti', 'university', 'università', 
-                                    'universität', 'université', 'universitāte', 'univerza', 'univerzita','univerzitet', 'univesithi', 'uniwersytet', 
-                                    'vniuersitatis', 'whare wananga', 'yliopisto','yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 
-                                    'ülikool', 'üniversite','πανεπιστήμιο', 'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
+                                    'acad', 'academy', 'akad', 'aachen', 'assoc', 'cambridge', 'ctr', 'cefet', 'center', 'centre', 'ctr', 
+                                    'chuo kikuu', 'cient', 'cirad', 'coll', 'college', 'colegio', 'companhia', 'communities', 'conservatory',
+                                    'council', 'dept', 'egyetemi', 'escola', 'education', 'escuela', 'embrapa', 'espm', 'epamig','epagri', 
+                                    'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 'fakultät', 'fal', 'fdn', 'fundacion', 'foundation',
+                                    'fundacao', 'gradevinski', 'grp', 'higher', 'hsch', 'hochschule', 'hosp', 'hgsk', 'hogeschool',  'háskóli', 
+                                    'högskola', 'ibmec', 'ird', 'inivèsite', 'ist', 'istituto', 'imd', 'institutional', 'int', 'inst',  'institut', 
+                                    'institute', 'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'inrae','jaamacad', "jami'a",  
+                                    'kolej', 'koulu', 'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'learning', 'mahadum', 'med', 'medicine',  
+                                    'medical', 'museum','observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 
+                                    'prifysgol', 'project', 'rech', 'recherche', 'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 
+                                    'supérieur', 'sveučilište', 'szkoła', 'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 
+                                    'ufrrj', 'ufruralrj', 'ufmg', 'ufpb', 'ufpe','ufal', 'uned', 'unep', 'unesp', 'unibersidad', 'unibertsitatea', 
+                                    'unicenp','ucpel', 'usp', 'ufac', 'udesc', 'uerj','univ', 'universidad', 'universidade', 'universitas', 
+                                    'universitat', 'universitate', 'universitato', 'universite', 'universiteit', 'universitet', 'universitetas', 
+                                    'universiti', 'university', 'università', 'universität', 'université', 'universitāte', 'univerza', 
+                                    'univerzita','univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 
+                                    'yliopisto','yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite','πανεπιστήμιο', 
+                                    'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
                                   ]
 
         self.language_names  =    { 
