@@ -558,9 +558,9 @@ class pbx_probe():
             for item in doc_type:
                 if (sum(self.data['document_type'].isin([item])) > 0):
                     docs.append(item) 
-                    self.data = self.data[self.data['document_type'].isin(docs)]
-                    self.data = self.data.reset_index(drop = True)
-                    self.__make_bib(verbose = False)
+            self.data = self.data[self.data['document_type'].isin(docs)]
+            self.data = self.data.reset_index(drop = True)
+            self.__make_bib(verbose = False)
         if (year_str > -1):
             self.data = self.data[self.data['year'] >= str(year_str)]
             self.data = self.data.reset_index(drop = True)
