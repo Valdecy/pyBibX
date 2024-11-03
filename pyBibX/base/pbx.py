@@ -397,6 +397,7 @@ class pbx_probe():
     def __make_bib(self, verbose = True):
         self.ask_gpt_ap         = -1
         self.ask_gpt_bp         = -1
+        self.ask_gpt_ct         = -1
         self.ask_gpt_ep         = -1
         self.ask_gpt_ng         = -1
         self.ask_gpt_rt         = -1
@@ -1760,9 +1761,9 @@ class pbx_probe():
                 Yv.append(j)
         self.ask_gpt_ap = productivity.copy(deep = True)
         self.ask_gpt_ap = self.ask_gpt_ap.loc[(self.ask_gpt_ap.sum(axis = 1) != 0), (self.ask_gpt_ap.sum(axis = 0) != 0)]
-        node_list_a = [ str(int(productivity.iloc[Xv[i], Yv[i]])) for i in range(0, len(Xv)) ]
-        nid_list    = [ n_id[Xv[i]][Yv[i]] for i in range(0, len(Xv)) ]
-        nid_list_a  = []
+        node_list_a     = [ str(int(productivity.iloc[Xv[i], Yv[i]])) for i in range(0, len(Xv)) ]
+        nid_list        = [ n_id[Xv[i]][Yv[i]] for i in range(0, len(Xv)) ]
+        nid_list_a      = []
         for item in nid_list:
             if (len(item) == 1):
                 nid_list_a.append(item)
@@ -4084,6 +4085,68 @@ class pbx_probe():
         fig    = go.Figure(data = [trace], layout = layout)
         fig.show()
         return self
+    
+    # Function: Graph Topics - Topics Collab   
+    def graph_topics_collab(self, topn = 15, rows = 5, cols = 3, wspace = 0.2, hspace = 0.2, tspace = 0.01, node_size = 300, font_size = 8, pad = 0.2, nd_a = '#FF0000', nd_b = '#008000', nd_c = '#808080', verbose = False):
+        self.__adjacency_matrix_aut(0)
+        collab_data        = self.matrix_a.copy(deep = True)
+        collab_data        = collab_data.reset_index(drop = True)
+        targets            = self.u_aut
+        sizes              = self.doc_aut
+        idx                = sorted(range(len(sizes)), key = sizes.__getitem__)
+        idx.reverse()
+        targets            = [targets[i] for i in idx]
+        targets            = targets[:topn]
+        doc_id             = self.table_id_doc.copy(deep = True)
+        doc_id['Document'] = doc_id['Document'].str.lower()
+        doc_id['Topics']   = self.topics
+        doc_id['Author']   = doc_id['Document'].apply( lambda x: [author for author in targets if author.split(',')[0] in x])
+        doc_id_filtered    = doc_id[doc_id['Author'].apply(len) > 0]
+        doc_id_exploded    = doc_id_filtered.explode('Author').reset_index(drop = True)
+        summary            = doc_id_exploded.groupby(['Author', 'Topics']).size().unstack(fill_value = 0)
+        summary['Total']   = summary.sum(axis = 1)
+        summary            = summary.sort_values(by = 'Total', ascending = False)
+        highlight_list     = set(targets) if len(targets) > 1 else set()
+        self.ask_gpt_ct    = []
+        if (len(targets) == 1):
+            rows, cols = 1, 1
+        elif (len(targets) > rows * cols):
+            rows = int(np.ceil(len(targets) / cols))
+        fig, axes = plt.subplots(rows, cols, figsize = (cols * 5, rows * 5), facecolor = 'white')
+        axes      = axes.flatten() if len(targets) > 1 else [axes]
+        for idx, target in enumerate(targets):
+            ax          = axes[idx]
+            G           = nx.Graph()
+            G.add_node(target, color = nd_a)
+            connections = collab_data[collab_data[target] > 0].index.tolist()
+            if (verbose == True):
+                ct = [collab_data.columns[conn_idx] for conn_idx in connections]
+                print(f'Main Node: {target}')
+                print(f'Links: {ct}\n')
+                self.ask_gpt_ct.append([ [target], ct ])
+            for conn_idx in connections:
+                conn_target = collab_data.columns[conn_idx]
+                color       = nd_b if conn_target in highlight_list else nd_c
+                G.add_node(conn_target, color = color)
+                G.add_edge(target, conn_target, color = color)
+            node_colors = [G.nodes[n]['color'] for n in G.nodes()]
+            edge_colors = [G[u][v]['color'] for u, v in G.edges()]
+            pos         = nx.spring_layout(G, seed=42)
+            label_pos   = {k: (v[0], v[1] + tspace) for k, v in pos.items()}
+            labels      = {node: '' if G.nodes[node]['color'] == nd_a else node for node in G.nodes()}
+            nx.draw_networkx_nodes(G, pos, node_color = node_colors, node_size = node_size, ax = ax)
+            nx.draw_networkx_edges(G, pos, edge_color = edge_colors, ax = ax)
+            nx.draw_networkx_labels(G, label_pos, labels, font_size = font_size, ax = ax)
+            ax.set_title(target.title(), color = nd_a, fontsize = font_size + 1)
+            ax.axis('off')
+            rect = plt.Rectangle((0, 0), 1, 1, fill = False, edgecolor = 'black', linewidth = 0.5, transform = ax.transAxes, clip_on = False)
+            ax.add_patch(rect)
+        for j in range(len(targets), rows * cols):
+            fig.delaxes(axes[j])
+        plt.subplots_adjust(wspace = wspace, hspace = hspace)
+        plt.tight_layout(pad = pad)
+        plt.show()
+        return summary
  
 ############################################################################
 
