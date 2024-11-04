@@ -4091,7 +4091,7 @@ class pbx_probe():
         self.__adjacency_matrix_aut(0)
         collab_data        = self.matrix_a.copy(deep = True)
         collab_data        = collab_data.reset_index(drop = True)
-        targets            = self.u_aut
+        targets            = [item for item in self.u_aut]
         sizes              = self.doc_aut
         idx                = sorted(range(len(sizes)), key = sizes.__getitem__)
         idx.reverse()
@@ -4100,10 +4100,15 @@ class pbx_probe():
         doc_id             = self.table_id_doc.copy(deep = True)
         doc_id['Document'] = doc_id['Document'].str.lower()
         doc_id['Topics']   = self.topics
-        doc_id['Author']   = doc_id['Document'].apply( lambda x: [author for author in targets if author.split(',')[0] in x])
-        doc_id_filtered    = doc_id[doc_id['Author'].apply(len) > 0]
-        doc_id_exploded    = doc_id_filtered.explode('Author').reset_index(drop = True)
-        summary            = doc_id_exploded.groupby(['Author', 'Topics']).size().unstack(fill_value = 0)
+        doc_id['Author']   = doc_id['Document'].apply( lambda x: [author for author in targets if author in x])
+        doc_id              = doc_id[doc_id['Author'].apply(len) > 0]
+        unique_topics       = sorted(set(topic for topic in self.topics))
+        summary             = pd.DataFrame(index = targets, columns = unique_topics + ['Total']).fillna(0)
+        for author in targets:
+            author_docs = doc_id[doc_id['Document'].str.contains(author)]
+            for topic in self.topics:
+                topic_count               = author_docs[author_docs['Topics'] == topic].shape[0]
+                summary.at[author, topic] = topic_count
         summary['Total']   = summary.sum(axis = 1)
         summary            = summary.sort_values(by = 'Total', ascending = False)
         highlight_list     = set(targets) if len(targets) > 1 else set()
