@@ -16,10 +16,10 @@ import networkx as nx
 import numpy as np   
 import openai       
 import os       
-import pandas as pd               
+import pandas as pd                
 import plotly.graph_objects as go
 import plotly.subplots as ps      
-import plotly.io as pio           
+import plotly.io as pio         
 import re                         
 import squarify                  
 import unicodedata                
@@ -32,8 +32,9 @@ except ImportError:
 from . import stws
 
 from bertopic import BERTopic                               
-from collections import Counter
+from collections import Counter, defaultdict
 from difflib import SequenceMatcher
+from gensim.models import FastText
 from matplotlib import pyplot as plt                       
 plt.style.use('bmh')
 #from scipy.spatial import ConvexHull   
@@ -459,12 +460,12 @@ class pbx_probe():
         self.uni, self.u_uni    = self.__get_institutions() 
         uni_                    = [item for sublist in self.uni for item in sublist]
         self.uni_count          = [uni_.count(item) for item in self.u_uni]
-        self.uni_cit            = self.__get_counts(self.u_uni,self.uni, self.citation)
+        self.uni_cit            = self.__get_counts(self.u_uni, self.uni, self.citation)
         self.doc_aut            = self.__get_counts(self.u_aut, self.aut)
         self.av_doc_aut         = round(sum(self.doc_aut)/len(self.doc_aut), 2)
         self.t_c, self.s_c      = self.__total_and_self_citations()
         self.dy_ref             = self.__get_ref_year()
-        self.natsort            = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)]  
+        self.natsort            = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)]  
         #self.ordinal            = lambda n: '%d%s'%(n, {1: 'st', 2: 'nd', 3: 'rd'}.get(n if n < 20 else n % 10, 'th')) # [ordinal(n) for n in range(1, 15)]
         self.dy_c_year          = self.__get_collaboration_year()
         if ('UNKNOW' in self.u_ref):
@@ -860,219 +861,299 @@ class pbx_probe():
         report_df       = pd.DataFrame(report, columns = ['Main Information', 'Results'])
         return report_df
 
+    # Function: Health of .bib docs 
+    def health_bib(self):
+        n      = self.data.shape[0]
+        health = []
+        check  = {
+                    'abbrev_source_title': 'Sources',
+                    'abstract':            'Abstracts',
+                    'affiliation':         'Institutions',
+                    'author':              'Author(s)',
+                    'doi':                 'DOI',
+                    'author_keywords':     'Keywords - Authors',
+                    'keywords':            'Keywords - Plus',
+                    'references':          'References',
+                    'year':                'Year'
+                  }
+        for col, name in check.items():
+            if (col in self.data.columns):
+                unknown_count = (self.data[col].astype(str) == 'UNKNOW').sum()
+                health_metric = ((n - unknown_count) / n) * 100
+                health.append([name, f'{health_metric:.2f}%'])
+            else:
+                health.append([name, None])
+        health_df = pd.DataFrame(health, columns = ['Entries', 'Completeness (%)'])
+        return health_df
+
     ##############################################################################
 
     # Function: Read .bib File
     def __read_bib(self, bib, db = 'scopus', del_duplicated = True):
-        self.vb = []
-        db      = db.lower()
-        f_file  = open(bib, 'r', encoding = 'utf8')
-        f_lines = f_file.read()
-        f_list  = f_lines.split('\n')
-        if (db == 'wos'):
-            f_list_ = []
-            for i in range(0, len(f_list)):
-                if (f_list[i][:3] != '   '):
-                    f_list_.append(f_list[i])
-                else:
-                    if (f_list_[-1].find('Cited-References') != -1):
-                        f_list[i] = f_list[i].replace(';', ',')
-                    if (f_list_[-1].find('Cited-References') == -1):
-                        f_list_[-1] = f_list_[-1] + f_list[i]
-                    else:
-                        f_list[i]   = f_list[i].replace(';', ',')
-                        f_list_[-1] = f_list_[-1] + ';' + f_list[i]
-            f_list = f_list_
-        if (db == 'pubmed'):
-            f_list_ = []
-            for i in range(0, len(f_list)):
-                if (i == 0 and f_list[i][:6] != '      ' ):
-                    f_list_.append(f_list[i])
-                elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] != f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ')):
-                    f_list_.append(f_list[i])
-                elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] == f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ' and f_list[i][:6].lower() != 'pt  - ')):
-                    f_list_[-1] = f_list_[-1] + '; ' + f_list[i][6:]
-                elif (f_list[i][:6] == '      '):
-                    f_list_[-1] = f_list_[-1] + f_list[i][6:]
-                elif (f_list[i][:6] == 'FAU - '):
-                    f_list_.append(f_list[i])
-                    j = i + 1
-                    while (len(f_list[j]) != 0):
-                        j = j + 1
-                        if (f_list[j][:6].lower() == 'fau - '):
-                            f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
-                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
-                elif (f_list[i][:6] == 'AU  - '):
-                    f_list_.append(f_list[i])
-                    j = i + 1
-                    while (len(f_list[j]) != 0):
-                        j = j + 1
-                        if (f_list[j][:6].lower() == 'au  - '):
-                            f_list_[-1] = f_list_[-1] + ' and ' + f_list[j][6:]
-                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
-                elif (f_list[i][:6] == 'AUID- '):
-                    f_list_.append(f_list[i])
-                    j = i + 1
-                    while (len(f_list[j]) != 0):
-                        j = j + 1
-                        if (f_list[j][:6].lower() == 'auid- '):
-                            f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
-                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
-                elif (f_list[i][:6] == 'AD  - '):
-                    f_list_.append(f_list[i])
-                    j = i + 1
-                    while (len(f_list[j]) != 0):
-                        j = j + 1
-                        if (f_list[j][:6].lower() == 'ad  - '):
-                            f_list_[-1] = f_list_[-1] + f_list[j][6:]
-                            f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
-                elif (f_list[i][:6] == 'PT  - '):
-                    f_list_.append(f_list[i])
-                    j = i + 1
-                    while (len(f_list[j]) != 0):
-                        j = j + 1
-                        if (f_list[j][:6].lower() == 'pt  - '):
-                            f_list[j] = f_list[j][:6].lower() + f_list[j][6:]
-            f_list = [item for item in f_list_]
-            for i in range(0, len(f_list)):
-                if (len(f_list[i]) > 0):
-                    if (f_list[i][4] == '-'):
-                        f_list[i] = f_list[i][:4] + '=' + f_list[i][5:]
-                    if (f_list[i][:3] == 'LID'):
-                        f_list[i] = f_list[i].replace(' [doi]', '')
-                        #f_list[i] = f_list[i].replace(' [pii]', '')
-                        #f_list[i] = f_list[i].replace(' [isbn]', '')
-                        #f_list[i] = f_list[i].replace(' [ed]', '')
-                        #f_list[i] = f_list[i].replace(' [editor]', '')
-                        #f_list[i] = f_list[i].replace(' [book]', '')
-                        #f_list[i] = f_list[i].replace(' [bookaccession]', '')
-        lhs = []
-        rhs = []
-        doc = 0
-        for i in range(0, len(f_list)):
-          if (f_list[i].find('@') == 0 or f_list[i][:4].lower() == 'pmid'):  
-            lhs.append('doc_start')
-            rhs.append('doc_start')
-            if (db == 'pubmed'):
-                lhs.append('note')
-                rhs.append('0')
-                lhs.append('source')
-                rhs.append('PubMed')
+        self.vb        = []
+        db             = db.lower()
+        file_extension = os.path.splitext(bib)[1].lower()
+        f_list         = []
+        if  (db == 'scopus' and file_extension == '.csv'):
+            data         = pd.read_csv(bib, encoding = 'utf8', dtype = str)
+            data.columns = data.columns.str.lower()
+            if ('abbrev_source_title' not in data.columns and 'abbreviated source title' in data.columns):
+                data.rename(columns = {'abbreviated source title': 'abbrev_source_title'}, inplace = True)
+            if ('abbrev_source_title' not in data.columns and 'journal' in data.columns):
+                data.rename(columns = {'journal': 'abbrev_source_title'}, inplace = True)
+            if ('document_type' not in data.columns and 'document type' in data.columns):
+                data.rename(columns = {'document type': 'document_type'}, inplace = True)
+            if ('art_number.' not in data.columns and 'art. no.' in data.columns):
+                data.rename(columns = {'art. no.': 'art_number'}, inplace = True)
+            if ('author_keywords' not in data.columns and 'author keywords' in data.columns):
+                data.rename(columns = {'author keywords': 'author_keywords'}, inplace = True)
+            if ('author' not in data.columns and 'authors' in data.columns):
+                data.rename(columns = {'authors': 'author'}, inplace = True)
+            if ('chemicals_cas' not in data.columns and r'chemicals/cas' in data.columns):
+                data.rename(columns = {r'chemicals/cas': 'chemicals_cas'}, inplace = True)
+            if ('correspondence_address' not in data.columns and 'correspondence address' in data.columns):
+                data.rename(columns = {'correspondence address': 'correspondence_address'}, inplace = True)
+            if ('editor' not in data.columns and 'editors' in data.columns):
+                data.rename(columns = {'editors': 'editor'}, inplace = True)
+            if ('funding_details' not in data.columns and 'funding details' in data.columns):
+                data.rename(columns = {'funding details': 'funding_details'}, inplace = True)
+            if ('keywords' not in data.columns and 'index keywords' in data.columns):
+                data.rename(columns = {'index keywords': 'keywords'}, inplace = True)
+            if ('language' not in data.columns and 'language of original document' in data.columns):
+                data.rename(columns = {'language of original document': 'language'}, inplace = True)
+            if ('note' not in data.columns and 'cited by' in data.columns):
+                data.rename(columns = {'cited by': 'note'}, inplace = True)
+            if ('page_count' not in data.columns and 'page count' in data.columns):
+                data.rename(columns = {'page count': 'page_count'}, inplace = True)
+            if ('pubmed_id' not in data.columns and 'pubmed id' in data.columns):
+                data.rename(columns = {'pubmed id': 'pubmed_id'}, inplace = True)
+            sanity_check = ['abbrev_source_title', 'abstract', 'address', 'affiliation', 'art_number',
+                            'author', 'author_keywords', 'chemicals_cas', 'coden',      
+                            'correspondence_address1', 'document_type', 'doi', 'editor', 'funding_details',
+                            'funding_text\xa01', 'funding_text\xa02', 'funding_text\xa03', 'isbn', 'issn',
+                            'journal', 'keywords', 'language', 'note', 'number', 'page_count', 'pages',
+                            'publisher', 'pubmed_id', 'references', 'source', 'sponsors', 'title',
+                            'tradenames', 'url', 'volume', 'year']
+            for col in sanity_check:
+                if (col not in data.columns):
+                    data[col] = 'UNKNOW'
+            data           = data.reindex(sorted(data.columns), axis = 1)
+            data['author'] = data['author'].apply(lambda x: x.replace(';', ' and ') if isinstance(x, str) else x)
+            doc           = data.shape[0]
+        else:
+            f_file  = open(bib, 'r', encoding = 'utf8')
+            f_lines = f_file.read()
+            f_list  = f_lines.split('\n')
+            #self.vb = []
+            #db      = db.lower()
+            #f_file  = open(bib, 'r', encoding = 'utf8')
+            #f_lines = f_file.read()
+            #f_list  = f_lines.split('\n')
             if (db == 'wos'):
-                lhs.append('source')
-                rhs.append('WoS')
-            doc = doc + 1
-          if ( (f_list[i].find('=') != -1 and f_list[i].find(' ') != 0) or (f_list[i].find('=') != -1 and f_list[i].find('=') == 15) ): # DBLP
-            lhs.append(f_list[i].split('=')[0].lower().strip())
-            rhs.append(f_list[i].split('=')[1].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip())
-          elif (f_list[i].find(' ') == 0 and i!= 0 and rhs[-1] != 'doc_start'):
-            rhs[-1] = rhs[-1]+' '+f_list[i].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip()
-        if (db == 'scopus' and 'abbrev_source_title' not in lhs and 'journal' in lhs):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'journal'):
-                    lhs[i] = 'abbrev_source_title'
-        if (db == 'scopus'):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'type'):
-                    lhs[i] = 'document_type'
-        if (db == 'wos' and 'journal-iso' not in lhs and 'journal' in lhs):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'journal'):
-                    lhs[i] = 'journal-iso'
-        if (db == 'pubmed' and 'ta' not in lhs and 'jt' in lhs):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'jt'):
-                    lhs[i] = 'ta'
-        if (db == 'wos'):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'affiliation'):
-                    lhs[i] = 'affiliation_'
-                if (lhs[i] == 'affiliations'):
-                    lhs[i] = 'affiliation'
-                if (lhs[i] == 'article-number'):
-                    lhs[i] = 'art_number'
-                if (lhs[i] == 'cited-references'):
-                    lhs[i] = 'references'
-                if (lhs[i] == 'keywords'):
-                    lhs[i] = 'author_keywords'
-                if (lhs[i] == 'journal-iso'):
-                    lhs[i] = 'abbrev_source_title'
-                if (lhs[i] == 'keywords-plus'):
-                    lhs[i] = 'keywords'
-                if (lhs[i] == 'note'):
-                    lhs[i] = 'note_'
-                if (lhs[i] == 'times-cited'):
-                    lhs[i] = 'note'
-                if (lhs[i] == 'type'):
-                    lhs[i] = 'document_type'
-                lhs[i] = lhs[i].replace('-', '_')
-        if (db == 'pubmed'):
-            for i in range(0, len(lhs)):
-                if (lhs[i] == 'ab'):
-                    lhs[i] = 'abstract'
-                if (lhs[i] == 'ad'):
-                    lhs[i] = 'affiliation'
-                if (lhs[i] == 'au'):
-                    lhs[i] = 'author'
-                if (lhs[i] == 'auid'):
-                    lhs[i] = 'orcid'
-                if (lhs[i] == 'fau'):
-                    lhs[i] = 'full_author'
-                if (lhs[i] == 'lid'):
-                    lhs[i] = 'doi'
-                if (lhs[i] == 'dp'):
-                    lhs[i] = 'year'
-                    rhs[i] = rhs[i][:4]
-                if (lhs[i] == 'ed'):
-                    lhs[i] = 'editor'
-                if (lhs[i] == 'ip'):
-                    lhs[i] = 'issue'
-                if (lhs[i] == 'is'):
-                    lhs[i] = 'issn'
-                if (lhs[i] == 'isbn'):
-                    lhs[i] = 'isbn'
-                if (lhs[i] == 'jt'):
-                    lhs[i] = 'journal'
-                if (lhs[i] == 'la'):
-                    lhs[i] = 'language'
-                    if (rhs[i] in self.language_names.keys()):
-                        rhs[i] = self.language_names[rhs[i]]
-                if (lhs[i] == 'mh'):
-                    lhs[i] = 'keywords'
-                if (lhs[i] == 'ot'):
-                    lhs[i] = 'author_keywords'
-                if (lhs[i] == 'pg'):
-                    lhs[i] = 'pages'
-                if (lhs[i] == 'pt'):
-                    lhs[i] = 'document_type'
-                if (lhs[i] == 'pmid'):
-                    lhs[i] = 'pubmed_id'
-                if (lhs[i] == 'ta'):
-                    lhs[i] = 'abbrev_source_title'
-                if (lhs[i] == 'ti'):
-                    lhs[i] = 'title'
-                if (lhs[i] == 'vi'):
-                    lhs[i] = 'volume'
-        labels       = list(set(lhs))
-        labels.remove('doc_start')
-        sanity_check = ['abbrev_source_title', 'abstract', 'address', 'affiliation', 'art_number', 'author', 'author_keywords', 'chemicals_cas', 'coden', 'correspondence_address1', 'document_type', 'doi', 'editor', 'funding_details', 'funding_text\xa01', 'funding_text\xa02', 'funding_text\xa03', 'isbn', 'issn', 'journal', 'keywords', 'language', 'note', 'number', 'page_count', 'pages', 'publisher', 'pubmed_id', 'references', 'source', 'sponsors', 'title', 'tradenames', 'url', 'volume', 'year']
-        for item in sanity_check:
-            if (item not in labels):
-                labels.append(item)
-        labels.sort()      
-        values      = [i for i in range(0, len(labels))] 
-        labels_dict = dict(zip(labels, values))
-        data        = pd.DataFrame(index = range(0, doc), columns = labels)
-        count       = -1
-        for i in range(0, len(rhs)):
-          if (lhs[i] == 'doc_start'):
-            count = count + 1
-          else:
-            #if (lhs[i] == 'doi'):
-                #data.iloc[count, labels_dict[lhs[i]]] = self.clean_doi(rhs[i])
-            #else:
-                #data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
-            data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
+                f_list_ = []
+                for i in range(0, len(f_list)):
+                    if (f_list[i][:3] != '   '):
+                        f_list_.append(f_list[i])
+                    else:
+                        if (f_list_[-1].find('Cited-References') != -1):
+                            f_list[i] = f_list[i].replace(';', ',')
+                        if (f_list_[-1].find('Cited-References') == -1):
+                            f_list_[-1] = f_list_[-1] + f_list[i]
+                        else:
+                            f_list[i]   = f_list[i].replace(';', ',')
+                            f_list_[-1] = f_list_[-1] + ';' + f_list[i]
+                f_list = f_list_
+            if (db == 'pubmed'):
+                f_list_ = []
+                for i in range(0, len(f_list)):
+                    if (i == 0 and f_list[i][:6] != '      ' ):
+                        f_list_.append(f_list[i])
+                    elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] != f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ')):
+                        f_list_.append(f_list[i])
+                    elif (i > 0 and f_list[i][:6] != '      ' and f_list[i][:6] == f_list[i-1][:6] and (f_list[i][:6].lower() != 'fau - ' and f_list[i][:6].lower() != 'au  - ' and f_list[i][:6].lower() != 'auid- ' and f_list[i][:6].lower() != 'ad  - ' and f_list[i][:6].lower() != 'pt  - ')):
+                        f_list_[-1] = f_list_[-1] + '; ' + f_list[i][6:]
+                    elif (f_list[i][:6] == '      '):
+                        f_list_[-1] = f_list_[-1] + f_list[i][6:]
+                    elif (f_list[i][:6] == 'FAU - '):
+                        f_list_.append(f_list[i])
+                        j = i + 1
+                        while (len(f_list[j]) != 0):
+                            j = j + 1
+                            if (f_list[j][:6].lower() == 'fau - '):
+                                f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
+                                f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                    elif (f_list[i][:6] == 'AU  - '):
+                        f_list_.append(f_list[i])
+                        j = i + 1
+                        while (len(f_list[j]) != 0):
+                            j = j + 1
+                            if (f_list[j][:6].lower() == 'au  - '):
+                                f_list_[-1] = f_list_[-1] + ' and ' + f_list[j][6:]
+                                f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                    elif (f_list[i][:6] == 'AUID- '):
+                        f_list_.append(f_list[i])
+                        j = i + 1
+                        while (len(f_list[j]) != 0):
+                            j = j + 1
+                            if (f_list[j][:6].lower() == 'auid- '):
+                                f_list_[-1] = f_list_[-1] + '; ' + f_list[j][6:]
+                                f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                    elif (f_list[i][:6] == 'AD  - '):
+                        f_list_.append(f_list[i])
+                        j = i + 1
+                        while (len(f_list[j]) != 0):
+                            j = j + 1
+                            if (f_list[j][:6].lower() == 'ad  - '):
+                                f_list_[-1] = f_list_[-1] + f_list[j][6:]
+                                f_list[j]   = f_list[j][:6].lower() + f_list[j][6:]
+                    elif (f_list[i][:6] == 'PT  - '):
+                        f_list_.append(f_list[i])
+                        j = i + 1
+                        while (len(f_list[j]) != 0):
+                            j = j + 1
+                            if (f_list[j][:6].lower() == 'pt  - '):
+                                f_list[j] = f_list[j][:6].lower() + f_list[j][6:]
+                f_list = [item for item in f_list_]
+                for i in range(0, len(f_list)):
+                    if (len(f_list[i]) > 0):
+                        if (f_list[i][4] == '-'):
+                            f_list[i] = f_list[i][:4] + '=' + f_list[i][5:]
+                        if (f_list[i][:3] == 'LID'):
+                            f_list[i] = f_list[i].replace(' [doi]', '')
+                            #f_list[i] = f_list[i].replace(' [pii]', '')
+                            #f_list[i] = f_list[i].replace(' [isbn]', '')
+                            #f_list[i] = f_list[i].replace(' [ed]', '')
+                            #f_list[i] = f_list[i].replace(' [editor]', '')
+                            #f_list[i] = f_list[i].replace(' [book]', '')
+                            #f_list[i] = f_list[i].replace(' [bookaccession]', '')
+            lhs = []
+            rhs = []
+            doc = 0
+            for i in range(0, len(f_list)):
+              if (f_list[i].find('@') == 0 or f_list[i][:4].lower() == 'pmid'):  
+                lhs.append('doc_start')
+                rhs.append('doc_start')
+                if (db == 'pubmed'):
+                    lhs.append('note')
+                    rhs.append('0')
+                    lhs.append('source')
+                    rhs.append('PubMed')
+                if (db == 'wos'):
+                    lhs.append('source')
+                    rhs.append('WoS')
+                doc = doc + 1
+              if ( (f_list[i].find('=') != -1 and f_list[i].find(' ') != 0) or (f_list[i].find('=') != -1 and f_list[i].find('=') == 15) ): # DBLP
+                lhs.append(f_list[i].split('=')[0].lower().strip())
+                rhs.append(f_list[i].split('=')[1].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip())
+              elif (f_list[i].find(' ') == 0 and i!= 0 and rhs[-1] != 'doc_start'):
+                rhs[-1] = rhs[-1]+' '+f_list[i].replace('{', '').replace('},', '').replace('}', '').replace('}},', '').strip()
+            if (db == 'scopus' and 'abbrev_source_title' not in lhs and 'journal' in lhs):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'journal'):
+                        lhs[i] = 'abbrev_source_title'
+            if (db == 'scopus'):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'type'):
+                        lhs[i] = 'document_type'
+            if (db == 'wos' and 'journal-iso' not in lhs and 'journal' in lhs):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'journal'):
+                        lhs[i] = 'journal-iso'
+            if (db == 'pubmed' and 'ta' not in lhs and 'jt' in lhs):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'jt'):
+                        lhs[i] = 'ta'
+            if (db == 'wos'):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'affiliation'):
+                        lhs[i] = 'affiliation_'
+                    if (lhs[i] == 'affiliations'):
+                        lhs[i] = 'affiliation'
+                    if (lhs[i] == 'article-number'):
+                        lhs[i] = 'art_number'
+                    if (lhs[i] == 'cited-references'):
+                        lhs[i] = 'references'
+                    if (lhs[i] == 'keywords'):
+                        lhs[i] = 'author_keywords'
+                    if (lhs[i] == 'journal-iso'):
+                        lhs[i] = 'abbrev_source_title'
+                    if (lhs[i] == 'keywords-plus'):
+                        lhs[i] = 'keywords'
+                    if (lhs[i] == 'note'):
+                        lhs[i] = 'note_'
+                    if (lhs[i] == 'times-cited'):
+                        lhs[i] = 'note'
+                    if (lhs[i] == 'type'):
+                        lhs[i] = 'document_type'
+                    lhs[i] = lhs[i].replace('-', '_')
+            if (db == 'pubmed'):
+                for i in range(0, len(lhs)):
+                    if (lhs[i] == 'ab'):
+                        lhs[i] = 'abstract'
+                    if (lhs[i] == 'ad'):
+                        lhs[i] = 'affiliation'
+                    if (lhs[i] == 'au'):
+                        lhs[i] = 'author'
+                    if (lhs[i] == 'auid'):
+                        lhs[i] = 'orcid'
+                    if (lhs[i] == 'fau'):
+                        lhs[i] = 'full_author'
+                    if (lhs[i] == 'lid'):
+                        lhs[i] = 'doi'
+                    if (lhs[i] == 'dp'):
+                        lhs[i] = 'year'
+                        rhs[i] = rhs[i][:4]
+                    if (lhs[i] == 'ed'):
+                        lhs[i] = 'editor'
+                    if (lhs[i] == 'ip'):
+                        lhs[i] = 'issue'
+                    if (lhs[i] == 'is'):
+                        lhs[i] = 'issn'
+                    if (lhs[i] == 'isbn'):
+                        lhs[i] = 'isbn'
+                    if (lhs[i] == 'jt'):
+                        lhs[i] = 'journal'
+                    if (lhs[i] == 'la'):
+                        lhs[i] = 'language'
+                        if (rhs[i] in self.language_names.keys()):
+                            rhs[i] = self.language_names[rhs[i]]
+                    if (lhs[i] == 'mh'):
+                        lhs[i] = 'keywords'
+                    if (lhs[i] == 'ot'):
+                        lhs[i] = 'author_keywords'
+                    if (lhs[i] == 'pg'):
+                        lhs[i] = 'pages'
+                    if (lhs[i] == 'pt'):
+                        lhs[i] = 'document_type'
+                    if (lhs[i] == 'pmid'):
+                        lhs[i] = 'pubmed_id'
+                    if (lhs[i] == 'ta'):
+                        lhs[i] = 'abbrev_source_title'
+                    if (lhs[i] == 'ti'):
+                        lhs[i] = 'title'
+                    if (lhs[i] == 'vi'):
+                        lhs[i] = 'volume'
+            labels       = list(set(lhs))
+            labels.remove('doc_start')
+            sanity_check = ['abbrev_source_title', 'abstract', 'address', 'affiliation', 'art_number', 'author', 'author_keywords', 'chemicals_cas', 'coden', 'correspondence_address1', 'document_type', 'doi', 'editor', 'funding_details', 'funding_text\xa01', 'funding_text\xa02', 'funding_text\xa03', 'isbn', 'issn', 'journal', 'keywords', 'language', 'note', 'number', 'page_count', 'pages', 'publisher', 'pubmed_id', 'references', 'source', 'sponsors', 'title', 'tradenames', 'url', 'volume', 'year']
+            for item in sanity_check:
+                if (item not in labels):
+                    labels.append(item)
+            labels.sort()      
+            values      = [i for i in range(0, len(labels))] 
+            labels_dict = dict(zip(labels, values))
+            data        = pd.DataFrame(index = range(0, doc), columns = labels)
+            count       = -1
+            for i in range(0, len(rhs)):
+              if (lhs[i] == 'doc_start'):
+                count = count + 1
+              else:
+                #if (lhs[i] == 'doi'):
+                    #data.iloc[count, labels_dict[lhs[i]]] = self.clean_doi(rhs[i])
+                #else:
+                    #data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
+                data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
+        
         entries = list(data.columns)
         
         # WoS -> Scopus
@@ -1434,7 +1515,7 @@ class pbx_probe():
                          for institution in self.institution_names:
                              if (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
                                  if (affiliation.strip() not in inst[i]):
-                                     inst[i].append(affiliation.strip().replace('\&', 'and'))
+                                     inst[i].append(affiliation.strip().replace(r'\&', 'and'))
                                  break  
                              elif (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') not in affiliation.lower()):
                                  if (',' in self.aut[i][j]):
@@ -1447,7 +1528,7 @@ class pbx_probe():
                                      last_name   = name_parts[-1]
                                  if (last_name in affiliation.lower() and  all(initial in affiliation.lower() for initial in initials)):
                                      if (affiliation.strip() not in inst[i]):
-                                         inst[i].append(affiliation.strip().replace('\&', 'and'))
+                                         inst[i].append(affiliation.strip().replace(r'\&', 'and'))
                                      break 
         for i in range(0, len(inst)):
             for j in range(0, len(inst[i])):
@@ -1831,6 +1912,47 @@ class pbx_probe():
         fig_aut.update_yaxes(autorange = 'reversed')
         fig_aut.show() 
         return 
+
+    # Function: Countries' Productivity Plot    
+    def countries_productivity(self, view = 'browser'):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        filtered_data        = [(ctr, count) for ctr, count in zip(self.u_ctr, self.ctr_count) if ctr.lower() != 'unknow']
+        f_u_ctr, f_ctr_count = zip(*filtered_data)
+        iso_3                = [country for country in f_u_ctr]  
+        data                 = dict(
+                                    type              = 'choropleth',
+                                    locations         = iso_3,
+                                    locationmode      = 'country names',
+                                    z                 = f_ctr_count,
+                                    colorscale        = 'sunsetdark', 
+                                    marker_line_color = 'black',
+                                    marker_line_width = 0.5,
+                                    colorbar_title    = 'Frequency',
+                                    hoverinfo         = 'location+z',
+                                )
+        layout              = dict(
+                                    geo = dict(
+                                                scope          = 'world',
+                                                showcoastlines = True,
+                                                coastlinecolor = 'black',
+                                                showland       = True,
+                                                landcolor      = '#f0f0f0',  
+                                                showocean      = False,
+                                                oceancolor     = '#7fcdff',  
+                                                showlakes      = False,
+                                                lakecolor      = 'blue',
+                                                showrivers     = False,
+                                                resolution     = 50, 
+                                                lataxis        = dict(range = [-60, 90]), 
+                                            ),
+            showlegend      = False,
+            hovermode       = 'closest',
+            margin          = dict(b = 10, l = 5, r = 5, t = 10)
+        )
+        fig = go.Figure(data = [go.Choropleth(data)], layout = layout)
+        fig.show()
+        return
     
     # Function: Evolution per Year
     def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, txt_font_size = 10, start = 2010, end = 2022):
@@ -1942,6 +2064,63 @@ class pbx_probe():
         fig = go.Figure(data = traces, layout = layout)
         fig.show()
         return     
+    
+    # Function: Parse Evolution Plot Data
+    def parse_ep_data(self, input_text):
+        data         = defaultdict(dict)
+        year_entries = re.split(r'(\d{4}):', input_text)[1:]  
+        years        = year_entries[::2] 
+        entries      = year_entries[1::2] 
+        for year, entry in zip(years, entries):
+            items = re.findall(r'([^,]+?)\s\((\d+)\)', entry)
+            for keyword, count in items:
+                data[year.strip()][keyword.strip()] = int(count)
+        return dict(data)
+    
+    # Function: Evolution per Year Complement
+    def plot_evolution_year_complement(self, ep_text, view = 'browser', topn = 10, custom = []):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        data = self.parse_ep_data(ep_text)
+        df   = pd.DataFrame(data).fillna(0)
+        df   = df.T
+        if (len(custom) > 0):
+            df = df[custom]
+        elif topn is not None:
+            total_frequencies = df.sum(axis = 0).sort_values(ascending = False)
+            top_keywords      = total_frequencies.index[:topn]
+            df                = df[top_keywords]
+        fig    = go.Figure()
+        for idx, keyword in enumerate(df.columns):
+            fig.add_trace(go.Scatter(
+                                        x          = df.index,
+                                        y          = df[keyword],
+                                        mode       = 'lines',
+                                        stackgroup = 'one', 
+                                        name       = keyword,
+                                        line       = dict(width = 0.5, color = self.color_names[idx]), 
+                                        hoverinfo  = 'x+y+name'  
+                                    ))
+    
+        fig.update_layout(
+                            hovermode   = 'x unified', 
+                            showlegend  = True,
+                            legend      = dict(title = 'Keywords'),
+                            xaxis       = dict(
+                                                title             = 'Year',
+                                                tickmode          = 'array',
+                                                tickvals          = list(df.index),
+                                                ticktext          = list(df.index),
+                                                ticklabelposition = 'outside',  
+                                                tickangle         = -45,  
+                                                automargin        = True  
+                                            ),
+                            yaxis       = dict(
+                                                title             = 'Frequency'
+                                            )
+                        )
+        fig.show()
+        return
 
     # Function: Plot Bar 
     def plot_bars(self, statistic = 'dpy', topn = 20, size_x = 10, size_y = 10): 
@@ -2512,7 +2691,7 @@ class pbx_probe():
         return dtm
    
     # Function: Projection
-    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, tf_idf = True, embeddings = False, method = 'tsvd'):
+    def docs_projection(self, view = 'browser', corpus_type = 'abs', stop_words = ['en'], rmv_custom_words = [], custom_label = [], custom_projection = [], n_components = 2, n_clusters = 5, node_labels = True, node_size = 25, node_font_size = 10, tf_idf = True, embeddings = False, method = 'tsvd'):
         if   (corpus_type == 'abs'):
             corpus = self.data['abstract']
             corpus = corpus.tolist()
@@ -2583,7 +2762,11 @@ class pbx_probe():
                 #except:
                     #hull_plot = False
             labels_c.extend(self.color_names[i] for item in idx)
-            node_list.extend(idx)
+            if (node_labels == True):
+                node_list.extend(idx)
+            else:
+                idx_ = ['' for item in idx]
+                node_list.extend(idx_)
             for j in range(0, len(idx)):
                 n_id.append(
                             'id:' +str(idx[j])               +'<br>'  +
@@ -2624,7 +2807,7 @@ class pbx_probe():
                                       y         = y,
                                       opacity   = 1,
                                       mode      = 'markers+text',
-                                      marker    = dict(symbol = 'circle-dot', size = 25, color = self.color_names[i]),
+                                      marker    = dict(symbol = 'circle-dot', size = node_size, color = self.color_names[i]),
                                       text      = node_list,
                                       hoverinfo = 'text',
                                       hovertext = n_id,
@@ -2647,7 +2830,7 @@ class pbx_probe():
                                                 )
                             )
         fig_proj = go.Figure(data = n_trace, layout = layout)
-        fig_proj.update_traces(textfont_size = 10, textfont_color = 'white') 
+        fig_proj.update_traces(textfont_size = node_font_size, textfont_color = 'white') 
         fig_proj.show() 
         return transformed, labels
 
@@ -2671,6 +2854,7 @@ class pbx_probe():
             cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
             if (len(cols) > 0):
                 self.matrix_a.iloc[cols, cols] = 0
+        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
     
     # Function: Country Colaboration Adjacency Matrix
@@ -2692,6 +2876,7 @@ class pbx_probe():
             cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
             if (len(cols) > 0):
                 self.matrix_a.iloc[cols, cols] = 0
+        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
     
     # Function: Institution Colaboration Adjacency Matrix
@@ -2713,6 +2898,7 @@ class pbx_probe():
             cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
             if (len(cols) > 0):
                 self.matrix_a.iloc[cols, cols] = 0
+        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
     
     # Function: KWA Colaboration Adjacency Matrix
@@ -2734,6 +2920,7 @@ class pbx_probe():
             cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
             if (len(cols) > 0):
                 self.matrix_a.iloc[cols, cols] = 0
+        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
     
     # Function: KWP Colaboration Adjacency Matrix
@@ -2755,6 +2942,7 @@ class pbx_probe():
             cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
             if (len(cols) > 0):
                 self.matrix_a.iloc[cols, cols] = 0
+        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
     
     # Function: References Adjacency Matrix
@@ -2811,7 +2999,85 @@ class pbx_probe():
             self.matrix_r         = self.matrix_r.iloc[:, cols]
             self.labels_r         = [self.labels_r[item] for item in cols]
             self.matrix_r.columns = self.labels_r 
+        self.matrix_r = self.matrix_r.astype(pd.SparseDtype('float', 0))
         return self
+
+    # Function: Network Collab
+    def network_collab(self, entry = 'aut', tgt = [], topn = 15, rows = 5, cols = 3, wspace = 0.2, hspace = 0.2, tspace = 0.01, node_size = 300, font_size = 8, pad = 0.2, nd_a = '#FF0000', nd_b = '#008000', nd_c = '#808080', verbose = False):
+        if (entry == 'aut'):
+            self.__adjacency_matrix_aut(0)
+            collab_data = self.matrix_a.copy(deep = True)
+            targets     = [item for item in self.u_aut]
+            sizes       = self.doc_aut
+        if (entry == 'cout'):
+            self.__adjacency_matrix_ctr(0) 
+            collab_data = self.matrix_a.copy(deep = True)
+            targets     = [item for item in self.u_ctr]
+            sizes       = self.__get_counts(self.u_ctr, self.ctr)
+        if (entry == 'inst'):
+            self.__adjacency_matrix_inst(0) 
+            collab_data = self.matrix_a.copy(deep = True)
+            targets     = [item for item in self.u_uni]
+            sizes       = self.__get_counts(self.u_uni, self.uni)
+        if (entry == 'kwa'):
+            self.__adjacency_matrix_kwa(0) 
+            collab_data = self.matrix_a.copy(deep = True)
+            targets     = [item for item in self.u_auk]
+            sizes       = self.__get_counts(self.u_auk, self.auk)
+        if (entry == 'kwp'):
+            self.__adjacency_matrix_kwp(0)
+            collab_data = self.matrix_a.copy(deep = True)
+            targets     = [item for item in self.u_kid]
+            sizes       = self.__get_counts(self.u_kid, self.kid)
+        collab_data     = collab_data.reset_index(drop = True)
+        if (len(tgt) == 0):
+            idx     = sorted(range(len(sizes)), key = sizes.__getitem__)
+            idx.reverse()
+            targets = [targets[i] for i in idx]
+            targets = targets[:topn]
+        else:
+            targets = [item for item in tgt]
+        highlight_list  = set(targets) if len(targets) > 1 else set()
+        self.ask_gpt_ct = []
+        if (len(targets) == 1):
+            rows, cols = 1, 1
+        elif (len(targets) > rows * cols):
+            rows = int(np.ceil(len(targets) / cols))
+        fig, axes = plt.subplots(rows, cols, figsize = (cols * 5, rows * 5), facecolor = 'white')
+        axes      = axes.flatten() if len(targets) > 1 else [axes]
+        for idx, target in enumerate(targets):
+            ax          = axes[idx]
+            G           = nx.Graph()
+            G.add_node(target, color = nd_a)
+            connections = collab_data[collab_data[target] > 0].index.tolist()
+            if (verbose == True):
+                ct = [collab_data.columns[conn_idx] for conn_idx in connections]
+                print(f'Main Node: {target}')
+                print(f'Links: {ct}\n')
+                self.ask_gpt_ct.append([ [target], ct ])
+            for conn_idx in connections:
+                conn_target = collab_data.columns[conn_idx]
+                color       = nd_b if conn_target in highlight_list else nd_c
+                G.add_node(conn_target, color = color)
+                G.add_edge(target, conn_target, color = color)
+            node_colors = [G.nodes[n]['color'] for n in G.nodes()]
+            edge_colors = [G[u][v]['color'] for u, v in G.edges()]
+            pos         = nx.spring_layout(G, seed=42)
+            label_pos   = {k: (v[0], v[1] + tspace) for k, v in pos.items()}
+            labels      = {node: '' if G.nodes[node]['color'] == nd_a else node for node in G.nodes()}
+            nx.draw_networkx_nodes(G, pos, node_color = node_colors, node_size = node_size, ax = ax)
+            nx.draw_networkx_edges(G, pos, edge_color = edge_colors, ax = ax)
+            nx.draw_networkx_labels(G, label_pos, labels, font_size = font_size, ax = ax)
+            ax.set_title(target.title(), color = nd_a, fontsize = font_size + 1)
+            ax.axis('off')
+            rect = plt.Rectangle((0, 0), 1, 1, fill = False, edgecolor = 'black', linewidth = 0.5, transform = ax.transAxes, clip_on = False)
+            ax.add_patch(rect)
+        for j in range(len(targets), rows * cols):
+            fig.delaxes(axes[j])
+        plt.subplots_adjust(wspace = wspace, hspace = hspace)
+        plt.tight_layout(pad = pad)
+        plt.show()
+        return
 
     # Function: Network Similarities 
     def network_sim(self, view = 'browser', sim_type = 'coup', node_size = -1, node_labels = False, cut_coup = 0.3, cut_cocit = 5):
@@ -4086,8 +4352,8 @@ class pbx_probe():
         fig.show()
         return self
     
-    # Function: Graph Topics - Topics Collab   
-    def graph_topics_collab(self, topn = 15, rows = 5, cols = 3, wspace = 0.2, hspace = 0.2, tspace = 0.01, node_size = 300, font_size = 8, pad = 0.2, nd_a = '#FF0000', nd_b = '#008000', nd_c = '#808080', verbose = False):
+    # Function: Topics - Topics Collab   
+    def topics_authors(self, topn = 15):
         self.__adjacency_matrix_aut(0)
         collab_data        = self.matrix_a.copy(deep = True)
         collab_data        = collab_data.reset_index(drop = True)
@@ -4111,47 +4377,124 @@ class pbx_probe():
                 summary.at[author, topic] = topic_count
         summary['Total']   = summary.sum(axis = 1)
         summary            = summary.sort_values(by = 'Total', ascending = False)
-        highlight_list     = set(targets) if len(targets) > 1 else set()
-        self.ask_gpt_ct    = []
-        if (len(targets) == 1):
-            rows, cols = 1, 1
-        elif (len(targets) > rows * cols):
-            rows = int(np.ceil(len(targets) / cols))
-        fig, axes = plt.subplots(rows, cols, figsize = (cols * 5, rows * 5), facecolor = 'white')
-        axes      = axes.flatten() if len(targets) > 1 else [axes]
-        for idx, target in enumerate(targets):
-            ax          = axes[idx]
-            G           = nx.Graph()
-            G.add_node(target, color = nd_a)
-            connections = collab_data[collab_data[target] > 0].index.tolist()
-            if (verbose == True):
-                ct = [collab_data.columns[conn_idx] for conn_idx in connections]
-                print(f'Main Node: {target}')
-                print(f'Links: {ct}\n')
-                self.ask_gpt_ct.append([ [target], ct ])
-            for conn_idx in connections:
-                conn_target = collab_data.columns[conn_idx]
-                color       = nd_b if conn_target in highlight_list else nd_c
-                G.add_node(conn_target, color = color)
-                G.add_edge(target, conn_target, color = color)
-            node_colors = [G.nodes[n]['color'] for n in G.nodes()]
-            edge_colors = [G[u][v]['color'] for u, v in G.edges()]
-            pos         = nx.spring_layout(G, seed=42)
-            label_pos   = {k: (v[0], v[1] + tspace) for k, v in pos.items()}
-            labels      = {node: '' if G.nodes[node]['color'] == nd_a else node for node in G.nodes()}
-            nx.draw_networkx_nodes(G, pos, node_color = node_colors, node_size = node_size, ax = ax)
-            nx.draw_networkx_edges(G, pos, edge_color = edge_colors, ax = ax)
-            nx.draw_networkx_labels(G, label_pos, labels, font_size = font_size, ax = ax)
-            ax.set_title(target.title(), color = nd_a, fontsize = font_size + 1)
-            ax.axis('off')
-            rect = plt.Rectangle((0, 0), 1, 1, fill = False, edgecolor = 'black', linewidth = 0.5, transform = ax.transAxes, clip_on = False)
-            ax.add_patch(rect)
-        for j in range(len(targets), rows * cols):
-            fig.delaxes(axes[j])
-        plt.subplots_adjust(wspace = wspace, hspace = hspace)
-        plt.tight_layout(pad = pad)
-        plt.show()
         return summary
+    
+    # Function: W2V
+    def word_embeddings(self, stop_words = ['en'], lowercase = True, rmv_accents = True, rmv_special_chars = False, rmv_numbers = True, rmv_custom_words = [], vector_size = 100, window = 5, min_count = 1, epochs = 10):
+        
+        ##
+        def tokenize(text):
+            return re.findall(r'\b\w+\b', text)
+        ##
+        
+        corpus = self.data['abstract'].tolist()
+        corpus = self.clear_text(corpus, 
+                                 stop_words        = stop_words, 
+                                 lowercase         = lowercase, 
+                                 rmv_accents       = rmv_accents, 
+                                 rmv_special_chars = rmv_special_chars, 
+                                 rmv_numbers       = rmv_numbers, 
+                                 rmv_custom_words  = rmv_custom_words, 
+                                 verbose           = False)
+        corpus = [tokenize(doc) for doc in corpus]
+        model  = FastText(sentences   = corpus, 
+                          vector_size = vector_size, 
+                          window      = window, 
+                          min_count   = min_count, 
+                          epochs      = epochs)
+        
+        w_emb  = [model.wv[word] for word in corpus[0] if word in model.wv]
+        vocab  = model.wv.index_to_key 
+        return model, corpus, w_emb, vocab
+    
+    # Function: Find Documents that have the Target Words
+    def word_embeddings_find_doc(self, corpus, target_words = []):
+        results  = []
+        i        = -1
+        original = self.data['abstract'].tolist()
+        for tokens in corpus:
+            i = i + 1
+            if (set(target_words).issubset(tokens)):
+                results.append((i, original[i]))  
+        return results
+    
+    
+    # Function: Words Similarity
+    def word_embeddings_sim(self, model, word_1 = '', word_2 = ''):
+        similarity = model.wv.similarity(word_1 , word_2)
+        return similarity
+    
+    # Function: Words Operations
+    def word_embeddings_operations(self, model, positive = [], negative = [], topn = 10):
+        result = model.wv.most_similar(positive = positive, negative = negative, topn = topn)
+        return result
+    
+    # Function: Plot Words
+    def plot_word_embeddings(self, model, view = 'browser', positive = [], negative = [], topn = 5, node_size = 10, font_size = 14):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
+        all_words   = []
+        all_vectors = []
+        all_labels  = []
+    
+        for i, (pos, neg) in enumerate(zip(positive, negative)):
+            query_label = '+'.join(pos) + ('-' + '-'.join(neg) if neg else '')
+            try:
+                similar_words = model.wv.most_similar(positive = pos, negative = neg, topn = topn)
+                all_words.extend(pos)
+                all_vectors.extend([model.wv[word] for word in pos])
+                all_labels.extend([query_label] * len(pos))
+                for similar_word, _ in similar_words:
+                    all_words.append(similar_word)
+                    all_vectors.append(model.wv[similar_word])
+                    all_labels.append(query_label)
+            except KeyError as e:
+                print(f"Warning: One or more words not in the model's vocabulary: {e}")
+    
+        reducer         = UMAP(n_components = 2, random_state = 42)
+        reduced_vectors = reducer.fit_transform(all_vectors)
+        df              = pd.DataFrame(reduced_vectors, columns = ['x', 'y'])
+        df['word']      = all_words
+        df['label']     = all_labels  
+        fig             = go.Figure()
+    
+        for i, query_label in enumerate(set(all_labels)):
+            group_df = df[df['label'] == query_label]
+            fig.add_trace(go.Scatter(
+                                      x            = group_df['x'],
+                                      y            = group_df['y'],
+                                      mode         = 'markers+text',
+                                      text         = group_df['word'],
+                                      textposition = 'top center',
+                                      marker       = dict(
+                                                           size    = node_size,
+                                                           color   = self.color_names[i],
+                                                           line    = dict(width = 1, color = 'DarkSlateGrey'),
+                                                           opacity = 0.8
+                                                         ),
+                                    name          = query_label
+                                ))
+        fig.update_layout(
+            hovermode    = 'closest',
+            margin       = dict(b = 10, l = 5, r = 5, t = 10),
+            plot_bgcolor = '#f5f5f5',
+            xaxis        = dict(  showgrid       = True, 
+                                  gridcolor      = 'white',
+                                  zeroline       = False, 
+                                  showticklabels = False, 
+                               ),
+            yaxis        = dict(  showgrid       = True,  
+                                  gridcolor      = 'white',
+                                  zeroline       = False, 
+                                  showticklabels = False,
+                                ),
+            legend       = dict( title      = 'Queries',
+                                 font       = dict(size = font_size),
+                                 itemsizing = 'constant'
+                                ),
+                        )
+        fig.show()
+        return
  
 ############################################################################
 
@@ -4440,7 +4783,7 @@ class pbx_probe():
         return analyze
 
     # Function: Ask chatGPT about Collaboration Analysis
-    def ask_chatgpt_colab(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following network information, knowing that Node 1 is connected with Node 2', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
+    def ask_chatgpt_col_an(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following network information, knowing that Node 1 is connected with Node 2', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
         flag                     = 0
         os.environ['OPENAI_KEY'] = api_key        
         corpus                   = self.ask_gpt_adj.to_string(index = False)
@@ -4928,5 +5271,63 @@ class pbx_probe():
         analyze = query_chatgpt(prompt)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
-
+    
+    # Function: Ask chatGPT about Network Collab
+    def ask_chatgpt_net_collab(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, the main nodes represent key entities, and the links indicate their direct connections or relationships', model = 'text-davinci-003', max_tokens = 2000, n = 1, temperature = 0.8):
+        flag                     = 0
+        os.environ['OPENAI_KEY'] = api_key 
+        corpus                   = []
+        for entry in self.ask_gpt_ct:
+            target = entry[0][0]  
+            ct    = ', '.join(entry[1]) 
+            corpus.append(f'Main Node = {target}; Links = {ct}')
+        corpus                   = '\n'.join(corpus)
+        prompt                   = query + ':\n\n' + f'{corpus}\n'
+        prompt                   = prompt[:char_limit]
+        
+        ##############################################################################
+       
+        def version_check(major, minor, patch):
+            try:
+                version                   = openai.__version__
+                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
+                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
+                    return True
+                else:
+                    return False
+            except AttributeError:
+                return False
+        
+        if (version_check(1, 0, 0)):
+            flag = 1
+        else:
+            flag = 0
+        
+        ##############################################################################
+            
+        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
+            if (flag == 0):
+              try:
+                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response['choices'][0]['message']['content']
+              except:
+                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
+            else:
+              try:
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+                  response = response.choices[0].message.content
+              except:
+                  client   = openai.OpenAI(api_key = api_key)
+                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+                  response = response.choices[0].text.strip()
+            return response
+        
+        ##############################################################################        
+        
+        analyze = query_chatgpt(prompt)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
 ############################################################################
