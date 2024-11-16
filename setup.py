@@ -6,7 +6,7 @@ long_description = (this_directory / 'README.md').read_text()
 
 setup(
     name='pyBibX',
-    version='3.3.8',
+    version='4.0.1',
     license='GNU',
     author='Valdecy Pereira',
     author_email='valdecy.pereira@gmail.com',
@@ -17,6 +17,7 @@ setup(
         'bertopic',
         'bert-extractive-summarizer',
         'chardet',
+        'gensim',
         'llmx',
         'matplotlib',
         'networkx',
