@@ -25,7 +25,7 @@ General Capabilities:
 - l) Creates a **Sankey Diagram (interactive plot)** with any combination of the following keys: Authors, Countries, Institutions, Journals, Auhors_Keywords, Keywords_Plus, and/or Languages
 - m) Creates a **TreeMap** from the Authors, Countries, Institutions, Journals, Auhors_Keywords, or Keywords_Plus
 - n) Creates an **Authors Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each author
-- o) Creates an **Countries Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each country (each author's country)
+- o) Creates a **Countries Productivity Plot (interactive plot)** It informs the documents (IDs) published for each country (each author's country)
 - p) Creates a **Bar Plot**  for the following statistics: Documents per Year, Citations per Year, Past Citations per Year, Lotka's Law, Sources per Documents, Sources per Citations, Authors per Documents, Authors per Citations, Authors per H-Index, Bradford's Law (Core Sources 1, 2 or 3), Institutions per Documents, Institutions per Citations, Countries per Documents, Countries per Citations, Language per Documents, Keywords Plus per Documents and Authors' Keywords per Documents
 
 Network Capabilities:
@@ -89,32 +89,45 @@ This section indicates the libraries that inspired pyBibX
 - **BERTopic (https://maartengr.github.io/BERTopic/index.html)**:
   <!-- -->
   a) Github: https://github.com/MaartenGr/BERTopic
+  <!-- -->
   b) Paper: GROOTENDORST, M. (2022). BERTopic: Neural Topic Modeling with a Class-based TF-IDF Procedure. arXiv. doi: https://doi.org/10.48550/arXiv.2203.05794
 
 - **Bibliometrix (https://www.bibliometrix.org/home/)**:
-- a) Github: https://github.com/massimoaria/bibliometrix
-- b) Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of informetrics, 11(4), 959-975. doi: https://doi.org/10.1016/j.joi.2017.08.007
+  <!-- -->
+  a) Github: https://github.com/massimoaria/bibliometrix
+  <!-- -->
+  b) Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of Informetrics, 11(4), 959-975. doi: https://doi.org/10.1016/j.joi.2017.08.007
 
 - **Gensim (https://radimrehurek.com/gensim/)**:
-- a) Github: https://github.com/piskvorky/gensim
-- b) Paper: REHUREK, R.; SOJKA, P. (2010). Software Framework for Topic Modelling with Large Corpora. LREC 2010. doi: https://doi.org/10.13140/2.1.2393.1847
+  <!-- -->
+  a) Github: https://github.com/piskvorky/gensim
+  <!-- -->
+  b) Paper: REHUREK, R.; SOJKA, P. (2010). Software Framework for Topic Modelling with Large Corpora. LREC 2010. doi: https://doi.org/10.13140/2.1.2393.1847
 
 - **chatGPT (https://chat.openai.com/chat)**:
-- a) Github: https://github.com/openai
-- b) Paper: OPENAI. (2023). GPT-4 Technical Report. arXiv. doi: https://doi.org/10.48550/arXiv.2303.08774
+  <!-- -->
+  a) Github: https://github.com/openai
+  <!-- -->
+  b) Paper: OPENAI. (2023). GPT-4 Technical Report. arXiv. doi: https://doi.org/10.48550/arXiv.2303.08774
 
 - **Metaknowledge (http://www.networkslab.org/metaknowledge)**:
-- a) Github: https://github.com/UWNETLAB/metaknowledge
-- b) Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
+  <!-- -->
+  a) Github: https://github.com/UWNETLAB/metaknowledge
+  <!-- -->
+  b) Paper: McILROY-YOUNG, R.; McLEVEY, J.; ANDERSON, J. (2015). Metaknowledge: Open Source Software for Social Networks, Bibliometrics, and Sociology of Knowledge Research.
 
 - **SentenceTransformers (https://www.sbert.net/)**:
-- a) Github: https://github.com/UKPLab/sentence-transformers
-- b) Paper: REIMERS, N.; GUREVYCH, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. arXiv. doi: https://arxiv.org/abs/1908.10084
+  <!-- -->
+  a) Github: https://github.com/UKPLab/sentence-transformers
+  <!-- -->
+  b) Paper: REIMERS, N.; GUREVYCH, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. arXiv. doi: https://arxiv.org/abs/1908.10084
 
 - **PEGASUS (https://ai.googleblog.com/2020/06/pegasus-state-of-art-model-for.html?m=1)**:
-- a) Github: https://github.com/huggingface/transformers
-- b) Paper: ZHANG, J.; ZHAO, Y.; SALEH, M.; LIU, P.J. (2019). PEGASUS: Pre-training with Extracted Gap-sentences for Abstractive Summarization. arXiv. doi: https://doi.org/10.48550/arXiv.1912.08777
+  <!-- -->
+  a) Github: https://github.com/huggingface/transformers
+  <!-- -->
+  b) Paper: ZHANG, J.; ZHAO, Y.; SALEH, M.; LIU, P.J. (2019). PEGASUS: Pre-training with Extracted Gap-sentences for Abstractive Summarization. arXiv. doi: https://doi.org/10.48550/arXiv.1912.08777
 
-And to all the people that helped to improve or correct the code. Thank you very much!
+And to all the people who helped to improve or correct the code. Thank you very much!
 
 * Fabio Ribeiro von Glehn (29.DECEMBER.2022) - UFG - Federal University of Goias (Brazil)
