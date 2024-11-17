@@ -81,8 +81,8 @@ pip install pyBibX
 This section indicates the libraries that inspired pyBibX
 
 - **BERT (https://smrzr.io/)**:
-- a) Github: https://github.com/dmmiller612/bert-extractive-summarizer
-- b) Paper: DEREK, M. (2019). Leveraging BERT for Extractive Text Summarization on Lectures. arXiv. doi: https://doi.org/10.48550/arXiv.1906.04165
+  a) Github: https://github.com/dmmiller612/bert-extractive-summarizer
+  b) Paper: DEREK, M. (2019). Leveraging BERT for Extractive Text Summarization on Lectures. arXiv. doi: https://doi.org/10.48550/arXiv.1906.04165
 
 - **BERTopic (https://maartengr.github.io/BERTopic/index.html)**:
 - a) Github: https://github.com/MaartenGr/BERTopic
