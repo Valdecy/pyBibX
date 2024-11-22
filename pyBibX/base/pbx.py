@@ -12,6 +12,7 @@
 
 # Required Libraries
 import chardet
+import google.generativeai as genai
 import networkx as nx             
 import numpy as np   
 import openai       
@@ -1913,47 +1914,105 @@ class pbx_probe():
         fig_aut.show() 
         return 
 
-    # Function: Countries' Productivity Plot    
+    # Function: Countries' Productivity Plot
     def countries_productivity(self, view = 'browser'):
         if (view == 'browser'):
             pio.renderers.default = 'browser'
-        filtered_data        = [(ctr, count) for ctr, count in zip(self.u_ctr, self.ctr_count) if ctr.lower() != 'unknow']
-        f_u_ctr, f_ctr_count = zip(*filtered_data)
-        iso_3                = [country for country in f_u_ctr]  
-        data                 = dict(
-                                    type              = 'choropleth',
-                                    locations         = iso_3,
-                                    locationmode      = 'country names',
-                                    z                 = f_ctr_count,
-                                    colorscale        = 'sunsetdark', 
-                                    marker_line_color = 'black',
-                                    marker_line_width = 0.5,
-                                    colorbar_title    = 'Frequency',
-                                    hoverinfo         = 'location+z',
-                                )
-        layout              = dict(
-                                    geo = dict(
-                                                scope          = 'world',
-                                                showcoastlines = True,
-                                                coastlinecolor = 'black',
-                                                showland       = True,
-                                                landcolor      = '#f0f0f0',  
-                                                showocean      = False,
-                                                oceancolor     = '#7fcdff',  
-                                                showlakes      = False,
-                                                lakecolor      = 'blue',
-                                                showrivers     = False,
-                                                resolution     = 50, 
-                                                lataxis        = dict(range = [-60, 90]), 
-                                            ),
-            showlegend      = False,
-            hovermode       = 'closest',
-            margin          = dict(b = 10, l = 5, r = 5, t = 10)
+        years       = list(range(self.date_str, self.date_end + 1))
+        yearly_data = {year: {} for year in years}
+        for i, year in enumerate(self.data['year']):
+            if (int(year) in years):
+                countries = [item.lower() for item in self.ctr[i]]
+                for country in countries:
+                    if (country != 'unknow'):
+                        if (country not in yearly_data[int(year)]):
+                            yearly_data[int(year)][country] = 0
+                        yearly_data[int(year)][country] = yearly_data[int(year)][country] + 1
+        all_years_data = {}
+        for year in yearly_data:
+            for country, count in yearly_data[year].items():
+                if (country not in all_years_data):
+                    all_years_data[country] = 0
+                all_years_data[country] = all_years_data[country] + count
+        yearly_data['All Years'] = all_years_data
+        frames                   = []
+        for year in yearly_data:
+            frame_data = yearly_data[year]
+            countries  = list(frame_data.keys())
+            counts     = list(frame_data.values())
+            frames.append(go.Frame(
+                                    data=[go.Choropleth(
+                                                        locations        = countries,
+                                                        locationmode     = 'country names',
+                                                        z                = counts,
+                                                        colorscale        = 'sunsetdark',
+                                                        marker_line_color = 'black',
+                                                        marker_line_width = 0.5,
+                                                        colorbar_title    = 'Frequency',
+                                                        hoverinfo         = 'location+z'
+                                    )   ],
+                name    = str(year)
+            ))
+    
+        # Initial data for "All Years"
+        initial_data = go.Choropleth(
+                                        locations         = list(all_years_data.keys()),
+                                        locationmode      = 'country names',
+                                        z                 = list(all_years_data.values()),
+                                        colorscale        = 'sunsetdark',
+                                        marker_line_color = 'black',
+                                        marker_line_width = 0.5,
+                                        colorbar_title    = 'Frequency',
+                                        hoverinfo         = 'location+z'
         )
-        fig = go.Figure(data = [go.Choropleth(data)], layout = layout)
+    
+        # Layout with slider
+        layout = go.Layout(
+                            geo = dict(
+                                        scope          = 'world',
+                                        showcoastlines = True,
+                                        coastlinecolor = 'black',
+                                        showland       = True,
+                                        landcolor      = '#f0f0f0',
+                                        showocean      = False,
+                                        oceancolor     = '#7fcdff',
+                                        showlakes      = False,
+                                        lakecolor      = 'blue',
+                                        showrivers     = False,
+                                        resolution     = 50,
+                                        lataxis        =dict(range = [-60, 90]),
+                    ),
+            showlegend  = False,
+            hovermode   = 'closest',
+            margin      = dict(b = 10, l = 5, r = 5, t = 10),
+            updatemenus = [
+                dict(
+                    type       = 'buttons',
+                    showactive = False,
+                    buttons    = [
+                                    dict(label = 'Play', method = 'animate', args = [None, dict(frame = dict(duration = 500, redraw = True), fromcurrent = True)]),
+                                    dict(label = 'Pause', method = 'animate', args = [[None], dict(frame = dict(duration = 0, redraw = False), mode = 'immediate', transition = dict(duration = 0))])
+                                ]
+                            )
+                        ],
+            sliders = [
+                dict(
+                    active = len(years),
+                    pad    = {'t': 50},
+                    steps  = [
+                                dict(
+                                        label  = str(year),
+                                        method = 'animate',
+                                        args   = [[str(year)], dict(mode = 'immediate', frame = dict(duration = 500, redraw = True), transition = dict(duration = 300))]
+                                    ) for year in yearly_data
+                    ]
+                )
+            ]
+        )
+        fig = go.Figure(data=[initial_data], layout = layout, frames = frames)
         fig.show()
         return
-    
+
     # Function: Evolution per Year
     def plot_evolution_year(self, view = 'browser', stop_words = ['en'], key = 'kwp', rmv_custom_words = [], topn = 10, txt_font_size = 10, start = 2010, end = 2022):
         if (view == 'browser'):
@@ -3050,11 +3109,11 @@ class pbx_probe():
             G           = nx.Graph()
             G.add_node(target, color = nd_a)
             connections = collab_data[collab_data[target] > 0].index.tolist()
+            ct          = [collab_data.columns[conn_idx] for conn_idx in connections]
+            self.ask_gpt_ct.append([ [target], ct ])
             if (verbose == True):
-                ct = [collab_data.columns[conn_idx] for conn_idx in connections]
                 print(f'Main Node: {target}')
                 print(f'Links: {ct}\n')
-                self.ask_gpt_ct.append([ [target], ct ])
             for conn_idx in connections:
                 conn_target = collab_data.columns[conn_idx]
                 color       = nd_b if conn_target in highlight_list else nd_c
@@ -4378,14 +4437,18 @@ class pbx_probe():
         summary['Total']   = summary.sum(axis = 1)
         summary            = summary.sort_values(by = 'Total', ascending = False)
         return summary
+
+############################################################################
     
     # Function: W2V
     def word_embeddings(self, stop_words = ['en'], lowercase = True, rmv_accents = True, rmv_special_chars = False, rmv_numbers = True, rmv_custom_words = [], vector_size = 100, window = 5, min_count = 1, epochs = 10):
         
-        ##
+        ##############################################################################
+        
         def tokenize(text):
             return re.findall(r'\b\w+\b', text)
-        ##
+        
+        ##############################################################################
         
         corpus = self.data['abstract'].tolist()
         corpus = self.clear_text(corpus, 
@@ -4523,6 +4586,38 @@ class pbx_probe():
             summary   = 'No abstracts were found in the selected set of documents'
         return summary
     
+    # Function: Check Version
+    def version_check(self, major, minor, patch):
+        try:
+            version                   = openai.__version__
+            major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
+            if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
+                return True
+            else:
+                return False
+        except AttributeError:
+            return False
+    
+    # Function: Query
+    def query_chatgpt(self, prompt, model, max_tokens, n, temperature, flag, api_key):
+        if (flag == 0):
+          try:
+              response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+              response = response['choices'][0]['message']['content']
+          except:
+              response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+              response = response.choices[0].text.strip()
+        else:
+          try:
+              client   = openai.OpenAI(api_key = api_key)
+              response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
+              response = response.choices[0].message.content
+          except:
+              client   = openai.OpenAI(api_key = api_key)
+              response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
+              response = response.choices[0].text.strip()
+        return response
+            
     # Function: Abstractive Text Summarization
     def summarize_abst_chatgpt(self, article_ids = [], join_articles = False, api_key = 'your_api_key_here', query = 'from the following scientific abstracts, summarize the main information in a single paragraph using around 250 words', model = 'text-davinci-003', max_tokens = 250, n = 1, temperature = 0.8):
         flag                     = 0
@@ -4539,46 +4634,10 @@ class pbx_probe():
                 corpus.append(abstracts.iloc[i])
                 print('Document ID' + str(i) + ' Number of Characters: ' + str(len(abstracts.iloc[i])))
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
         
         if (len(corpus) > 0):
             print('')
@@ -4590,7 +4649,37 @@ class pbx_probe():
             else:    
                 corpus = ' '.join(corpus)
                 prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
-            summary = query_chatgpt(prompt)
+            #summary = query_chatgpt(prompt)
+            summary = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
+        else:
+            summary = 'No abstracts were found in the selected set of documents'
+        return summary
+
+    # Function: Abstractive Text Summarization
+    def summarize_abst_gemini(self, article_ids = [],join_articles = False, api_key = 'your_api_key_here', query = 'from the following scientific abstracts, summarize the main information in a single paragraph using around 250 words', model_name = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        model     = genai.GenerativeModel(model_name)
+        abstracts = self.data['abstract']
+        corpus    = []
+        if (len(article_ids) == 0):
+            article_ids = [i for i in range(0, abstracts.shape[0])]
+        else:
+            article_ids = [int(item) for item in article_ids]
+        for i in range(0, abstracts.shape[0]):
+            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+                corpus.append(abstracts.iloc[i])
+        if (len(corpus) > 0):
+            print('')
+            print('Total Number of Valid Abstracts: ', int(len(corpus)/2))
+            print('')
+            if (join_articles == False):
+                for i, abstract in enumerate(corpus):
+                    prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
+            else:    
+                corpus = ' '.join(corpus)
+                prompt = query + ':\n\n' + f'{i+1}. {corpus}\n'
+            summary = model.generate_content(prompt)
+            summary = summary .text
         else:
             summary = 'No abstracts were found in the selected set of documents'
         return summary
@@ -4630,49 +4719,13 @@ class pbx_probe():
             corpus       = corpus +  f'{author} {paper_counts}\n'
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
-       
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
         
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
 
-        analyze = query_chatgpt(prompt)
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
     
@@ -4684,48 +4737,12 @@ class pbx_probe():
         prompt                   = query + ' regarding ' + self.ask_gpt_bp_t + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
     
@@ -4737,48 +4754,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -4790,48 +4771,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -4845,48 +4790,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
     
@@ -4898,48 +4807,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################
-       
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -4954,48 +4827,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -5007,48 +4844,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -5062,48 +4863,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-                
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -5117,48 +4882,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -5170,48 +4899,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
 
@@ -5227,48 +4920,12 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
     
@@ -5285,49 +4942,193 @@ class pbx_probe():
         prompt                   = query + ':\n\n' + f'{corpus}\n'
         prompt                   = prompt[:char_limit]
         
-        ##############################################################################
-       
-        def version_check(major, minor, patch):
-            try:
-                version                   = openai.__version__
-                major_v, minor_v, patch_v = [int(v) for v in version.split('.')]
-                if ( (major_v, minor_v, patch_v) >= (major, minor, patch) ):
-                    return True
-                else:
-                    return False
-            except AttributeError:
-                return False
-        
-        if (version_check(1, 0, 0)):
+        if (self.version_check(1, 0, 0)):
             flag = 1
         else:
             flag = 0
-        
-        ##############################################################################
-            
-        def query_chatgpt(prompt, model = model, max_tokens = max_tokens, n = n, temperature = temperature):
-            if (flag == 0):
-              try:
-                  response = openai.ChatCompletion.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response['choices'][0]['message']['content']
-              except:
-                  response = openai.Completion.create(engine = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            else:
-              try:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.chat.completions.create(model = model, messages = [{'role': 'user', 'content': prompt}], max_tokens = max_tokens)
-                  response = response.choices[0].message.content
-              except:
-                  client   = openai.OpenAI(api_key = api_key)
-                  response = client.completions.create( model = model, prompt = prompt, max_tokens = max_tokens, n = n, stop = None, temperature = temperature)
-                  response = response.choices[0].text.strip()
-            return response
-        
-        ##############################################################################        
-        
-        analyze = query_chatgpt(prompt)
+
+        analyze = self.query_chatgpt(prompt, model, max_tokens, n, temperature, flag, api_key)
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+ 
+############################################################################
+
+    # Function: Ask Gemini about Authors Productivity by Year
+    def ask_gemini_ap(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to authors productivity by year', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem    = genai.GenerativeModel(model)
+        corpus = ''
+        for author, row in self.ask_gpt_ap.iterrows():
+            years        = [(year, row[year]) for year in row.index if row[year] > 0]
+            paper_counts = ', '.join([f'({year}: {count} paper{"s" if count > 1 else ""})' for year, count in years])
+            corpus       = corpus +  f'{author} {paper_counts}\n'
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
         print('Number of Characters: ' + str(len(prompt)))
         return analyze
     
+    # Function: Ask Gemini about Bar Plots 
+    def ask_gemini_bp(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_bp.to_string(index = False)    
+        prompt  = query + ' regarding ' + self.ask_gpt_bp_t + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask Gemini about Citation Analysis 
+    def ask_gemini_citation(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_nad.to_string(index = False)    
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Collaboration Analysis
+    def ask_gemini_col_an(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following network information, knowing that Node 1 is connected with Node 2', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)       
+        corpus  = self.ask_gpt_adj.to_string(index = False)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about EDA Report 
+    def ask_gemini_eda(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model) 
+        corpus  = self.ask_gpt_rt.to_string(index = False)    
+        lines   = corpus.split('\n')
+        corpus  = '\n'.join(' '.join(line.split()) for line in lines)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask Gemini about Evolution Plot
+    def ask_gemini_ep(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, related to words apperance by year', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_ep
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Citation Analysis 
+    def ask_gemini_hist(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the most influential references, also discover if there is relevant network connections', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem    = genai.GenerativeModel(model)
+        corpus = []
+        for i in range(0, self.ask_gpt_hist.shape[0]):
+            corpus.append('Paper ' + self.ask_gpt_hist.iloc[i,0] + ' Cites Paper ' + self.ask_gpt_hist.iloc[i,1])
+        corpus  = ', '.join(corpus)    
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Map Analysis 
+    def ask_gemini_map(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_map.to_string(index = False)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about N-Grms 
+    def ask_gemini_ngrams(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information relating the n-grams and their frequency', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_ng.to_string(index = False)  
+        lines   = corpus.split('\n')
+        corpus  = '\n'.join(' '.join(line.split()) for line in lines)  
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Sankey Diagram
+    def ask_gemini_sankey(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information from a network called Sankey', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_sk.to_string(index = False)   
+        lines   = corpus.split('\n')
+        corpus  = '\n'.join(' '.join(line.split()) for line in lines)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Similarity Analysis 
+    def ask_gemini_sim(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = self.ask_gpt_sim.to_string(index = False)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+
+    # Function: Ask Gemini about Wordcloud 
+    def ask_gemini_wordcloud(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem     = genai.GenerativeModel(model)
+        corpus  = pd.DataFrame.from_dict(self.ask_gpt_wd, orient = 'index', columns = ['Frequency'])    
+        corpus  = corpus.reset_index().rename(columns = {'index': 'Word'})
+        corpus  = corpus.to_string(index = False)
+        lines   = corpus.split('\n')
+        corpus  = '\n'.join(' '.join(line.split()) for line in lines)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+    
+    # Function: Ask Gemini about Network Collab
+    def ask_gemini_net_collab(self, char_limit = 4097, api_key = 'your_api_key_here', query = 'give me insights about the following information, the main nodes represent key entities, and the links indicate their direct connections or relationships', model = 'gemini-1.5-flash'):
+        genai.configure(api_key = api_key)
+        gem    = genai.GenerativeModel(model)
+        corpus = []
+        for entry in self.ask_gpt_ct:
+            target = entry[0][0]  
+            ct    = ', '.join(entry[1]) 
+            corpus.append(f'Main Node = {target}; Links = {ct}')
+        corpus  = '\n'.join(corpus)
+        prompt  = query + ':\n\n' + f'{corpus}\n'
+        prompt  = prompt[:char_limit]
+        analyze = gem.generate_content(prompt)
+        analyze = analyze.text
+        print('Number of Characters: ' + str(len(prompt)))
+        return analyze
+ 
 ############################################################################
