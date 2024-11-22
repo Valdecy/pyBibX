@@ -1,4 +1,4 @@
-# pyBibX
+# pybibx
 
 ## Introduction
 
@@ -65,7 +65,7 @@ Correction and Manipulation Capabilities:
 
 1. Install
 ```bash
-pip install pyBibX
+pip install pybibx
 ```
 
 2. Try it in **Colab**:
@@ -81,7 +81,7 @@ pip install pyBibX
 - Example 09: **Ask Gemini** Analysis  ([ Colab Demo ](https://colab.research.google.com/drive/1oEJBfCml_OMgmSTicMOB-FKMaR2FtoG3?usp=sharing))
 
 # Acknowledgement 
-This section indicates the libraries that inspired pyBibX
+This section indicates the libraries that inspired pybibx
 
 - **BERT (https://smrzr.io/)**:
   <!-- -->
