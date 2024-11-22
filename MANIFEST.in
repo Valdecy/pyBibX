@@ -1,1 +1,1 @@
-recursive-include pyBibX/base/stws *.txt
+recursive-include pybibx/base/stws *.txt
