@@ -6,7 +6,7 @@ A Bibliometric and Scientometric python library that uses the raw files generate
 
 To export the correct file formats from Scopus, Web of Science, and PubMed, follow these steps:
 
-- a) **Scopus**: Search, select articles, click "Export" choose "BibTeX" or ("CSV") select all fields, click "Export" again.
+- a) **Scopus**: Search, select articles, click "Export" choose "BibTeX" or "CSV", select all fields, click "Export" again.
 - b) **WoS**: Search, select articles, click "Export" choose "Save to Other File Formats" select "BibTeX" select all fields, click "Send"
 - c) **PubMed**: Search, select articles, click "Save" choose "PubMed" format, click "Save" to download a .txt file. 
 
@@ -25,7 +25,7 @@ General Capabilities:
 - l) Creates a **Sankey Diagram (interactive plot)** with any combination of the following keys: Authors, Countries, Institutions, Journals, Auhors_Keywords, Keywords_Plus, and/or Languages
 - m) Creates a **TreeMap** from the Authors, Countries, Institutions, Journals, Auhors_Keywords, or Keywords_Plus
 - n) Creates an **Authors Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each author
-- o) Creates a **Countries Productivity Plot (interactive plot)** It informs the documents (IDs) published for each country (each author's country)
+- o) Creates a **Countries Productivity Plot (interactive plot)** It informs for each year the documents (IDs) published for each country (each author's country)
 - p) Creates a **Bar Plot**  for the following statistics: Documents per Year, Citations per Year, Past Citations per Year, Lotka's Law, Sources per Documents, Sources per Citations, Authors per Documents, Authors per Citations, Authors per H-Index, Bradford's Law (Core Sources 1, 2 or 3), Institutions per Documents, Institutions per Citations, Countries per Documents, Countries per Citations, Language per Documents, Keywords Plus per Documents and Authors' Keywords per Documents
 
 Network Capabilities:
@@ -51,8 +51,10 @@ Artificial Intelligence Capabilities:
 - m) Creates **Sentence Embeddings** from Abstracts, Titles, Authors Keywords or Keywords Plus
 - n) **Abstractive Text Summarization** using **PEGASUS** on a set of selected documents or all documents
 - o) **Abstractive Text Summarization** using **chatGPT** on a set of selected documents or all documents. Requires the user to have an **API key** (https://platform.openai.com/account/api-keys)
-- p) **Extractive Text Summarization** using **BERT** on a set of selected documents or all documents
-- q) **Ask chatGPT** to analyze the following results: EDA Report, WordCloud, N-Grams, Evolution Plot, Sankey Diagram, Authors Productivity Plot, Bar Plots, Citation Analysis, Collaboration Analysis, Similarity Analysis, and World Map Collaboration Analysis (consult **Example 08**). Requires the user to have an **API key** (https://platform.openai.com/account/api-keys)
+- p) **Abstractive Text Summarization** using **Gemini** on a set of selected documents or all documents. Requires the user to have an **API key** (https://ai.google.dev/gemini-api/)
+- q) **Extractive Text Summarization** using **BERT** on a set of selected documents or all documents
+- r) **Ask chatGPT** to analyze the following results: EDA Report, WordCloud, N-Grams, Evolution Plot, Sankey Diagram, Authors Productivity Plot, Bar Plots, Citation Analysis, Collaboration Analysis, Similarity Analysis, and World Map Collaboration Analysis (consult **Example 08**). Requires the user to have an **API key** (https://platform.openai.com/account/api-keys)
+- s) **Ask Gemini** to analyze the following results: EDA Report, WordCloud, N-Grams, Evolution Plot, Sankey Diagram, Authors Productivity Plot, Bar Plots, Citation Analysis, Collaboration Analysis, Similarity Analysis, and World Map Collaboration Analysis (consult **Example 09**). Requires the user to have an **API key** (https://ai.google.dev/gemini-api/)
 
 Correction and Manipulation Capabilities:
 - a) Filter the .bib, .csv or .txt file by Year, Sources, Bradford Law Cores, Countries, Languages and/or Abstracts (Documents with Abstracts)
@@ -76,6 +78,7 @@ pip install pyBibX
 - Example 06: Scopus + WOS + Pubmed ([ Colab Demo ](https://colab.research.google.com/drive/1Ko6AibkXtB_Kwg3Eu0fhzNMVEIXPkbez?usp=sharing))
 - Example 07: Your Own              ([ Colab Demo ](https://colab.research.google.com/drive/19EYjgal9V1kemmzpHnyp6MSlk9S-kGHT?usp=sharing))
 - Example 08: **Ask chatGPT** Analysis  ([ Colab Demo ](https://colab.research.google.com/drive/1LMrR49F54MuX-stlrQbrrjX_dEU3kZ8Y?usp=sharing))
+- Example 09: **Ask Gemini** Analysis  ([ Colab Demo ](https://colab.research.google.com/drive/1oEJBfCml_OMgmSTicMOB-FKMaR2FtoG3?usp=sharing))
 
 # Acknowledgement 
 This section indicates the libraries that inspired pyBibX
@@ -97,6 +100,12 @@ This section indicates the libraries that inspired pyBibX
   a) Github: https://github.com/massimoaria/bibliometrix
   <!-- -->
   b) Paper: ARIA, M.; CUCCURULLO, C. (2017). Bibliometrix: An R-tool for Comprehensive Science Mapping Analysis. Journal of Informetrics, 11(4), 959-975. doi: https://doi.org/10.1016/j.joi.2017.08.007
+  
+- **Gemini (https://gemini.google.com/app)**:
+  <!-- -->
+  a) Github: https://github.com/google-gemini
+  <!-- -->
+  b) Paper: Gemini Team Google (2024). Gemini: A Family of Highly Capable Multimodal Models. arXiv. doi: https://arxiv.org/abs/2312.11805
 
 - **Gensim (https://radimrehurek.com/gensim/)**:
   <!-- -->
