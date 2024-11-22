@@ -5,12 +5,12 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / 'README.md').read_text()
 
 setup(
-    name='pyBibX',
-    version='4.0.3',
+    name='pybibx',
+    version='4.0.4',
     license='GNU',
     author='Valdecy Pereira',
     author_email='valdecy.pereira@gmail.com',
-    url='https://github.com/Valdecy/pyBibX',
+    url='https://github.com/Valdecy/pybibx',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
