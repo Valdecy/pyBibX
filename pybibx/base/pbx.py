@@ -406,7 +406,6 @@ class pbx_probe():
         self.ask_gpt_sk         = -1
         self.ask_gpt_wd         = -1
         self.data['year']       = self.data['year'].replace('UNKNOW', '0')
-        #self.dy                 = pd.to_numeric(self.data['year'], errors = 'coerce', downcast = 'float').fillna('0')
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
         self.date_end           = int(self.dy.max())
@@ -467,7 +466,6 @@ class pbx_probe():
         self.t_c, self.s_c      = self.__total_and_self_citations()
         self.dy_ref             = self.__get_ref_year()
         self.natsort            = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)]  
-        #self.ordinal            = lambda n: '%d%s'%(n, {1: 'st', 2: 'nd', 3: 'rd'}.get(n if n < 20 else n % 10, 'th')) # [ordinal(n) for n in range(1, 15)]
         self.dy_c_year          = self.__get_collaboration_year()
         if ('UNKNOW' in self.u_ref):
             self.u_ref.remove('UNKNOW')
@@ -711,7 +709,7 @@ class pbx_probe():
         self.data  = pd.concat([self.data, data]) 
         self.data  = self.data.reset_index(drop = True)
         self.data  = self.data.fillna('UNKNOW')
-        duplicated = self.data['doi'].duplicated() # self.data = self.data.drop_duplicates(subset = 'doi', keep = 'first')
+        duplicated = self.data['doi'].duplicated()
         title      = self.data['title']
         title      = title.to_list()
         title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
@@ -945,11 +943,6 @@ class pbx_probe():
             f_file  = open(bib, 'r', encoding = 'utf8')
             f_lines = f_file.read()
             f_list  = f_lines.split('\n')
-            #self.vb = []
-            #db      = db.lower()
-            #f_file  = open(bib, 'r', encoding = 'utf8')
-            #f_lines = f_file.read()
-            #f_list  = f_lines.split('\n')
             if (db == 'wos'):
                 f_list_ = []
                 for i in range(0, len(f_list)):
@@ -1021,12 +1014,6 @@ class pbx_probe():
                             f_list[i] = f_list[i][:4] + '=' + f_list[i][5:]
                         if (f_list[i][:3] == 'LID'):
                             f_list[i] = f_list[i].replace(' [doi]', '')
-                            #f_list[i] = f_list[i].replace(' [pii]', '')
-                            #f_list[i] = f_list[i].replace(' [isbn]', '')
-                            #f_list[i] = f_list[i].replace(' [ed]', '')
-                            #f_list[i] = f_list[i].replace(' [editor]', '')
-                            #f_list[i] = f_list[i].replace(' [book]', '')
-                            #f_list[i] = f_list[i].replace(' [bookaccession]', '')
             lhs = []
             rhs = []
             doc = 0
@@ -1149,10 +1136,6 @@ class pbx_probe():
               if (lhs[i] == 'doc_start'):
                 count = count + 1
               else:
-                #if (lhs[i] == 'doi'):
-                    #data.iloc[count, labels_dict[lhs[i]]] = self.clean_doi(rhs[i])
-                #else:
-                    #data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
                 data.iloc[count, labels_dict[lhs[i]]] = rhs[i]
         
         entries = list(data.columns)
@@ -1293,71 +1276,47 @@ class pbx_probe():
     
     # Function: Get Entries
     def __get_str(self, entry = 'references', s = ';', lower = True, sorting = True):
-        info = []
-        for i in range(0, self.data[entry].shape[0]):
-            e = self.data[entry][i]
-            if (isinstance(e, str) == True):
-                strg = e.split(s)
-                strg = [item.strip() for item in strg if item.strip() != 'note']
-                strg = [' '.join(item.split()) for item in strg]
-                if (lower == True):
-                    strg = [item.lower() for item in strg]
-                info.append(strg)
-            else:
-                info.append([])
-        unique_info = [item for sublist in info for item in sublist]
-        unique_info = list(set(unique_info))
-        if (unique_info[0] == ''):
-            unique_info = unique_info[1:]
+        column      = self.data[entry]
+        info        = [ [ ' '.join(item.split()).lower() if lower else ' '.join(item.split()) for item in e.split(s) if item.strip() and item.strip() != 'note' ] if isinstance(e, str) else [] for e in column ]
+        unique_info = list({item for sublist in info for item in sublist})
+        if ('' in unique_info):
+            unique_info.remove('')
         if (sorting == True):
             unique_info.sort()
         return info, unique_info
-    
+   
     # Function: Get Citations
     def __get_citations(self, series):
-        citation = [item.lower().replace('cited by ' , '') for item in list(series)] 
-        citation = [item.lower().replace('cited by: ', '') for item in list(citation)] 
-        for i in range(0, len(citation)):
-            if (citation[i] != 'unknow'):
-                idx = citation[i].find(';')
-                if (idx >= 0):
-                    try:
-                        citation[i] = int(citation[i][:idx])
-                    except:
-                        try:
-                            citation[i] = int(re.search(r'\d+', citation[i]).group())
-                        except:
-                            citation[i] = 0
-                else:
-                    try:
-                        citation[i] = int(citation[i])
-                    except:
-                        try:
-                            citation[i] = int(re.search(r'\d+', citation[i]).group())
-                        except:
-                            citation[i] = 0
-            else:
-                citation[i] = 0
-        return citation
-    
+        series = series.fillna('unknow').str.lower()
+        series = series.str.replace('cited by:?', '', regex = True)
+        def extract_numeric(value):
+            try:
+                idx = value.find(';')
+                if idx >= 0:
+                    return int(value[:idx])
+                return int(value)
+            except ValueError:
+                match = re.search(r'\d+', value)
+                return int(match.group()) if match else 0
+        return series.apply(extract_numeric).tolist()
+
     # Function: Get Past Citations per Year
     def __get_past_citations_year(self):
-        df      = self.data[['author', 'title', 'doi', 'year', 'references']]
-        df      = df.sort_values(by = ['year'])
-        df      = df.reset_index(drop = True)
-        c_count = [0]*df.shape[0]
-        c_year  = list(df['year'])
-        for i in range(0, df.shape[0]):
-            title = df.iloc[i, 1]
-            for j in range(i, len(self.ref)):
-                for k in range(0, len(self.ref[j])):
-                    if (title.lower() in self.ref[j][k].lower()):
+        df             = self.data[['author', 'title', 'doi', 'year', 'references']].sort_values(by = 'year').reset_index(drop = True)
+        c_count        = [0] * df.shape[0]
+        c_year         = df['year'].tolist()
+        ref_lower      = [[ref.lower() for ref in refs] for refs in self.ref]
+        title_to_index = {df.iloc[i, 1].lower(): i for i in range(df.shape[0])}
+        for j, refs in enumerate(ref_lower):
+            for ref in refs:
+                for title, idx in title_to_index.items():
+                    if (title in ref):
                         c_count[j] = c_count[j] + 1
-        c_year_  = list(set(c_year))
-        c_year_.sort()
-        c_count_ = [0]*len(c_year_)
-        for i in range(0, len(c_year)):
-            c_count_[c_year_.index(c_year[i])] = c_count_[c_year_.index(c_year[i])] + c_count[i]
+        year_to_count = {year: 0 for year in sorted(set(c_year))}
+        for year, count in zip(c_year, c_count):
+            year_to_count[year] = year_to_count[year] + count
+        c_year_  = list(year_to_count.keys())
+        c_count_ = list(year_to_count.values())
         return c_year_, c_count_
     
     # Function: Get Countries
@@ -1396,37 +1355,7 @@ class pbx_probe():
         df = df.str.replace('U Arab Emirates', 'United Arab Emirates',        case = False, regex = True)
         df = df.str.replace('USA',             'United States of America',    case = False, regex = True)
         df = df.str.replace('VietNam',         'Viet Nam',                    case = False, regex = True)
-        #for i in range(0, df.shape[0]):
-            #df[i] = df[i].replace(' USA',            ' United States of America')
-            #df[i] = df[i].replace('ENGLAND',         'United Kingdom')
-            #df[i] = df[i].replace('Antigua & Barbu', 'Antigua and Barbuda')
-            #df[i] = df[i].replace('Bosnia & Herceg', 'Bosnia and Herzegovina')
-            #df[i] = df[i].replace('Cent Afr Republ', 'Central African Republic')
-            #df[i] = df[i].replace('Czech Republic',  'Czechia')
-            #df[i] = df[i].replace('Dominican Rep',   'Dominican Republic')
-            #df[i] = df[i].replace('England',         'United Kingdom')
-            #df[i] = df[i].replace('Equat Guinea',    'Equatorial Guinea')
-            #df[i] = df[i].replace('Fr Austr Lands',  'French Southern Territories')
-            #df[i] = df[i].replace('Fr Polynesia',    'French Polynesia')
-            #df[i] = df[i].replace('Malagasy Republ', 'Madagascar')
-            #df[i] = df[i].replace('Mongol Peo Rep',  'Mongolia')
-            #df[i] = df[i].replace('Neth Antilles',   'Saint Martin')
-            #df[i] = df[i].replace('North Ireland',   'Ireland')
-            #df[i] = df[i].replace('Peoples R China', 'China')
-            #df[i] = df[i].replace('Rep of Georgia',  'Georgia')
-            #df[i] = df[i].replace('Russia',          'Russian Federation')
-            #df[i] = df[i].replace('Sao Tome E Prin', 'Sao Tome and Principe')
-            #df[i] = df[i].replace('Scotland',        'United Kingdom')
-            #df[i] = df[i].replace('St Kitts & Nevi', 'Saint Kitts and Nevis')
-            #df[i] = df[i].replace('Trinid & Tobago', 'Trinidad and Tobago')
-            #df[i] = df[i].replace('U Arab Emirates', 'United Arab Emirates')
-            #df[i] = df[i].replace('USA',             'United States of America')
-            #df[i] = df[i].replace('VietNam',         'Viet Nam')
         df = df.str.lower()
-        #for i in range(0, len(self.aut)):
-            #for j in range(0, len(self.aut[i])):
-                #for k in range(0, df.shape[0]):
-                    #df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
         replace_dict = {}
         for sublist in self.aut:
             for val in sublist:
@@ -1479,11 +1408,7 @@ class pbx_probe():
                 df[i] = self.data.loc[i, 'affiliation_']
             elif (df[i] == 0):
                 df[i] = 'UNKNOW'
-        df = df.str.lower()
-        #for i in range(0, len(self.aut)):
-            #for j in range(0, len(self.aut[i])):
-                #for k in range(0, df.shape[0]):
-                    #df[k] = df[k].replace(self.aut[i][j], self.aut[i][j].replace('.', ''))
+        df           = df.str.lower()
         replace_dict = {}
         for sublist in self.aut:
             for val in sublist:
@@ -1557,16 +1482,17 @@ class pbx_probe():
     # Function: Get Counts
     def __get_counts(self, u_ent, ent, acc = []):
         counts = []
-        for i in range(0, len(u_ent)):
+        for u in u_ent:
             ents = 0
-            for j in range(0, len(ent)):
-                if (u_ent[i] in ent[j] and len(acc) == 0):
-                    ents = ents + 1
-                elif (u_ent[i] in ent[j] and len(acc) > 0):
-                    ents = ents + acc[j]
+            for j, e in enumerate(ent):
+                if (u in e):
+                    if (acc):
+                        ents = ents + acc[j]
+                    else:
+                        ents = ents + 1
             counts.append(ents)
         return counts
-    
+
     # Function: Get Count Year
     def __get_counts_year(self, u_ent, ent):
         years = list(range(self.date_str, self.date_end+1))
@@ -1602,33 +1528,14 @@ class pbx_probe():
     
     # Function: Get Reference Year
     def __get_ref_year(self):
-        dy_ref = []
-        for item in self.u_ref:
-            years = ['-2']
-            while years[-1] != '-1':
-                a1, a2, a3 = '1', '8', '0' 
-                b1, b2, b3 = str(self.date_end)[0], str(self.date_end)[1], str(self.date_end)[2]
-                match_1    = re.match(r'.*(['+a1+'-'+a1+']['+a2+'-9]['+a3+'-9][0-9])', item)
-                match_2    = re.match(r'.*(['+b1+'-'+b1+']['+b2+'-'+b2+'][0-'+b3+'][0-9])', item)
-                if (match_1 is not None and match_2 is not None and int(match_1.group(1)) >= int(match_2.group(1)) ):
-                    years.append(match_1.group(1))
-                    item = item.replace(match_1.group(1), '')
-                elif (match_1 is not None and match_2 is not None and int(match_1.group(1)) < int(match_2.group(1)) ):
-                    if (int(match_2.group(1)) <= self.date_end):
-                        years.append(match_2.group(1))
-                    item = item.replace(match_2.group(1), '')
-                elif (match_1 is not None):
-                    years.append(match_1.group(1))
-                    item = item.replace(match_1.group(1), '')
-                elif (match_2 is not None):
-                    if (int(match_2.group(1)) <= self.date_end):
-                        years.append(match_2.group(1))
-                    item = item.replace(match_2.group(1), '')
-                else:
-                    years.append('-1')
-            years = [int(year) for year in years]
-            dy_ref.append(max(years))
-        return dy_ref
+        date_end        = self.date_end
+        year_pattern    = re.compile(r'(?<!\d)(\d{4})(?!\d)')
+        extracted_years = []
+        for ref in self.u_ref:
+            matches     = year_pattern.findall(ref)
+            valid_years = [int(year) for year in matches if 1800 <= int(year) <= date_end]
+            extracted_years.append(max(valid_years) if valid_years else -1)
+        return extracted_years
     
     ##############################################################################
     
@@ -2069,34 +1976,20 @@ class pbx_probe():
             tit_       = [item.split() for item in tit_]
             u_tit      = [u_tit[i] for i in idx]
             u_ent, ent = u_tit, tit_
-        traces = []
-        years  = list(range(self.date_str, self.date_end+1))
-        dict_y = dict(zip(years, list(range(0, len(years)))))
-        themes = self.__get_counts_year(u_ent, ent)
-        #w_idx  = []
-        #if (len(target_word) > 0):
-            #posit  = -1
-            #for word in target_word:
-                #if (word.lower() in u_ent):
-                    #posit = u_ent.index(word.lower())
-                #if (posit > 0):
-                    #w_idx.append(posit)
-            #if (len(w_idx) > 0):
-                #themes = themes.iloc[w_idx, :]
+        traces          = []
+        years           = list(range(self.date_str, self.date_end+1))
+        dict_y          = dict(zip(years, list(range(0, len(years)))))
+        themes          = self.__get_counts_year(u_ent, ent)
         self.ask_gpt_ep = ''
         for j in range(dict_y[start], dict_y[end]+1):
             theme_vec = themes.iloc[:, j]
             theme_vec = theme_vec[theme_vec > 0]
             if (len(theme_vec) > 0):
-                theme_vec = theme_vec.sort_values(ascending = False) 
-                theme_vec = theme_vec.iloc[:topn] 
-                idx       = theme_vec.index.tolist()
-                names     = [u_ent[item] for item in idx]
-                values    = [themes.loc[item, j] for item in idx]
-                #if (len(w_idx) > 0):
-                    #values = [themes.loc[item, j] for item in idx]
-                #else:
-                    #values = [themes.iloc[item, j] for item in idx]
+                theme_vec       = theme_vec.sort_values(ascending = False) 
+                theme_vec       = theme_vec.iloc[:topn] 
+                idx             = theme_vec.index.tolist()
+                names           = [u_ent[item] for item in idx]
+                values          = [themes.loc[item, j] for item in idx]
                 n_val           = [names[i]+' ('+str(int(values[i]))+')' for i in range(0, len(names))]
                 self.ask_gpt_ep = self.ask_gpt_ep + ' ' + str(years[j]) + ': ' + ', '.join(n_val)
                 data            = go.Bar(x                = [years[j]]*len(values), 
@@ -2568,19 +2461,22 @@ class pbx_probe():
     
     # Function: Hirsch Index
     def __h_index(self):
-        h_i = []
+        h_i                     = []
+        researcher_to_citations = {researcher: [] for researcher in self.u_aut}
+        for i, researchers in enumerate(self.aut):
+            for researcher in researchers:
+                if (researcher in researcher_to_citations):
+                    researcher_to_citations[researcher].append(self.citation[i])
         for researcher in self.u_aut:
-            doc = []
-            i   = 0
-            for researchers in self.aut:
-                if (researcher in researchers):
-                    doc.append(self.citation[i])
-                i = i + 1
-            for j in range(len(doc)-1, -1, -1):
-                count = len([element for element in doc if element >= j])
-                if (count >= j):
-                    h_i.append(j)
+            citations = researcher_to_citations[researcher]
+            citations.sort(reverse = True)
+            h         = 0
+            for idx, citation in enumerate(citations):
+                if (citation >= idx + 1):
+                    h = idx + 1
+                else:
                     break
+            h_i.append(h)
         return h_i
     
     # Function: Total and Self Citations
@@ -2588,20 +2484,14 @@ class pbx_probe():
         t_c = []
         s_c = []
         for researcher in self.u_aut:
-            doc = []
-            cit = 0
-            i1  = 0
-            i2  = 0
-            for researchers in self.aut:
-                if (researcher in researchers):
-                    doc.append(self.citation[i1])
-                    for reference in self.ref[i2]:
-                        if (researcher in reference.lower()):
-                            cit = cit + 1
-                i1 = i1 + 1
-            i2 = i2 + 1
-            t_c.append(sum(doc))
-            s_c.append(cit)
+            total_citations = 0
+            self_citations  = 0
+            for i, authors in enumerate(self.aut):
+                if (researcher in authors):
+                    total_citations = total_citations + self.citation[i]
+                    self_citations  = self_citations + sum(1 for ref in self.ref[i] if researcher in ref.lower())
+            t_c.append(total_citations)
+            s_c.append(self_citations)
         return t_c, s_c
 
     #############################################################################
@@ -4242,15 +4132,6 @@ class pbx_probe():
         self.topic_info         = self.topic_model.get_topic_info()
         print(self.topic_info)
         return self   
-
-    # Function: Topics - Align Outliers
-    #def topics_align_outliers(self):
-        #self.topics     = [np.argmax(probs[i,:]) for i in range(0, self.probs.shape[0])]
-        #self.topic_info = self.topic_info[self.topic_info.Topic != -1]
-        #for i in range(0, self.topic_info.shape[0]):
-            #self.topic_info.iloc[i, 1] = self.topics.count(self.topic_info.iloc[i, 0])
-        #print(self.topic_info)
-        #return self
 
     # Function: Topics - Main Representatives
     def topics_representatives(self):
