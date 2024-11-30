@@ -37,8 +37,8 @@ from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from gensim.models import FastText
 from matplotlib import pyplot as plt                       
-plt.style.use('bmh')
-#from scipy.spatial import ConvexHull   
+plt.style.use('bmh') 
+from scipy.sparse import csr_matrix
 from sentence_transformers import SentenceTransformer                    
 from sklearn.cluster import KMeans                          
 from sklearn.decomposition import TruncatedSVD as tsvd      
@@ -56,41 +56,100 @@ from wordcloud import WordCloud
 # pbx Class
 class pbx_probe():
     def __init__(self, file_bib, db = 'scopus', del_duplicated = True):
+        db                     = db.lower()
+        self.database          = db
         self.institution_names =  [ 
-                                    'acad', 'academy', 'akad', 'aachen', 'assoc', 'cambridge', 'ctr', 'cefet', 'center', 'centre', 'ctr', 
-                                    'chuo kikuu', 'cient', 'cirad', 'coll', 'college', 'colegio', 'companhia', 'communities', 'conservatory',
-                                    'council', 'dept', 'egyetemi', 'escola', 'education', 'escuela', 'embrapa', 'espm', 'epamig','epagri', 
-                                    'eyunivesithi', 'fac', 'faculdade', 'facultad', 'fakultet', 'fakultät', 'fal', 'fdn', 'fundacion', 'foundation',
-                                    'fundacao', 'gradevinski', 'grp', 'higher', 'hsch', 'hochschule', 'hosp', 'hgsk', 'hogeschool',  'háskóli', 
-                                    'högskola', 'ibmec', 'ird', 'inivèsite', 'ist', 'istituto', 'imd', 'institutional', 'int', 'inst',  'institut', 
-                                    'institute', 'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 'inrae','jaamacad', "jami'a",  
-                                    'kolej', 'koulu', 'kulanui', 'lab.', 'lab', 'labs', 'laborat', 'learning', 'mahadum', 'med', 'medicine',  
-                                    'medical', 'museum','observatory', 'oilthigh', 'okulu', 'ollscoile', 'oniversite', 'politecnico', 'polytechnic', 
-                                    'prifysgol', 'project', 'rech', 'recherche', 'research', 'sch', 'school', 'schule', 'scuola', 'seminary', 'skola', 
-                                    'supérieur', 'sveučilište', 'szkoła', 'tech', 'technical', 'technische', 'technique', 'technological', 'uff', 
-                                    'ufrrj', 'ufruralrj', 'ufmg', 'ufpb', 'ufpe','ufal', 'uned', 'unep', 'unesp', 'unibersidad', 'unibertsitatea', 
-                                    'unicenp','ucpel', 'usp', 'ufac', 'udesc', 'uerj','univ', 'universidad', 'universidade', 'universitas', 
-                                    'universitat', 'universitate', 'universitato', 'universite', 'universiteit', 'universitet', 'universitetas', 
-                                    'universiti', 'university', 'università', 'universität', 'université', 'universitāte', 'univerza', 
-                                    'univerzita','univerzitet', 'univesithi', 'uniwersytet', 'vniuersitatis', 'whare wananga', 
-                                    'yliopisto','yunifasiti', 'yunivesite', 'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite','πανεπιστήμιο', 
-                                    'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
+                                   'acad', 'academy', 'akad', 'aachen', 'assoc', 'cambridge', 'ctr',
+                                   'cefet', 'center', 'centre', 'ctr',  'chuo kikuu', 'cient', 'cirad',
+                                   'coll', 'college', 'colegio', 'companhia', 'communities', 'conservatory', 
+                                   'council', 'dept', 'egyetemi', 'escola', 'education', 'escuela', 
+                                   'embrapa', 'espm', 'epamig','epagri',  'eyunivesithi', 'fac', 
+                                   'faculdade', 'facultad', 'fakultet', 'fakultät', 'fal', 'fdn', 
+                                   'fundacion', 'foundation', 'fundacao', 'gradevinski', 'grp', 'higher', 
+                                   'hsch', 'hochschule', 'hosp', 'hgsk', 'hogeschool',  'háskóli',  
+                                   'högskola', 'ibmec', 'ird', 'inivèsite', 'ist', 'istituto', 'imd', 
+                                   'institutional', 'int', 'inst',  'institut', 'institute', 
+                                   'institute of technology',  'inyuvesi', 'iskola', 'iunivesite', 
+                                   'inrae','jaamacad', "jami'a",  'kolej', 'koulu', 'kulanui', 'lab.', 
+                                   'lab', 'labs', 'laborat', 'learning', 'mahadum', 'med', 'medicine', 
+                                   'medical', 'museum','observatory', 'oilthigh', 'okulu', 'ollscoile', 
+                                   'oniversite', 'politecnico', 'polytechnic', 'prifysgol', 'project', 
+                                   'rech', 'recherche', 'research', 'sch', 'school', 'schule', 'scuola', 
+                                   'seminary', 'skola', 'supérieur', 'sveučilište', 'szkoła', 'tech', 
+                                   'technical', 'technische', 'technique', 'technological', 'uff', 'ufrrj', 
+                                   'ufruralrj', 'ufmg', 'ufpb', 'ufpe','ufal', 'uned', 'unep', 'unesp', 
+                                   'unibersidad', 'unibertsitatea',  'unicenp','ucpel', 'usp', 'ufac', 
+                                   'udesc', 'uerj','univ', 'universidad', 'universidade', 'universitas', 
+                                   'universitat', 'universitate', 'universitato', 'universite', 
+                                   'universiteit', 'universitet', 'universitetas', 'universiti', 
+                                   'university', 'università', 'universität', 'université', 'universitāte', 
+                                   'univerza', 'univerzita','univerzitet', 'univesithi', 'uniwersytet', 
+                                   'vniuersitatis', 'whare wananga', 'yliopisto','yunifasiti', 'yunivesite', 
+                                   'yunivhesiti', 'zanko', 'école', 'ülikool', 'üniversite','πανεπιστήμιο', 
+                                   'σχολείο', 'универзитет', 'университет', 'універсітэт', 'школа'
                                   ]
+        self.inst_priority   =    {
+                                   'acad': 30, 'academy': 40, 'akad': 30, 'aachen': 50, 'assoc': 20, 
+                                   'cambridge': 90, 'ctr': 20, 'cefet': 50, 'center': 60, 'centre': 60, 
+                                   'chuo kikuu': 50, 'cient': 20, 'cirad': 50, 'coll': 40, 'college': 60, 
+                                   'colegio': 40, 'companhia': 10, 'communities': 10, 'conservatory': 40, 
+                                   'council': 30, 'dept': 20, 'egyetemi': 50, 'escola': 50, 'education': 40, 
+                                   'escuela': 50, 'embrapa': 70, 'espm': 60, 'epamig': 60, 'epagri': 60, 
+                                   'eyunivesithi': 50, 'fac': 40, 'faculdade': 50, 'facultad': 50, 
+                                   'fakultet': 50, 'fakultät': 50, 'fal': 20, 'fdn': 20, 'fundacion': 40, 
+                                   'foundation': 40, 'fundacao': 40, 'gradevinski': 30, 'grp': 20, 
+                                   'higher': 40, 'hsch': 50, 'hochschule': 50, 'hosp': 30, 'hgsk': 50, 
+                                   'hogeschool': 50, 'háskóli': 50, 'högskola': 50, 'ibmec': 60, 'ird': 50, 
+                                   'inivèsite': 50, 'ist': 50, 'istituto': 50, 'imd': 60, 
+                                   'institutional': 30, 'int': 20, 'inst': 40, 'institut': 70, 
+                                   'institute': 90, 'institute of technology': 100, 'inyuvesi': 50, 
+                                   'iskola': 50, 'iunivesite': 50, 'inrae': 70, 'jaamacad': 50, 
+                                   "jami'a": 50, 'kolej': 50, 'koulu': 50, 'kulanui': 50, 'lab.': 30, 
+                                   'lab': 30, 'labs': 30, 'laborat': 40, 'learning': 20, 'mahadum': 50, 
+                                   'med': 30, 'medicine': 70, 'medical': 70, 'museum': 40, 
+                                   'observatory': 50, 'oilthigh': 50, 'okulu': 50, 'ollscoile': 50, 
+                                   'oniversite': 50, 'politecnico': 70, 'polytechnic': 70, 'prifysgol': 70, 
+                                   'project': 30, 'rech': 40, 'recherche': 40, 'research': 90, 'sch': 40, 
+                                   'school': 60, 'schule': 50, 'scuola': 50, 'seminary': 40, 'skola': 50, 
+                                   'supérieur': 50, 'sveučilište': 50, 'szkoła': 50, 'tech': 70, 
+                                   'technical': 70, 'technische': 70, 'technique': 70, 'technological': 70, 
+                                   'uff': 50, 'ufrrj': 50, 'ufruralrj': 50, 'ufmg': 50, 'ufpb': 50, 
+                                   'ufpe': 50, 'ufal': 50, 'uned': 50, 'unep': 50, 'unesp': 50, 
+                                   'unibersidad': 50, 'unibertsitatea': 50, 'unicenp': 50, 'ucpel': 50, 
+                                   'usp': 70, 'ufac': 50, 'udesc': 50, 'uerj': 50, 'univ': 80, 
+                                   'universidad': 90, 'universidade': 90, 'universitas': 90, 
+                                   'universitat': 90, 'universitate': 90, 'universitato': 90, 
+                                   'universite': 90, 'universiteit': 90, 'universitet': 90, 
+                                   'universitetas': 90, 'universiti': 90, 'university': 100, 
+                                   'università': 90, 'universität': 90, 'université': 90, 
+                                   'universitāte': 90, 'univerza': 90, 'univerzita': 90, 
+                                   'univerzitet': 90, 'univesithi': 90, 'uniwersytet': 90, 
+                                   'vniuersitatis': 90, 'whare wananga': 50, 'yliopisto': 50, 
+                                   'yunifasiti': 50, 'yunivesite': 50, 'yunivhesiti': 50, 
+                                   'zanko': 50, 'école': 50, 'ülikool': 50,'üniversite': 90, 
+                                   'πανεπιστήμιο': 90, 'σχολείο': 50, 'универзитет': 90, 
+                                   'университет': 90, 'універсітэт': 90,'школа': 50
+                                  }
 
         self.language_names  =    { 
-                                    'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 'arm': 'Armenian', 
-                                    'aze': 'Azerbaijani', 'bos': 'Bosnian', 'bul': 'Bulgarian', 'cat': 'Catalan', 'chi': 'Chinese', 
-                                    'cze': 'Czech', 'dan': 'Danish', 'dut': 'Dutch', 'eng': 'English', 'epo': 'Esperanto', 
-                                    'est': 'Estonian', 'fin': 'Finnish', 'fre': 'French', 'geo': 'Georgian', 'ger': 'German', 
-                                    'gla': 'Scottish Gaelic', 'gre': 'Greek, Modern', 'heb': 'Hebrew', 'hin': 'Hindi', 
-                                    'hrv': 'Croatian', 'hun': 'Hungarian', 'ice': 'Icelandic', 'ind': 'Indonesian', 'ita': 'Italian', 
-                                    'jpn': 'Japanese', 'kin': 'Kinyarwanda', 'kor': 'Korean', 'lat': 'Latin', 'lav': 'Latvian', 
-                                    'lit': 'Lithuanian', 'mac': 'Macedonian', 'mal': 'Malayalam', 'mao': 'Maori', 'may': 'Malay', 
-                                    'mul': 'Multiple languages', 'nor': 'Norwegian', 'per': 'Persian, Iranian', 'pol': 'Polish', 
-                                    'por': 'Portuguese', 'pus': 'Pushto', 'rum': 'Romanian, Rumanian, Moldovan', 'rus': 'Russian', 
-                                    'san': 'Sanskrit', 'slo': 'Slovak', 'slv': 'Slovenian', 'spa': 'Spanish', 'srp': 'Serbian', 
-                                    'swe': 'Swedish', 'tha': 'Thai', 'tur': 'Turkish', 'ukr': 'Ukrainian', 'und': 'Undetermined', 
-                                    'vie': 'Vietnamese', 'wel': 'Welsh'
+                                   'afr': 'Afrikaans', 'alb': 'Albanian','amh': 'Amharic', 'ara': 'Arabic', 
+                                   'arm': 'Armenian', 'aze': 'Azerbaijani', 'bos': 'Bosnian', 
+                                   'bul': 'Bulgarian', 'cat': 'Catalan', 'chi': 'Chinese', 'cze': 'Czech', 
+                                   'dan': 'Danish', 'dut': 'Dutch', 'eng': 'English', 'epo': 'Esperanto', 
+                                   'est': 'Estonian', 'fin': 'Finnish', 'fre': 'French', 'geo': 'Georgian', 
+                                   'ger': 'German', 'gla': 'Scottish Gaelic', 'gre': 'Greek, Modern', 
+                                   'heb': 'Hebrew', 'hin': 'Hindi', 'hrv': 'Croatian', 'hun': 'Hungarian', 
+                                   'ice': 'Icelandic', 'ind': 'Indonesian', 'ita': 'Italian', 
+                                   'jpn': 'Japanese', 'kin': 'Kinyarwanda', 'kor': 'Korean', 'lat': 'Latin', 
+                                   'lav': 'Latvian', 'lit': 'Lithuanian', 'mac': 'Macedonian', 
+                                   'mal': 'Malayalam', 'mao': 'Maori', 'may': 'Malay', 
+                                   'mul': 'Multiple languages', 'nor': 'Norwegian', 
+                                   'per': 'Persian, Iranian', 'pol': 'Polish', 'por': 'Portuguese', 
+                                   'pus': 'Pushto', 'rum': 'Romanian, Rumanian, Moldovan', 'rus': 'Russian', 
+                                   'san': 'Sanskrit', 'slo': 'Slovak', 'slv': 'Slovenian', 'spa': 'Spanish', 
+                                   'srp': 'Serbian',  'swe': 'Swedish', 'tha': 'Thai', 'tur': 'Turkish', 
+                                   'ukr': 'Ukrainian', 'und': 'Undetermined', 'vie': 'Vietnamese', 
+                                   'wel': 'Welsh'
                                   }
         self.country_names =      [
                                    'Afghanistan', 'Albania', 'Algeria', 'American Samoa', 'Andorra', 'Angola', 'Anguilla', 
@@ -405,6 +464,12 @@ class pbx_probe():
         self.ask_gpt_rt         = -1
         self.ask_gpt_sk         = -1
         self.ask_gpt_wd         = -1
+        self.author_country_map = -1
+        self.corr_a_country_map = -1
+        self.frst_a_country_map = -1
+        self.author_inst_map    = -1
+        self.corr_a_inst_map    = -1
+        self.frst_a_inst_map    = -1  
         self.data['year']       = self.data['year'].replace('UNKNOW', '0')
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
@@ -889,6 +954,60 @@ class pbx_probe():
 
     # Function: Read .bib File
     def __read_bib(self, bib, db = 'scopus', del_duplicated = True):
+        
+        ##############################################################################
+        
+        def assign_authors_to_affiliations(authors_str, affiliations_str):
+            authors = [a.strip() for a in authors_str.split(' and ')]
+            affiliations = [a.strip() for a in affiliations_str.split(';')]
+            new_affiliations = []
+            for i, aff in enumerate(affiliations):
+                if i < len(authors):
+                    new_affiliations.append(f"{authors[i]} {aff}")
+                else:
+                    new_affiliations.append(aff)
+            return '; '.join(new_affiliations)
+        
+        def get_corresponding_authors_and_affiliations(corr_address):
+            if not isinstance(corr_address, str):
+                return [], []
+            match = re.search(r'Corresponding Author\s+([^;]+);([^;]+)', corr_address, re.IGNORECASE)
+            if not match:
+                return [], []
+            authors_part      = match.group(1).strip()
+            affiliations_part = match.group(2).strip()
+            authors           = [a for a in re.split(r'\s+and\s+|;', authors_part)]
+            affiliations      = [affiliations_part]
+            return authors, affiliations
+        
+        def map_authors_to_affiliations(row):
+            authors_str             = row['author']
+            affiliations_str        = row['affiliation']
+            correspondence_address1 = row['correspondence_address1']
+            if isinstance(authors_str, str):
+                authors = [a for a in re.split(r'\s+and\s+|;', authors_str)]
+            else:
+                authors = []
+            if isinstance(affiliations_str, str):
+                affiliations = [a.strip() for a in affiliations_str.split(';')]
+            else:
+                affiliations = []
+            ca_authors, ca_affiliations = get_corresponding_authors_and_affiliations(correspondence_address1)
+            new_affiliations            = []
+            for ca_author, ca_aff in zip(ca_authors, ca_affiliations):
+                new_affiliations.append(f"{ca_author} {ca_aff}")
+            for ca_aff in ca_affiliations:
+                affiliations = [aff for aff in affiliations if ca_aff.lower() not in aff.lower()]
+            remaining_authors = [a for a in authors if a not in ca_authors]
+            for i, author in enumerate(remaining_authors):
+                if i < len(affiliations):
+                    aff = affiliations[i]
+                    new_affiliations.append(f"{author} {aff}")
+            transformed_affiliation = '; '.join(new_affiliations)
+            return transformed_affiliation
+
+        ##############################################################################
+        
         self.vb        = []
         db             = db.lower()
         file_extension = os.path.splitext(bib)[1].lower()
@@ -1255,6 +1374,15 @@ class pbx_probe():
             filtered_indices = list(filtered_indices)
             for i in filtered_indices:
                 data.loc[i, 'affiliation'] =  data.loc[i, 'affiliations']
+        if (db == 'scopus'):
+            data['correspondence_address1'] = ('Corresponding Author ' + data['correspondence_address1'] )
+            data['affiliation']             = data.apply(map_authors_to_affiliations, axis = 1)
+        if (db == 'pubmed'):
+            data['affiliation'] = data.apply(lambda row: assign_authors_to_affiliations(row['author'], row['affiliation']), axis = 1)
+        if (db == 'wos'):
+            data['affiliation_'] = data['affiliation_'].str.replace(r'(?<=[A-Z])\.', '#' , regex = True)
+            data['affiliation_'] = data['affiliation_'].str.replace(';', ',', regex = False).str.replace('.', ';', regex = False).str.rstrip(';')
+            data['affiliation_'] = data['affiliation_'].str.replace('#', '.', regex = False)
         data = data.reindex(sorted(data.columns), axis = 1)
         return data, entries
     
@@ -1321,164 +1449,170 @@ class pbx_probe():
     
     # Function: Get Countries
     def __get_countries(self):
-        df = pd.Series(np.zeros(self.data.shape[0]))
-        for i in range(0, self.data.shape[0]):
-            if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
-                df[i] = self.data.loc[i, 'affiliation']
-            elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                df[i] = self.data.loc[i, 'affiliation_'].replace('(Corresponding Author)', '')
-                if (',' in df[i] and ', ' not in df[i]):
-                    df[i] = df[i].replace(',', ', ')
-            elif (df[i] == 0):
-                df[i] = 'UNKNOW'
-        df = df.str.replace(' USA',            ' United States of America',   case = False, regex = True)
-        df = df.str.replace('ENGLAND',         'United Kingdom',              case = False, regex = True)
-        df = df.str.replace('Antigua & Barbu', 'Antigua and Barbuda',         case = False, regex = True)
-        df = df.str.replace('Bosnia & Herceg', 'Bosnia and Herzegovina',      case = False, regex = True)
-        df = df.str.replace('Cent Afr Republ', 'Central African Republic',    case = False, regex = True)
-        df = df.str.replace('Czech Republic',  'Czechia',                     case = False, regex = True)
-        df = df.str.replace('Dominican Rep',   'Dominican Republic',          case = False, regex = True)
-        df = df.str.replace('Equat Guinea',    'Equatorial Guinea',           case = False, regex = True)
-        df = df.str.replace('Fr Austr Lands',  'French Southern Territories', case = False, regex = True)
-        df = df.str.replace('Fr Polynesia',    'French Polynesia',            case = False, regex = True)
-        df = df.str.replace('Malagasy Republ', 'Madagascar',                  case = False, regex = True)
-        df = df.str.replace('Mongol Peo Rep',  'Mongolia',                    case = False, regex = True)
-        df = df.str.replace('Neth Antilles',   'Saint Martin',                case = False, regex = True)
-        df = df.str.replace('North Ireland',   'Ireland',                     case = False, regex = True)
-        df = df.str.replace('Peoples R China', 'China',                       case = False, regex = True)
-        df = df.str.replace('Rep of Georgia',  'Georgia',                     case = False, regex = True)
-        df = df.str.replace('Russia',          'Russian Federation',          case = False, regex = True)
-        df = df.str.replace('Sao Tome E Prin', 'Sao Tome and Principe',       case = False, regex = True)
-        df = df.str.replace('Scotland',        'United Kingdom',              case = False, regex = True)
-        df = df.str.replace('St Kitts & Nevi', 'Saint Kitts and Nevis',       case = False, regex = True)
-        df = df.str.replace('Trinid & Tobago', 'Trinidad and Tobago',         case = False, regex = True)
-        df = df.str.replace('U Arab Emirates', 'United Arab Emirates',        case = False, regex = True)
-        df = df.str.replace('USA',             'United States of America',    case = False, regex = True)
-        df = df.str.replace('VietNam',         'Viet Nam',                    case = False, regex = True)
-        df = df.str.lower()
-        replace_dict = {}
-        for sublist in self.aut:
-            for val in sublist:
-                replace_dict[val] = val.replace('.', '')
-        df.replace(replace_dict, inplace = True)
-        ctrs = [[] for i in range(0, df.shape[0])]
-        for i in range(0, self.data.shape[0]):
-            if (self.data.loc[i, 'source'].lower() == 'scopus'):
-                affiliations = str(df[i]).strip().split(';')
-                for affiliation in affiliations:
+        data = self.data.copy(deep = True)
+        
+        ##############################################################################
+        
+        def preprocess_affiliation(row):
+            source = row['source'].lower()
+            if (source in ['scopus', 'pubmed']):
+                return row['affiliation']
+            elif (source == 'wos'):
+                aff = row['affiliation_'].replace('(Corresponding Author)', '')
+                return aff.replace(',', ', ') if ',' in aff and ', ' not in aff else aff
+            return 'UNKNOW'
+        
+        def get_additional_country_data():
+            unique_countries = set()
+            for country_data in self.author_country_map.values():
+                for _, country in country_data:
+                    unique_countries.add(country)
+            u_ctr = list(unique_countries)
+            ctr   = []
+            for index, row in self.data.iterrows():
+                row_countries = []
+                for author in self.aut[index]: 
+                    if (author in self.author_country_map):
+                        for row_idx, country in self.author_country_map[author]:
+                            if (row_idx == index):
+                                row_countries.append(country)
+                ctr.append(row_countries)
+            self.corr_a_country_map = {}
+            for index, row in self.data.iterrows():
+                if (self.database.lower() == 'wos'):
+                    if ('Corresponding Author' in row['affiliation_']):
+                        corresponding_author = next( (author for author in self.aut[index] if 'Corresponding Author' in row['affiliation_']), None )
+                        if (corresponding_author and corresponding_author in self.author_country_map):
+                            self.corr_a_country_map[corresponding_author] = self.author_country_map[corresponding_author]
+                else:
+                    corresponding_author = next((author for author in self.aut[index]  if 'corresponding author' in row['correspondence_address1'].lower()), None)
+                    if (corresponding_author and corresponding_author in self.author_country_map):
+                        self.corr_a_country_map[corresponding_author] = self.author_country_map[corresponding_author]
+            self.frst_a_country_map = {}
+            for index, row in self.data.iterrows():
+                if (self.aut[index]):  
+                    first_author = self.aut[index][0]
+                    if (first_author in self.author_country_map):
+                        self.frst_a_country_map[first_author] = self.author_country_map[first_author]
+            return ctr, u_ctr
+        
+        ##############################################################################
+        
+        data['processed_affiliation'] = data.apply(preprocess_affiliation, axis = 1).str.lower()
+        country_replacements          = {
+                                            ' usa':            ' united states of america',
+                                            'england':         'united kingdom',
+                                            'antigua & barbu': 'antigua and barbuda',
+                                            'bosnia & herceg': 'bosnia and herzegovina',
+                                            'cent afr republ': 'central african republic',
+                                            'czech republic':  'czechia',
+                                            'dominican rep':   'dominican republic',
+                                            'equat guinea':    'equatorial guinea',
+                                            'fr austr lands':  'french southern territories',
+                                            'fr polynesia':    'french polynesia',
+                                            'malagasy republ': 'madagascar',
+                                            'mongol peo rep':  'mongolia',
+                                            'neth antilles':   'saint martin',
+                                            'north ireland':   'ireland',
+                                            'peoples r china': 'china',
+                                            'rep of georgia':  'georgia',
+                                            'russia':          'russian federation',
+                                            'sao tome e prin': 'sao tome and principe',
+                                            'scotland':        'united kingdom',
+                                            'st kitts & nevi': 'saint kitts and nevis',
+                                            'trinid & tobago': 'trinidad and tobago',
+                                            'u arab emirates': 'united arab emirates',
+                                            'usa':             'united states of america',
+                                            'vietnam':         'viet nam',
+                                        }
+        data['processed_affiliation'] = data['processed_affiliation'].replace(country_replacements, regex = True)
+        self.author_country_map       = {author: [] for author in self.u_aut}
+        for index, row in data.iterrows():
+            affiliations = row['processed_affiliation'].split(';')
+            authors      = self.aut[row.name]
+            for author in authors:
+                detected_country = 'UNKNOW'
+                for aff in affiliations:
                     for country in self.country_names:
-                        if (country.lower() in affiliation.lower()):
-                            ctrs[i].append(country)
+                        if (country.lower() in aff and author in aff):
+                            detected_country = country
                             break
-            if (self.data.loc[i, 'source'].lower()  == 'pubmed'):
-                affiliations = str(df[i]).strip().split(',')
-                for affiliation in affiliations:
-                    for country in self.country_names:
-                        if (country.lower() in affiliation.lower()):
-                            ctrs[i].append(country)
-                            break
-            if (self.data.loc[i, 'source'].lower()  == 'wos'):
-                affiliations = str(df[i]).strip().split('.')[:-1]
-                for affiliation in affiliations:
-                     for j in range(0, len(self.aut[i])):
-                         for country in self.country_names:
-                             if (country.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
-                                 ctrs[i].append(country)
-                                 break
-        for i in range(0, len(ctrs)):
-            while len(self.aut[i]) > len(ctrs[i]):
-                if (len(ctrs[i]) == 0):
-                    ctrs[i].append('UNKNOW')
-                ctrs[i].append(ctrs[i][-1])
-            if (len(ctrs[i]) == 0):
-                ctrs[i].append('UNKNOW')
-        u_ctrs = [item for sublist in ctrs for item in sublist]
-        u_ctrs = list(set(u_ctrs))
-        if (len(u_ctrs[0]) == 0):
-            u_ctrs = u_ctrs[1:]
-        return ctrs, u_ctrs
-  
-    # Function: Get Institutions
-    def __get_institutions(self):
-        df = pd.Series(np.zeros(self.data.shape[0]))
-        for i in range(0, self.data.shape[0]):
-            if (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
-                df[i] = self.data.loc[i, 'affiliation']
-            elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                df[i] = self.data.loc[i, 'affiliation_']
-            elif (df[i] == 0):
-                df[i] = 'UNKNOW'
-        df           = df.str.lower()
-        replace_dict = {}
-        for sublist in self.aut:
-            for val in sublist:
-                replace_dict[val] = val.replace('.', '')
-        df.replace(replace_dict, inplace = True)
-        inst  = [[] for i in range(0, df.shape[0])]
-        inst_ = [[] for i in range(0, df.shape[0])]
-        for i in range(0, df.shape[0]):
-            if  (self.data.loc[i, 'source'].lower() == 'scopus'):
-                affiliations = str(df[i]).split(';')
-                for affiliation in affiliations:
-                    for institution in self.institution_names:
-                        if (institution.lower() in affiliation.lower()):
-                            if (affiliation.strip() not in inst[i]):
-                                inst[i].append(affiliation.strip())
-                            break
-            if  (self.data.loc[i, 'source'].lower() == 'pubmed'):
-                affiliations = str(df[i]).split(',')
-                for affiliation in affiliations:
-                    for institution in self.institution_names:
-                        if (institution.lower() in affiliation.lower()):
-                            if (affiliation.strip() not in inst[i]):
-                                inst[i].append(affiliation.strip())
-                            break
-            if (self.data.loc[i, 'source'].lower() == 'wos'):
-                df[i]        = df[i].replace('(corresponding author),',',')
-                affiliations = str(df[i]).strip().split('.')[:-1]
-                for affiliation in affiliations:
-                     for j in range(0, len(self.aut[i])):
-                         for institution in self.institution_names:
-                             if (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') in affiliation.lower()):
-                                 if (affiliation.strip() not in inst[i]):
-                                     inst[i].append(affiliation.strip().replace(r'\&', 'and'))
-                                 break  
-                             elif (institution.lower() in affiliation.lower() and self.aut[i][j].lower().replace('.', '') not in affiliation.lower()):
-                                 if (',' in self.aut[i][j]):
-                                     name_parts = self.aut[i][j].lower().replace('.', '').split(', ')
-                                     last_name  = name_parts[0]
-                                     initials   = [part[0] for part in name_parts[1:]]
-                                 else:
-                                     name_parts  = self.aut[i][j].split()
-                                     initials    = name_parts[0][0]
-                                     last_name   = name_parts[-1]
-                                 if (last_name in affiliation.lower() and  all(initial in affiliation.lower() for initial in initials)):
-                                     if (affiliation.strip() not in inst[i]):
-                                         inst[i].append(affiliation.strip().replace(r'\&', 'and'))
-                                     break 
-        for i in range(0, len(inst)):
-            for j in range(0, len(inst[i])):
-                item = inst[i][j].split(',')
-                for institution in self.institution_names:
-                    idx = [k for k in range(0, len(item)) if institution in item[k].lower()]
-                    if (len(idx) > 0):
-                        institution_name = item[idx[0]]
-                        institution_name = ' '.join(institution_name.split())
-                        inst_[i].append(institution_name)
+                    if (detected_country != 'UNKNOW'):
                         break
-        for i in range(0, len(inst_)):
-            while len(self.aut[i]) > len(inst_[i]):
-                if (len(inst_[i]) == 0):
-                    inst_[i].append('UNKNOW')
-                inst_[i].append(inst_[i][-1])
-            if (len(inst_[i]) == 0):
-                inst_[i].append('UNKNOW')
-        u_inst = [item for sublist in inst_ for item in sublist]
-        u_inst = list(set(u_inst))
-        if (len(u_inst[0]) == 0):
-            u_inst = u_inst[1:]
-        return inst_, u_inst
-    
+                if not any(entry[0] == index for entry in self.author_country_map[author]):
+                    self.author_country_map[author].append((index, detected_country))
+        ctr, u_ctr = get_additional_country_data()
+        return ctr, u_ctr 
+
+    # Function: Get Institutions   
+    def __get_institutions(self):
+        
+        #############################################################################
+
+        def extract_top_institution_with_priority(text, institution_names):
+            segments              = text.split(';')
+            selected_institutions = []
+            for segment in segments:
+                segment   = segment.strip().lower()
+                sub_parts = segment.split(',')
+                matches   = [ (part.strip(), self.inst_priority.get(keyword, 0)) for part in sub_parts for keyword in self.inst_priority.keys() if keyword in part ]
+                if (matches):
+                    matches.sort(key = lambda x: (-x[1], -len(x[0])))
+                    selected_institutions.append(matches[0][0])
+                else:
+                    selected_institutions.append('UNKNOW')
+            return selected_institutions
+
+        #############################################################################
+
+        sources                = self.data['source'].str.lower()
+        affiliations           = (self.data['affiliation'].fillna('').str.lower() if 'affiliation' in self.data.columns else pd.Series([''] * len(self.data)) )
+        affiliations_wos       = (self.data['affiliation_'].fillna('').str.lower() if 'affiliation_' in self.data.columns else pd.Series([''] * len(self.data)) )
+        affiliations_wos       = (self.data['affiliation_'].fillna('').str.lower() if 'affiliation_' in self.data.columns else pd.Series([''] * len(self.data)) )
+        processed_affiliations = np.where(sources.isin(['scopus', 'pubmed']), affiliations, np.where(sources == 'wos', affiliations_wos, 'UNKNOW') )
+        processed_affiliations = pd.Series(processed_affiliations)
+        top_institutions       = processed_affiliations.apply( lambda row: extract_top_institution_with_priority(row, self.institution_names))
+        inst                   = [top for top in top_institutions]
+        flattened_institutions = [institution for sublist in top_institutions for institution in sublist]
+        u_inst                 = list(set(flattened_institutions))
+        self.author_inst_map   = {author: [] for author in self.u_aut}
+        for index, institutions in enumerate(inst):
+            for author in self.aut[index]:
+                for institution in inst[index]:
+                    for _, aff in enumerate(processed_affiliations[index].split(';')):
+                        if (author in aff and institution in aff):
+                            self.author_inst_map[author].append((index, institution))
+                if (len(self.author_inst_map[author]) == 0):
+                    self.author_inst_map[author].append((index, 'UNKNOW'))
+        inst = []
+        for index, row in self.data.iterrows():
+            row_inst = []
+            for author in self.aut[index]: 
+                if (author in self.author_inst_map):
+                    for row_idx, uni in self.author_inst_map[author]:
+                        if (row_idx == index):
+                            row_inst.append(uni)
+            inst.append(row_inst)
+        self.corr_a_inst_map = {}
+        for index, row in self.data.iterrows():
+            if (self.database == 'wos'):
+                if ('corresponding author' in row['affiliation_'].lower()):
+                    corresponding_author = next((author for author in self.aut[index] if 'corresponding author' in row['affiliation_'].lower()), None)
+                    if (corresponding_author and corresponding_author in self.author_inst_map):
+                        self.corr_a_inst_map[corresponding_author] = self.author_inst_map[corresponding_author]
+            else:
+                if ('corresponding author' in row['correspondence_address1'].lower()):
+                    corresponding_author = next( (author for author in self.aut[index] if 'corresponding author' in row['correspondence_address1'].lower()), None)
+                    if (corresponding_author and corresponding_author in self.author_inst_map):
+                        self.corr_a_inst_map[corresponding_author] = self.author_inst_map[corresponding_author]
+        self.frst_a_inst_map = {}
+        for index, row in self.data.iterrows():
+            if (self.aut[index]):  
+                first_author = self.aut[index][0]
+                if (first_author in self.author_inst_map):
+                    self.frst_a_inst_map[first_author] = self.author_inst_map[first_author]
+        return inst, u_inst
+
     # Function: Get Counts
     def __get_counts(self, u_ent, ent, acc = []):
         counts = []
@@ -1533,7 +1667,7 @@ class pbx_probe():
         extracted_years = []
         for ref in self.u_ref:
             matches     = year_pattern.findall(ref)
-            valid_years = [int(year) for year in matches if 1800 <= int(year) <= date_end]
+            valid_years = [int(year) for year in matches if 1665 <= int(year) <= date_end] # The oldest scientific journal is Philosophical Transactions, which was launched in 1665 by Henry Oldenburg
             extracted_years.append(max(valid_years) if valid_years else -1)
         return extracted_years
     
@@ -2686,30 +2820,10 @@ class pbx_probe():
         for i in range(0, n):
             labels_c    = []
             node_list   = []
-            #node_list_h = []
             n_id        = []
-            #n_id_h      = []
-            #x_h         = []
-            #y_h         = []
             idx         = [j for j in range(0, len(labels)) if labels[j] == i]
-            #idx_h       = []
             x           = transformed[idx, 0]
             y           = transformed[idx, 1]
-            #if (hull_plot == True):
-                #pts = np.c_[x,y]
-                #try:
-                    #hull  = ConvexHull(pts)
-                    #pts_h = pts[hull.vertices, :]
-                    #pts_  = [ ( pts[i, 0], pts[i, 1] ) for i in range(0, pts.shape[0])]
-                    #x     = [item[0] for item in pts_]
-                    #y     = [item[1] for item in pts_]
-                    #x_h.extend(pts_h[:,0].tolist())
-                    #y_h.extend(pts_h[:,1].tolist())
-                    #for hv in hull.vertices:
-                        #node_list_h.etend(idx[hv])
-                        #idx_h.extend(idx[hv])
-                #except:
-                    #hull_plot = False
             labels_c.extend(self.color_names[i] for item in idx)
             if (node_labels == True):
                 node_list.extend(idx)
@@ -2727,31 +2841,6 @@ class pbx_probe():
                              self.data.loc[idx[j], 'doi']    +'.'
                              )
                 n_id[-1] = '<br>'.join(textwrap.wrap(n_id[-1], width = 50))
-            #if (hull_plot == True):
-                #for j in range(0, len(idx_h)):
-                    #n_id_h.append(
-                                #'id:' +str(idx_h[j])               +'<br>'  +
-                                #'cluster:' +str(i)                 +'<br>'  +
-                                # self.data.loc[idx_h[j], 'author'] +' ('    +
-                                # self.data.loc[idx_h[j], 'year']   +'). '   +
-                                # self.data.loc[idx_h[j], 'title']  +'. '    +
-                                # self.data.loc[idx_h[j], 'journal']+'. doi:'+
-                                # self.data.loc[idx_h[j], 'doi']    +'.'
-                                # )
-                    #n_id_h[-1] = '<br>'.join(textwrap.wrap(n_id_h[-1], width = 50))
-            #if (hull_plot == True):
-                #n_trace.append(go.Scatter(x         = x_h,
-                                          #y         = y_h,
-                                          #opacity   = 1,
-                                          #mode      = 'markers+text',
-                                          #marker    = dict(symbol = 'circle-dot', size = 25, color = self.color_names[i]),
-                                          #fill      = 'toself',
-                                          #fillcolor = self.__hex_rgba(hxc = self.color_names[i], alpha = 0.15),
-                                          #text      = node_list_h,
-                                          #hoverinfo = 'text',
-                                          #hovertext = n_id_h,
-                                          #name      = ''
-                                          #))
             n_trace.append(go.Scatter(x         = x,
                                       y         = y,
                                       opacity   = 1,
@@ -2893,61 +2982,54 @@ class pbx_probe():
                 self.matrix_a.iloc[cols, cols] = 0
         self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
         return self
-    
+
     # Function: References Adjacency Matrix
     def __adjacency_matrix_ref(self, min_cites = 2, local_nodes = False):
-        self.matrix_r = pd.DataFrame(np.zeros( (self.data.shape[0], len(self.u_ref))), columns = self.u_ref)
-        for i in range(0, self.data.shape[0]):
-            for j in range(0, len(self.ref[i])):
-                try:
-                    k = self.u_ref.index(self.ref[i][j])
-                    self.matrix_r.iloc[i, k] = self.matrix_r.iloc[i, k] + 1
-                except:
-                    pass      
-        self.labels_r = ['r_'+str(i) for i in range(0, self.matrix_r.shape[1])]
-        keys_1 = self.data['title'].tolist()
-        keys_1 = [item.lower().replace('[','').replace(']','') for item in keys_1]
-        keys_2 = self.data['doi'].tolist()
-        keys_2 = [item.lower() for item in keys_2]
-        keys   = [[] for item in keys_1]
-        for i in range(0, self.data.shape[0]):   
-            if   (self.data.loc[i, 'source'].lower() == 'scopus' or self.data.loc[i, 'source'].lower() == 'pubmed'):
-                keys[i] = keys_1[i]
-            elif (self.data.loc[i, 'source'].lower() == 'wos'):
-                keys[i] = keys_2[i]
-        insd_r = []
-        insd_t = []
-        corp   = []
-        if (len(self.u_ref) > 0):
-            corp.append(self.u_ref[0].lower())
-            for i in range(1, len(self.u_ref)):
-                corp[-1] = corp[-1]+' '+self.u_ref[i].lower()
-            idx_   = [i for i in range(0, len(keys)) if re.search(keys[i], corp[0]) ]
-            for i in idx_:
-                for j in range(0, len(self.u_ref)):
-                    if (re.search(keys[i], self.u_ref[j].lower()) ):
-                        insd_r.append('r_'+str(j))
-                        insd_t.append(str(i))
-                        self.dy_ref[j] = int(self.dy[i])
-                        break
-        self.dict_lbs = dict(zip(insd_r, insd_t))
-        for item in self.labels_r:
-            if item not in self.dict_lbs.keys():
-                self.dict_lbs[item] = item
-        self.labels_r         = [self.dict_lbs[item] for item in self.labels_r]
-        self.matrix_r.columns = self.labels_r 
-        if (local_nodes == True):
-            cols                  = self.matrix_r.columns.values.tolist()
-            cols                  = [i for i in range(0, len(cols)) if cols[i].find('r_') == -1]
-            self.matrix_r         = self.matrix_r.iloc[:, cols]
-            self.labels_r         = [self.labels_r[item] for item in cols]
-            self.matrix_r.columns = self.labels_r 
+        u_ref_map   = {ref: idx for idx, ref in enumerate(self.u_ref)}
+        num_rows    = self.data.shape[0]
+        num_cols    = len(self.u_ref)
+        ref_indices = [ [u_ref_map[ref] for ref in refs if ref in u_ref_map] for refs in self.ref ]
+        row_indices = []
+        col_indices = []
+        data        = []
+        for row, refs in enumerate(ref_indices):
+            for col in refs:
+                row_indices.append(row)
+                col_indices.append(col)
+                data.append(1)
+        sparse_matrix   = csr_matrix((data, (row_indices, col_indices)), shape = (num_rows, num_cols), dtype = np.float32)
+        self.matrix_r   = pd.DataFrame.sparse.from_spmatrix(sparse_matrix, columns = self.u_ref)
+        self.labels_r   = [f'r_{i}' for i in range(num_cols)]
+        sources         = self.data['source'].str.lower()
+        keys_1          = self.data['title'].str.lower().str.replace('[', '', regex = False).str.replace(']', '', regex = False).tolist()
+        keys_2          = self.data['doi'].str.lower().tolist()
+        keys            = np.where(sources.isin(['scopus', 'pubmed']), keys_1, np.where(sources == 'wos', keys_2, None))
+        corpus          = ' '.join(ref.lower() for ref in self.u_ref)
+        matched_indices = [i for i, key in enumerate(keys) if key and re.search(key, corpus)]
+        insd_r          = []
+        insd_t          = []
+        u_ref_lower     = [ref.lower() for ref in self.u_ref]
+        for i in matched_indices:
+            key = keys[i]
+            for j, ref in enumerate(u_ref_lower):
+                if re.search(key, ref):
+                    insd_r.append(f'r_{j}')
+                    insd_t.append(str(i))
+                    self.dy_ref[j] = int(self.dy[i])
+                    break  
+        self.dict_lbs         = dict(zip(insd_r, insd_t))
+        self.dict_lbs.update({label: label for label in self.labels_r if label not in self.dict_lbs})
+        self.labels_r         = [self.dict_lbs.get(label, label) for label in self.labels_r]
+        self.matrix_r.columns = self.labels_r
+        if (local_nodes):
+            mask          = ~self.matrix_r.columns.str.contains('r_')
+            self.matrix_r = self.matrix_r.loc[:, mask]
+            self.labels_r = self.matrix_r.columns.tolist()
         if (min_cites >= 1):
-            cols                  = self.matrix_r.sum(axis = 0).tolist()
-            cols                  = [i for i in range(0, len(cols)) if cols[i] >= min_cites]
-            self.matrix_r         = self.matrix_r.iloc[:, cols]
-            self.labels_r         = [self.labels_r[item] for item in cols]
-            self.matrix_r.columns = self.labels_r 
+            col_sums      = self.matrix_r.sum(axis = 0)
+            cols_to_keep  = col_sums[col_sums >= min_cites].index
+            self.matrix_r = self.matrix_r[cols_to_keep]
+            self.labels_r = cols_to_keep.tolist()
         self.matrix_r = self.matrix_r.astype(pd.SparseDtype('float', 0))
         return self
 
@@ -3160,21 +3242,33 @@ class pbx_probe():
     def network_adj_map(self, view = 'browser', connections = True, country_lst = []):
         if (view == 'browser'):
             pio.renderers.default = 'browser'
-        lat_  = [self.country_lat_long[i][0] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
-        lon_  = [self.country_lat_long[i][1] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
-        iso_3 = [self.country_alpha_3[i] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
-        text  = [item for item in self.country_names if item in self.u_ctr]
+        lat_             = [self.country_lat_long[i][0] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
+        lon_             = [self.country_lat_long[i][1] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
+        iso_3            = [self.country_alpha_3[i] for i in range(0, len(self.country_lat_long)) if self.country_names[i] in self.u_ctr]
+        text             = [item for item in self.country_names if item in self.u_ctr]
         self.__adjacency_matrix_ctr(1)
         adjacency_matrix = self.matrix_a.values
-        vals  = [ int(self.dict_ctr_id[text[i]].replace('c_','')) for i in range(0, len(text)) ]
-        vals  = [ int(np.sum(adjacency_matrix[i,:])) for i in vals ]
-        lat_  = [ lat_[i] for i in range(0, len(vals)) if vals[i] > 0]
-        lon_  = [ lon_[i] for i in range(0, len(vals)) if vals[i] > 0]
-        iso_3 = [iso_3[i] for i in range(0, len(vals)) if vals[i] > 0]
-        text  = [ text[i] for i in range(0, len(vals)) if vals[i] > 0]
-        vals  = [ vals[i] for i in range(0, len(vals)) if vals[i] > 0]
+        try:
+            row_pos                      = self.matrix_a.index.get_loc('UNKNOW')
+            col_pos                      = self.matrix_a.columns.get_loc('UNKNOW')
+            adjacency_matrix[row_pos, :] = 0
+            adjacency_matrix[:, col_pos] = 0
+        except:
+            pass
+        vals             = [ int(self.dict_ctr_id[text[i]].replace('c_','')) for i in range(0, len(text))]
+        vals             = [ int(np.sum(adjacency_matrix[i,:])) for i in vals ]
+        lat_             = [ lat_[i] for i in range(0, len(vals)) if vals[i] > 0]
+        lon_             = [ lon_[i] for i in range(0, len(vals)) if vals[i] > 0]
+        iso_3            = [iso_3[i] for i in range(0, len(vals)) if vals[i] > 0]
+        text             = [ text[i] for i in range(0, len(vals)) if vals[i] > 0]
+        vals             = [ vals[i] for i in range(0, len(vals)) if vals[i] > 0]
         rows, cols       = np.where(adjacency_matrix >= 1)
         edges            = list(zip(rows.tolist(), cols.tolist()))
+        try:
+            unk   = int(self.dict_ctr_id['UNKNOW'].replace('c_',''))
+            edges = list(filter(lambda edge: unk not in edge, edges))
+        except:
+            pass
         self.ask_gpt_map = pd.DataFrame(edges, columns = ['Country 1', 'Country 2']) 
         nids_list  = ['id:                        ' +self.dict_ctr_id[text[i]]+'<br>'+
                       'country:               '     +text[i].upper()+'<br>' +
@@ -3414,7 +3508,7 @@ class pbx_probe():
                 name  = self.labels_a[u_cols[i]]
                 n_cls = -1
                 color = 'white'
-                n_coa = self.n_colab[int(name.replace('a_',''))]
+                n_coa = self.n_colab[u_cols[i]]
                 n_doc = self.doc_aut[int(name.replace('a_',''))]
                 n_lhi = self.aut_h[int(name.replace('a_',''))]
                 n_id  = self.u_aut[int(name.replace('a_',''))]
@@ -3424,7 +3518,7 @@ class pbx_probe():
                 name  = self.labels_a[u_cols[i]]
                 n_cls = -1
                 color = 'white'
-                n_coa = self.n_colab[int(name.replace('c_',''))]
+                n_coa = self.n_colab[u_cols[i]]
                 n_id  = self.u_ctr[int(name.replace('c_',''))]
                 self.H.add_node(name, n_cls = n_cls, color = color, n_coa = n_coa, n_id = n_id )  
         elif (adj_type == 'inst'):   
@@ -3432,7 +3526,7 @@ class pbx_probe():
                 name  = self.labels_a[u_cols[i]]
                 n_cls = -1
                 color = 'white'
-                n_coa = self.n_colab[int(name.replace('i_',''))]
+                n_coa = self.n_colab[u_cols[i]]
                 n_id  = self.u_uni[int(name.replace('i_',''))]
                 self.H.add_node(name, n_cls = n_cls, color = color, n_coa = n_coa, n_id = n_id )  
         elif (adj_type == 'kwa'):   
@@ -3440,7 +3534,7 @@ class pbx_probe():
                 name  = self.labels_a[u_cols[i]]
                 n_cls = -1
                 color = 'white'
-                n_coa = self.n_colab[int(name.replace('k_',''))]
+                n_coa = self.n_colab[u_cols[i]]
                 n_id  = self.u_auk[int(name.replace('k_',''))]
                 self.H.add_node(name, n_cls = n_cls, color = color, n_coa = n_coa, n_id = n_id )  
         elif (adj_type == 'kwp'):   
@@ -3448,7 +3542,7 @@ class pbx_probe():
                 name  = self.labels_a[u_cols[i]]
                 n_cls = -1
                 color = 'white'
-                n_coa = self.n_colab[int(name.replace('p_',''))]
+                n_coa = self.n_colab[u_cols[i]]
                 n_id  = self.u_kid[int(name.replace('p_',''))]
                 self.H.add_node(name, n_cls = n_cls, color = color, n_coa = n_coa, n_id = n_id )  
         for i in range(0, len(edges)):
