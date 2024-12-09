@@ -21,8 +21,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.subplots as ps      
 import plotly.io as pio         
-import re                         
-import squarify                  
+import re                                         
 import unicodedata                
 import textwrap
 
@@ -38,6 +37,9 @@ from difflib import SequenceMatcher
 from gensim.models import FastText
 from matplotlib import pyplot as plt                       
 plt.style.use('bmh') 
+from numba import njit
+from numba.typed import List
+from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from sentence_transformers import SentenceTransformer                    
 from sklearn.cluster import KMeans                          
@@ -52,6 +54,46 @@ from umap import UMAP
 from wordcloud import WordCloud                           
 
 ############################################################################
+
+@njit
+def build_edges(idx_list):
+    total_pairs = 0
+    for items in idx_list:
+        n = len(items)
+        if (n > 1):
+            total_pairs = total_pairs + n * (n - 1)
+    rows = np.empty(total_pairs, dtype = np.int32)
+    cols = np.empty(total_pairs, dtype = np.int32)
+    pos  = 0
+    for items in idx_list:
+        n = len(items)
+        for i in range(0, n):
+            for j in range(i+1, n):
+                a1        = items[i]
+                a2        = items[j]
+                rows[pos] = a1
+                cols[pos] = a2
+                pos       = pos + 1
+                rows[pos] = a2
+                cols[pos] = a1
+                pos       = pos + 1
+    return rows, cols
+
+@njit
+def build_edges_ref(ref_idx_list):
+    count = 0
+    for row in range(0, len(ref_idx_list)):
+        count = count + len(ref_idx_list[row])
+    row_indices = np.empty(count, dtype=np.int32)
+    col_indices = np.empty(count, dtype=np.int32)
+    pos         = 0
+    for row in range(0, len(ref_idx_list)):
+        refs = ref_idx_list[row]
+        for col in refs:
+            row_indices[pos] = row
+            col_indices[pos] = col
+            pos              = pos + 1
+    return row_indices, col_indices
 
 # pbx Class
 class pbx_probe():
@@ -470,7 +512,7 @@ class pbx_probe():
         self.author_inst_map    = -1
         self.corr_a_inst_map    = -1
         self.frst_a_inst_map    = -1  
-        self.data['year']       = self.data['year'].replace('UNKNOW', '0')
+        self.data['year']       = self.data['year'].replace('UNKNOWN', '0')
         self.dy                 = pd.to_numeric(self.data['year'], downcast = 'float')
         self.date_str           = int(self.dy.min())
         self.date_end           = int(self.dy.max())
@@ -487,8 +529,8 @@ class pbx_probe():
         self.aut_multi          = [item for item in self.aut_docs if item > 1]
         self.aut_cit            = self.__get_counts(self.u_aut, self.aut, self.citation)
         self.kid, self.u_kid    = self.__get_str(entry = 'keywords', s = ';', lower = True, sorting = True)
-        if ('unknow' in self.u_kid):
-            self.u_kid.remove('unknow')
+        if ('unknown' in self.u_kid):
+            self.u_kid.remove('unknown')
         self.kid_               = [item for sublist in self.kid for item in sublist]
         self.kid_count          = [self.kid_.count(item) for item in self.u_kid]
         idx                     = sorted(range(len(self.kid_count)), key = self.kid_count.__getitem__)
@@ -496,8 +538,8 @@ class pbx_probe():
         self.u_kid              = [self.u_kid[i] for i in idx]
         self.kid_count          = [self.kid_count[i] for i in idx]
         self.auk, self.u_auk    = self.__get_str(entry = 'author_keywords', s = ';', lower = True, sorting = True)
-        if ('unknow' in self.u_auk):
-            self.u_auk.remove('unknow')
+        if ('unknown' in self.u_auk):
+            self.u_auk.remove('unknown')
         self.auk_               = [item for sublist in self.auk for item in sublist]
         self.auk_count          = [self.auk_.count(item) for item in self.u_auk]
         idx                     = sorted(range(len(self.auk_count)), key = self.auk_count.__getitem__)
@@ -505,8 +547,8 @@ class pbx_probe():
         self.u_auk              = [self.u_auk[i] for i in idx]
         self.auk_count          = [self.auk_count[i] for i in idx]
         self.jou, self.u_jou    = self.__get_str(entry = 'abbrev_source_title', s = ';', lower = True, sorting = True)
-        if ('unknow' in self.u_jou):
-            self.u_jou.remove('unknow')
+        if ('unknown' in self.u_jou):
+            self.u_jou.remove('unknown')
         jou_                    = [item for sublist in self.jou for item in sublist]
         self.jou_count          = [jou_.count(item) for item in self.u_jou]
         idx                     = sorted(range(len(self.jou_count)), key = self.jou_count.__getitem__)
@@ -532,8 +574,8 @@ class pbx_probe():
         self.dy_ref             = self.__get_ref_year()
         self.natsort            = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)]  
         self.dy_c_year          = self.__get_collaboration_year()
-        if ('UNKNOW' in self.u_ref):
-            self.u_ref.remove('UNKNOW')
+        if ('UNKNOWN' in self.u_ref):
+            self.u_ref.remove('UNKNOWN')
         self.__id_document()
         self.__id_author()
         self.__id_source()
@@ -680,26 +722,12 @@ class pbx_probe():
             self.data = self.data.reset_index(drop = True)
             self.__make_bib(verbose = False)
         if (abstract == True):
-            self.data = self.data[self.data['abstract'] != 'UNKNOW']
+            self.data = self.data[self.data['abstract'] != 'UNKNOWN']
             self.data = self.data.reset_index(drop = True)
             self.__make_bib(verbose = False)
         self.__update_vb()
         self.__make_bib(verbose = True)
         return
-    
-    #from functools import lru_cache
-    #def __lev_dist(a, b): 
-        #@lru_cache(None)
-        #def min_dist(s1, s2):
-            #if s1 == len(a) or s2 == len(b):
-                #return len(a) - s1 + len(b) - s2
-            #if a[s1] == b[s2]:
-                #return min_dist(s1 + 1, s2 + 1)
-            #return 1 + min(min_dist(s1, s2 + 1),      # insert character
-                           #min_dist(s1 + 1, s2),      # delete character
-                           #min_dist(s1 + 1, s2 + 1),  # replace character
-                           #)
-        #return min_dist(0, 0)
         
     # Function: Clean DOI entries
     def clean_doi(doi):
@@ -773,14 +801,14 @@ class pbx_probe():
         data, _    = self.__read_bib(file_bib, db, del_duplicated)
         self.data  = pd.concat([self.data, data]) 
         self.data  = self.data.reset_index(drop = True)
-        self.data  = self.data.fillna('UNKNOW')
+        self.data  = self.data.fillna('UNKNOWN')
         duplicated = self.data['doi'].duplicated()
         title      = self.data['title']
         title      = title.to_list()
         title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
         t_dupl     = pd.Series(title).duplicated()
         for i in range(0, duplicated.shape[0]):
-            if (self.data.loc[i, 'doi'] == 'UNKNOW'):
+            if (self.data.loc[i, 'doi'] == 'UNKNOWN'):
                 duplicated[i] = False
             if (t_dupl[i] == True):
                 duplicated[i] = True
@@ -942,7 +970,7 @@ class pbx_probe():
                   }
         for col, name in check.items():
             if (col in self.data.columns):
-                unknown_count = (self.data[col].astype(str) == 'UNKNOW').sum()
+                unknown_count = (self.data[col].astype(str) == 'UNKNOWN').sum()
                 health_metric = ((n - unknown_count) / n) * 100
                 health.append([name, f'{health_metric:.2f}%'])
             else:
@@ -1054,7 +1082,7 @@ class pbx_probe():
                             'tradenames', 'url', 'volume', 'year']
             for col in sanity_check:
                 if (col not in data.columns):
-                    data[col] = 'UNKNOW'
+                    data[col] = 'UNKNOWN'
             data           = data.reindex(sorted(data.columns), axis = 1)
             data['author'] = data['author'].apply(lambda x: x.replace(';', ' and ') if isinstance(x, str) else x)
             doc           = data.shape[0]
@@ -1327,7 +1355,7 @@ class pbx_probe():
             title      = self.clear_text(title, stop_words  = [], lowercase = True, rmv_accents = True, rmv_special_chars = True, rmv_numbers = True, rmv_custom_words = [])
             t_dupl     = pd.Series(title).duplicated()
             for i in range(0, duplicated.shape[0]):
-                if (data.loc[i, 'doi'] == 'UNKNOW' or pd.isnull(data.loc[i, 'doi'])):
+                if (data.loc[i, 'doi'] == 'UNKNOWN' or pd.isnull(data.loc[i, 'doi'])):
                     duplicated[i] = False
                 if (t_dupl[i] == True):
                     duplicated[i] = True
@@ -1342,7 +1370,7 @@ class pbx_probe():
         if (db == 'wos' and 'type' in entries):
             data['document_type'] = data['type']
         if ('document_type' in entries):
-            types     = list(data['document_type'].replace(np.nan, 'UNKNOW'))
+            types     = list(data['document_type'].replace(np.nan, 'UNKNOWN'))
             u_types   = list(set(types))
             u_types.sort()
             string_vb = ''
@@ -1350,16 +1378,16 @@ class pbx_probe():
             for tp in u_types:
                 string_vb = tp + ' = ' + str(types.count(tp))
                 self.vb.append(string_vb)
-        data.fillna('UNKNOW', inplace = True)
+        data.fillna('UNKNOWN', inplace = True)
         data['keywords']        = data['keywords'].apply(lambda x: x.replace(',',';'))
         data['author_keywords'] = data['author_keywords'].apply(lambda x: x.replace(',',';'))
         if (db == 'wos'):
-            idx     = data[data['year'] == 'UNKNOW'].index.values
+            idx     = data[data['year'] == 'UNKNOWN'].index.values
             idx_val = [data.loc[i, 'da'][:4] for i in idx]
             for i in range(0, len(idx)):
                 data.iloc[idx[i], -1] = idx_val[i]
         if ('affiliation' in data.columns and 'affiliation_' in data.columns):
-            filtered_indices = data[(data['affiliation'] == 'UNKNOW') & (data['affiliation_'] != 'UNKNOW')].index
+            filtered_indices = data[(data['affiliation'] == 'UNKNOWN') & (data['affiliation_'] != 'UNKNOWN')].index
             filtered_indices = list(filtered_indices)
             for i in filtered_indices:
                 s         = data.loc[i, 'affiliation_']
@@ -1370,7 +1398,7 @@ class pbx_probe():
                 new_s     = '. '.join(new_parts)
                 data.loc[i, 'affiliation'] =  new_s
         if ('affiliation' in data.columns and 'affiliations' in data.columns):
-            filtered_indices = data[(data['affiliation'] == 'UNKNOW') & (data['affiliations'] != 'UNKNOW')].index
+            filtered_indices = data[(data['affiliation'] == 'UNKNOWN') & (data['affiliations'] != 'UNKNOWN')].index
             filtered_indices = list(filtered_indices)
             for i in filtered_indices:
                 data.loc[i, 'affiliation'] =  data.loc[i, 'affiliations']
@@ -1415,8 +1443,11 @@ class pbx_probe():
    
     # Function: Get Citations
     def __get_citations(self, series):
-        series = series.fillna('unknow').str.lower()
+        series = series.fillna('unknown').str.lower()
         series = series.str.replace('cited by:?', '', regex = True)
+        
+        ############################################################################
+        
         def extract_numeric(value):
             try:
                 idx = value.find(';')
@@ -1426,6 +1457,9 @@ class pbx_probe():
             except ValueError:
                 match = re.search(r'\d+', value)
                 return int(match.group()) if match else 0
+            
+        ############################################################################
+        
         return series.apply(extract_numeric).tolist()
 
     # Function: Get Past Citations per Year
@@ -1460,7 +1494,7 @@ class pbx_probe():
             elif (source == 'wos'):
                 aff = row['affiliation_'].replace('(Corresponding Author)', '')
                 return aff.replace(',', ', ') if ',' in aff and ', ' not in aff else aff
-            return 'UNKNOW'
+            return 'UNKNOWN'
         
         def get_additional_country_data():
             unique_countries = set()
@@ -1531,13 +1565,13 @@ class pbx_probe():
             affiliations = row['processed_affiliation'].split(';')
             authors      = self.aut[row.name]
             for author in authors:
-                detected_country = 'UNKNOW'
+                detected_country = 'UNKNOWN'
                 for aff in affiliations:
                     for country in self.country_names:
                         if (country.lower() in aff and author in aff):
                             detected_country = country
                             break
-                    if (detected_country != 'UNKNOW'):
+                    if (detected_country != 'UNKNOWN'):
                         break
                 if not any(entry[0] == index for entry in self.author_country_map[author]):
                     self.author_country_map[author].append((index, detected_country))
@@ -1560,7 +1594,7 @@ class pbx_probe():
                     matches.sort(key = lambda x: (-x[1], -len(x[0])))
                     selected_institutions.append(matches[0][0])
                 else:
-                    selected_institutions.append('UNKNOW')
+                    selected_institutions.append('UNKNOWN')
             return selected_institutions
 
         #############################################################################
@@ -1569,7 +1603,7 @@ class pbx_probe():
         affiliations           = (self.data['affiliation'].fillna('').str.lower() if 'affiliation' in self.data.columns else pd.Series([''] * len(self.data)) )
         affiliations_wos       = (self.data['affiliation_'].fillna('').str.lower() if 'affiliation_' in self.data.columns else pd.Series([''] * len(self.data)) )
         affiliations_wos       = (self.data['affiliation_'].fillna('').str.lower() if 'affiliation_' in self.data.columns else pd.Series([''] * len(self.data)) )
-        processed_affiliations = np.where(sources.isin(['scopus', 'pubmed']), affiliations, np.where(sources == 'wos', affiliations_wos, 'UNKNOW') )
+        processed_affiliations = np.where(sources.isin(['scopus', 'pubmed']), affiliations, np.where(sources == 'wos', affiliations_wos, 'UNKNOWN') )
         processed_affiliations = pd.Series(processed_affiliations)
         top_institutions       = processed_affiliations.apply( lambda row: extract_top_institution_with_priority(row, self.institution_names))
         inst                   = [top for top in top_institutions]
@@ -1583,7 +1617,7 @@ class pbx_probe():
                         if (author in aff and institution in aff):
                             self.author_inst_map[author].append((index, institution))
                 if (len(self.author_inst_map[author]) == 0):
-                    self.author_inst_map[author].append((index, 'UNKNOW'))
+                    self.author_inst_map[author].append((index, 'UNKNOWN'))
         inst = []
         for index, row in self.data.iterrows():
             row_inst = []
@@ -1815,7 +1849,9 @@ class pbx_probe():
         return 
     
     # Function: Tree Map
-    def tree_map(self, entry = 'kwp', topn = 20, size_x = 10, size_y = 10, txt_font_size = 12): 
+    def tree_map(self, view = 'browser', entry = 'kwp', topn = 20):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
         if   (entry == 'kwp'):
             labels = self.u_kid
             sizes  = self.kid_count 
@@ -1840,19 +1876,37 @@ class pbx_probe():
             labels = self.u_uni
             sizes  = self.uni_count 
             title  = 'Institutions'
-        idx    = sorted(range(len(sizes)), key = sizes.__getitem__)
+        idx            = sorted(range(len(sizes)), key = sizes.__getitem__)
         idx.reverse()
-        labels = [labels[i] for i in idx]
-        sizes  = [sizes[i]  for i in idx]
-        labels = labels[:topn]
-        labels = [labels[i]+'\n ('+str(sizes[i])+')' for i in range(0, len(labels))]
-        sizes  = sizes[:topn] 
-        cols   = [plt.cm.Spectral(i/float(len(labels))) for i in range(0, len(labels))]
-        plt.figure(figsize = (size_x, size_y))
-        squarify.plot(sizes = sizes, label = labels, pad = True, color = cols, alpha = 0.75, text_kwargs = {'fontsize': txt_font_size})
-        plt.title(title, loc = 'center')
-        plt.axis('off')
-        plt.show()
+        labels         = [labels[i] for i in idx]
+        sizes          = [sizes[i]  for i in idx]
+        labels         = labels[:topn]
+        sizes          = sizes[:topn]
+        display_labels = []
+        for lbl in labels:
+            if (len(lbl) > 20):
+                midpoint  = len(lbl)//2
+                break_pos = lbl.find(' ', midpoint)
+                if (break_pos == -1):
+                    break_pos = midpoint
+                lbl_display = lbl[:break_pos] + '<br>' + lbl[break_pos+1:]
+            else:
+                lbl_display = lbl
+            display_labels.append(lbl_display)
+        fig = go.Figure(
+                        go.Treemap(
+                                    labels        = display_labels,
+                                    parents       = [''] * len(labels),  
+                                    values        = sizes,
+                                    textinfo      = 'label+value',  
+                                    texttemplate  = '%{label}<br>(%{value})',
+                                    textfont      = dict(size = 12),
+                                    #hovertemplate = '<b>%{label}</b><br>Value: %{value}<extra></extra>',
+                                    marker        = dict(colors = self.color_names)
+                                 )
+                       )
+        fig.update_layout(title = title, margin = dict(l = 10, r = 10, t = 40, b = 10), paper_bgcolor = 'white')
+        fig.show()
         return
     
     # Function: Authors' Productivity Plot
@@ -1965,7 +2019,7 @@ class pbx_probe():
             if (int(year) in years):
                 countries = [item.lower() for item in self.ctr[i]]
                 for country in countries:
-                    if (country != 'unknow'):
+                    if (country != 'unknown'):
                         if (country not in yearly_data[int(year)]):
                             yearly_data[int(year)][country] = 0
                         yearly_data[int(year)][country] = yearly_data[int(year)][country] + 1
@@ -2064,9 +2118,9 @@ class pbx_probe():
             end = self.date_end
         y_idx = [i for i in range(0, self.data.shape[0]) if int(self.data.loc[i, 'year']) >= start and int(self.data.loc[i, 'year']) <= end]
         if (len(rmv_custom_words) == 0):
-            rmv_custom_words = ['unknow']
+            rmv_custom_words = ['unknown']
         else:
-            rmv_custom_words.append('unknow') 
+            rmv_custom_words.append('unknown') 
         if   (key == 'kwp'):
             u_ent = [item for item in self.u_kid if item not in rmv_custom_words]
             ent   = [item for item in self.kid   if item not in rmv_custom_words]
@@ -2209,7 +2263,9 @@ class pbx_probe():
         return
 
     # Function: Plot Bar 
-    def plot_bars(self, statistic = 'dpy', topn = 20, size_x = 10, size_y = 10): 
+    def plot_bars(self, view = 'browser',  statistic = 'dpy', topn = 20):
+        if (view == 'browser'):
+            pio.renderers.default = 'browser'
         if  (statistic.lower() == 'dpy'):
             key   = list(range(self.date_str, self.date_end+1))
             value = [self.data[self.data.year == str(item)].shape[0] for item in key]
@@ -2231,9 +2287,9 @@ class pbx_probe():
                 value.append(docs)
         elif(statistic.lower() == 'ppy'):
             key, value = self.__get_past_citations_year()
-            title      = 'Past Citations per Year'
-            x_lbl      = 'Year'
-            y_lbl      = 'Past Citations'
+            title = 'Past Citations per Year'
+            x_lbl = 'Year'
+            y_lbl = 'Past Citations'
         elif (statistic.lower() == 'ltk'):
             value = list(range(1, max(self.doc_aut)+1))
             key   = [self.doc_aut.count(item) for item in value]
@@ -2241,9 +2297,16 @@ class pbx_probe():
             idx.reverse()
             key   = [key[i]   for i in idx]
             value = [value[i] for i in idx]
-            title = "Lotka's Law"
-            x_lbl = 'Documents'
-            y_lbl = 'Authors'
+            accumulator = defaultdict(int)
+            for k, v in zip(key, value):
+                accumulator[k] = accumulator[k] + v
+            combined   = sorted(accumulator.items(), key = lambda x: x[0])
+            key, value = zip(*combined)
+            key        = [item for item in key]
+            value      = [item for item in value]
+            title      = "Lotka's Law"
+            x_lbl      = 'Documents'
+            y_lbl      = 'Authors'
         elif (statistic.lower() == 'spd'):
             key   = self.u_jou
             value = self.jou_count
@@ -2434,40 +2497,53 @@ class pbx_probe():
         data_tuples       = list(zip(key, value))
         self.ask_gpt_bp   = pd.DataFrame(data_tuples, columns = [x_lbl, y_lbl])
         self.ask_gpt_bp_t = title
-        w_1               = 0.135
-        w_2               = 0.045
-        w_s               = np.arange(len(value) / 8, step = 0.125)
-        plt.figure(figsize = [size_x, size_y])
-        if (statistic.lower() == 'dpy' or statistic.lower() == 'cpy' or statistic.lower() == 'ppy' or statistic.lower() == 'ltk'):
-            plt.bar(w_s, value, color = '#dce6f2', width = w_1/2, edgecolor = '#c3d5e8')
-            plt.bar(w_s, value, color = '#ffc001', width = w_2/2, edgecolor = '#c3d5e8')
+        fig = go.Figure()
+        if (statistic.lower() in ['dpy', 'cpy', 'ppy', 'ltk']):
+            x = key
+            y = value
+            fig.add_trace(go.Bar(
+                            x            = x, 
+                            y            = y, 
+                            text         = y,
+                            textposition = 'auto',
+                            marker       = dict(color = '#ffc001', line = dict(color = '#c3d5e8', width = 1)),
+                          ))
+            
             if (statistic.lower() != 'ltk'):
-                plt.axhline(y = sum(value)/len(value), color = 'r', linestyle = '-', lw = 0.75)
-            plt.axhline(y = 0, color = 'gray')
-            plt.xticks(w_s, key)
-            plt.xticks(rotation = 90)
-            for i, bar in enumerate(value):
-                plt.text(x = i / 8 - 0.015, y = bar + 0.5, s = bar)
+                avg_line = np.mean(value)
+                fig.add_hline(y = avg_line, line_color = 'red', line_width = 1, line_dash = 'solid')  
+            fig.update_layout(title = title, xaxis_title = x_lbl, yaxis_title = y_lbl, template = 'plotly_white')
         else:
-            plt.barh(key, color = '#dce6f2', width = value, height = w_1*5, edgecolor = '#c3d5e8')
-            plt.barh(key, color = '#ffc001', width = value, height = w_2*5, edgecolor = '#c3d5e8')
-            plt.yticks(key)
-            for i, bar in enumerate(value):
-                plt.text(x = bar + 0.05, y = key[i], s = bar)
-            plt.gca().invert_yaxis()
-        plt.title(title, loc = 'center')
-        plt.xlabel(x_lbl)
-        plt.ylabel(y_lbl)
-        plt.show()
+            x = value
+            y = key
+            fig.add_trace(go.Bar(
+                            x            = x,
+                            y            = y,
+                            orientation  = 'h',
+                            text         = x,
+                            textposition = 'auto',
+                            marker       = dict(color = '#ffc001', line = dict(color = '#c3d5e8', width = 1))
+                        ))
+            fig.update_yaxes(autorange = 'reversed')
+            fig.update_layout(title = title, xaxis_title = x_lbl, yaxis_title = y_lbl, template = 'plotly_white')
+        if (statistic.lower() == 'ltk'):
+            fig.update_xaxes(type = 'category', categoryorder = 'array', categoryarray = x)
+        fig.show()
         return
-    
+
     # Function: Sankey Diagram
     def sankey_diagram(self, view = 'browser', entry = ['aut', 'cout', 'inst'], topn = 20): 
+        
+        ############################################################################
+        
         def sort_count(u_lst, count_lst):
             idx   = sorted(range(0, len(count_lst)), key = count_lst.__getitem__)
             idx.reverse()
             u_lst = [u_lst[i] for i in idx]
-            return u_lst   
+            return u_lst  
+        
+        ############################################################################
+        
         if (view == 'browser'):
             pio.renderers.default = 'browser'
         u_keys = ['aut', 'cout', 'inst', 'jou', 'kwa', 'kwp', 'lan']
@@ -2494,9 +2570,9 @@ class pbx_probe():
             else:
                 start.append(finish[-1]+1)
                 finish.append(start[-1]+len(list_u[-1])-1)
-        label  = [item for sublist in list_u for item in sublist if item != 'UNKNOW']
+        label  = [item for sublist in list_u for item in sublist if item != 'UNKNOWN']
         for i in range(0, len(entry)):
-            label.append('UNKNOW_'+dict_n[entry[i]])
+            label.append('UNKNOWN_'+dict_n[entry[i]])
         dict_s = dict(  zip( label, list( range( 0, len(label) ) ) ) )
         pairs  = [[] for _ in range(0, len(list_u)-1)]
         for i in range(0, len(list_u)-1):
@@ -2504,23 +2580,23 @@ class pbx_probe():
             for m in range(0, len(list_u[i])):
                 name_a = list_u[i][m]
                 idx_a  = [k for k in range(0, len(list_e[i])) if name_a in list_e[i][k] ]
-                name_a = name_a.replace('UNKNOW', 'UNKNOW_'+dict_n[entry[j-1]])
+                name_a = name_a.replace('UNKNOWN', 'UNKNOWN_'+dict_n[entry[j-1]])
                 for n in idx_a:
                     if (entry[i] != 'kwa' and entry[i] != 'kwp'):
-                        pos_a  = list_e[i][n].index(name_a.replace('UNKNOW_'+dict_n[entry[j-1]], 'UNKNOW'))
+                        pos_a  = list_e[i][n].index(name_a.replace('UNKNOWN_'+dict_n[entry[j-1]], 'UNKNOWN'))
                         pos_a  = np.clip(pos_a, 0, len(list_e[j][n])-1)
                     else:
                         pos_a  = 0
                     if (entry[j] != 'kwa' and entry[j] != 'kwp'):
                         if (len(list_e[j][n]) > 0):
-                            name_b = list_e[j][n][pos_a].replace('UNKNOW', 'UNKNOW_'+dict_n[entry[j]])
+                            name_b = list_e[j][n][pos_a].replace('UNKNOWN', 'UNKNOWN_'+dict_n[entry[j]])
                         else:
-                            name_b = 'UNKNOW_'+dict_n[entry[j]]
+                            name_b = 'UNKNOWN_'+dict_n[entry[j]]
                         pairs[i].append([name_a, name_b])
                     else:
                         name_b = list_e[j][n]
                         for name in name_b:
-                            pairs[i].append([name_a, name.replace('UNKNOW', 'UNKNOW_'+dict_n[entry[j]])])
+                            pairs[i].append([name_a, name.replace('UNKNOWN', 'UNKNOWN_'+dict_n[entry[j]])])
         for pair in pairs:
             if (pair == pairs[0]):
                 u_pair = list(set([tuple(x) for x in pair]))
@@ -2874,149 +2950,195 @@ class pbx_probe():
 
     #############################################################################
     
-    # Function: Authors Colaboration Adjacency Matrix
+    # Function: Authors Colaboration Adjacency Matrix   
     def __adjacency_matrix_aut(self, min_colab = 1):
-        self.matrix_a = pd.DataFrame(np.zeros( (len(self.u_aut), len(self.u_aut))), index = self.u_aut, columns = self.u_aut)
-        for i in range(0, len(self.aut)):
-            if (len(self.aut[i]) > 1):
-                for j in range(0, len(self.aut[i]) -1):
-                    j1 = j
-                    j2 = j+1
-                    self.matrix_a.loc[self.aut[i][j1], self.aut[i][j2]] = self.matrix_a.loc[self.aut[i][j1], self.aut[i][j2]] + 1
-                    self.matrix_a.loc[self.aut[i][j2], self.aut[i][j1]] = self.matrix_a.loc[self.aut[i][j2], self.aut[i][j1]] + 1
-        self.labels_a = ['a_'+str(i) for i in range(0, self.matrix_a.shape[0])]
-        self.matrix_a[self.matrix_a > 0] = 1
-        self.n_colab  = self.matrix_a.sum(axis = 0)
-        self.n_colab  = [int(item) for item in self.n_colab]
+        tgt_entry      = self.aut
+        tgt_entry_u    = self.u_aut
+        tgt_label      = 'a_'
+        item_to_idx    = {tgt: idx for idx, tgt in enumerate(tgt_entry_u)} 
+        n_items        = len(tgt_entry_u) 
+        item_idx_list  = []
+        for it in tgt_entry:
+            item_idx       = np.array([item_to_idx[i] for i in it], dtype = np.int32)
+            item_idx_list.append(item_idx)
+        item_idx_list_typed = List()
+        for arr in item_idx_list:
+            item_idx_list_typed.append(arr)
+        rows, cols     = build_edges(item_idx_list_typed)
+        data           = np.ones(len(rows), dtype = np.int8)
+        adjacency      = coo_matrix((data, (rows, cols)), shape = (n_items, n_items)).tocsr()
+        n_colab        = np.array(adjacency.sum(axis = 0)).flatten()
+        adjacency.data = (adjacency.data > 0).astype(np.int8)
         if (min_colab > 0):
-            cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
-            if (len(cols) > 0):
-                self.matrix_a.iloc[cols, cols] = 0
-        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
+            low_colab_mask = n_colab < min_colab
+            if (np.any(low_colab_mask)):
+                low_idx               = np.where(low_colab_mask)[0]
+                adjacency[low_idx, :] = 0
+                adjacency[:, low_idx] = 0
+        adjacency.eliminate_zeros()
+        self.matrix_a = pd.DataFrame.sparse.from_spmatrix(adjacency, index = tgt_entry_u, columns = tgt_entry_u)
+        self.labels_a = [tgt_label + str(i) for i in range(0, n_items)]
+        self.n_colab  = n_colab.tolist()
         return self
     
     # Function: Country Colaboration Adjacency Matrix
     def __adjacency_matrix_ctr(self, min_colab = 1):
-        self.matrix_a = pd.DataFrame(np.zeros( (len(self.u_ctr), len(self.u_ctr))), index = self.u_ctr, columns = self.u_ctr)
-        for i in range(0, len(self.ctr)):
-            if (len(self.ctr[i]) > 1):
-                for j in range(0, len(self.ctr[i]) -1):
-                    j1 = j
-                    j2 = j+1
-                    self.matrix_a.loc[self.ctr[i][j1], self.ctr[i][j2]] = self.matrix_a.loc[self.ctr[i][j1], self.ctr[i][j2]] + 1
-                    self.matrix_a.loc[self.ctr[i][j2], self.ctr[i][j1]] = self.matrix_a.loc[self.ctr[i][j2], self.ctr[i][j1]] + 1
-        np.fill_diagonal(self.matrix_a.values, 0)
-        self.labels_a = ['c_'+str(i) for i in range(0, self.matrix_a.shape[0])]
-        self.matrix_a[self.matrix_a > 0] = 1
-        self.n_colab  = self.matrix_a.sum(axis = 0)
-        self.n_colab  = [int(item) for item in self.n_colab]
+        tgt_entry      = self.ctr
+        tgt_entry_u    = self.u_ctr
+        tgt_label      = 'c_'
+        item_to_idx    = {tgt: idx for idx, tgt in enumerate(tgt_entry_u)} 
+        n_items        = len(tgt_entry_u) 
+        item_idx_list  = []
+        for it in tgt_entry:
+            item_idx       = np.array([item_to_idx[i] for i in it], dtype = np.int32)
+            item_idx_list.append(item_idx)
+        item_idx_list_typed = List()
+        for arr in item_idx_list:
+            item_idx_list_typed.append(arr)
+        rows, cols     = build_edges(item_idx_list_typed)
+        data           = np.ones(len(rows), dtype = np.int8)
+        adjacency      = coo_matrix((data, (rows, cols)), shape = (n_items, n_items)).tocsr()
+        n_colab        = np.array(adjacency.sum(axis = 0)).flatten()
+        adjacency.data = (adjacency.data > 0).astype(np.int8)
         if (min_colab > 0):
-            cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
-            if (len(cols) > 0):
-                self.matrix_a.iloc[cols, cols] = 0
-        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
+            low_colab_mask = n_colab < min_colab
+            if (np.any(low_colab_mask)):
+                low_idx               = np.where(low_colab_mask)[0]
+                adjacency[low_idx, :] = 0
+                adjacency[:, low_idx] = 0
+        adjacency.eliminate_zeros()
+        self.matrix_a = pd.DataFrame.sparse.from_spmatrix(adjacency, index = tgt_entry_u, columns = tgt_entry_u)
+        self.labels_a = [tgt_label + str(i) for i in range(0, n_items)]
+        self.n_colab  = n_colab.tolist()
         return self
-    
-    # Function: Institution Colaboration Adjacency Matrix
+
+    # Function: Institution Colaboration Adjacency Matrix   
     def __adjacency_matrix_inst(self, min_colab = 1):
-        self.matrix_a = pd.DataFrame(np.zeros( (len(self.u_uni), len(self.u_uni))), index = self.u_uni, columns = self.u_uni)
-        for i in range(0, len(self.uni)):
-            if (len(self.uni[i]) > 1):
-                for j in range(0, len(self.uni[i]) -1):
-                    j1 = j
-                    j2 = j+1
-                    self.matrix_a.loc[self.uni[i][j1], self.uni[i][j2]] = self.matrix_a.loc[self.uni[i][j1], self.uni[i][j2]] + 1
-                    self.matrix_a.loc[self.uni[i][j2], self.uni[i][j1]] = self.matrix_a.loc[self.uni[i][j2], self.uni[i][j1]] + 1
-        np.fill_diagonal(self.matrix_a.values, 0)
-        self.labels_a = ['i_'+str(i) for i in range(0, self.matrix_a.shape[0])]
-        self.matrix_a[self.matrix_a > 0] = 1
-        self.n_colab  = self.matrix_a.sum(axis = 0)
-        self.n_colab  = [int(item) for item in self.n_colab]
+        tgt_entry      = self.uni
+        tgt_entry_u    = self.u_uni
+        tgt_label      = 'i_'
+        item_to_idx    = {tgt: idx for idx, tgt in enumerate(tgt_entry_u)} 
+        n_items        = len(tgt_entry_u) 
+        item_idx_list  = []
+        for it in tgt_entry:
+            item_idx       = np.array([item_to_idx[i] for i in it], dtype = np.int32)
+            item_idx_list.append(item_idx)
+        item_idx_list_typed = List()
+        for arr in item_idx_list:
+            item_idx_list_typed.append(arr)
+        rows, cols     = build_edges(item_idx_list_typed)
+        data           = np.ones(len(rows), dtype = np.int8)
+        adjacency      = coo_matrix((data, (rows, cols)), shape = (n_items, n_items)).tocsr()
+        n_colab        = np.array(adjacency.sum(axis = 0)).flatten()
+        adjacency.data = (adjacency.data > 0).astype(np.int8)
         if (min_colab > 0):
-            cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
-            if (len(cols) > 0):
-                self.matrix_a.iloc[cols, cols] = 0
-        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
+            low_colab_mask = n_colab < min_colab
+            if (np.any(low_colab_mask)):
+                low_idx               = np.where(low_colab_mask)[0]
+                adjacency[low_idx, :] = 0
+                adjacency[:, low_idx] = 0
+        adjacency.eliminate_zeros()
+        self.matrix_a = pd.DataFrame.sparse.from_spmatrix(adjacency, index = tgt_entry_u, columns = tgt_entry_u)
+        self.labels_a = [tgt_label + str(i) for i in range(0, n_items)]
+        self.n_colab  = n_colab.tolist()
         return self
     
-    # Function: KWA Colaboration Adjacency Matrix
+    # Function: KWA Colaboration Adjacency Matrix   
     def __adjacency_matrix_kwa(self, min_colab = 1):
-        self.matrix_a = pd.DataFrame(np.zeros( (len(self.u_auk), len(self.u_auk))), index = self.u_auk, columns = self.u_auk)
-        for i in range(0, len(self.auk)):
-            if (len(self.auk[i]) > 1):
-                for j in range(0, len(self.auk[i])-1):
-                    j1 = j
-                    j2 = j+1
-                    self.matrix_a.loc[self.auk[i][j1], self.auk[i][j2]] = self.matrix_a.loc[self.auk[i][j1], self.auk[i][j2]] + 1
-                    self.matrix_a.loc[self.auk[i][j2], self.auk[i][j1]] = self.matrix_a.loc[self.auk[i][j2], self.auk[i][j1]] + 1
-        np.fill_diagonal(self.matrix_a.values, 0)
-        self.labels_a =  [self.dict_kwa_id[item] for item in list(self.matrix_a.columns)] 
-        self.matrix_a[self.matrix_a > 0] = 1
-        self.n_colab  = self.matrix_a.sum(axis = 0)
-        self.n_colab  = [int(item) for item in self.n_colab]
+        tgt_entry      = self.auk
+        tgt_entry_u    = self.u_auk
+        item_to_idx    = {tgt: idx for idx, tgt in enumerate(tgt_entry_u)} 
+        n_items        = len(tgt_entry_u) 
+        item_idx_list  = []
+        for it in tgt_entry:
+            if (it[0] != 'unknown'):
+                item_idx       = np.array([item_to_idx[i] for i in it], dtype = np.int32)
+                item_idx_list.append(item_idx)
+        item_idx_list_typed = List()
+        for arr in item_idx_list:
+            item_idx_list_typed.append(arr)
+        rows, cols     = build_edges(item_idx_list_typed)
+        data           = np.ones(len(rows), dtype = np.int8)
+        adjacency      = coo_matrix((data, (rows, cols)), shape = (n_items, n_items)).tocsr()
+        n_colab        = np.array(adjacency.sum(axis = 0)).flatten()
+        adjacency.data = (adjacency.data > 0).astype(np.int8)
         if (min_colab > 0):
-            cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
-            if (len(cols) > 0):
-                self.matrix_a.iloc[cols, cols] = 0
-        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
+            low_colab_mask = n_colab < min_colab
+            if (np.any(low_colab_mask)):
+                low_idx               = np.where(low_colab_mask)[0]
+                adjacency[low_idx, :] = 0
+                adjacency[:, low_idx] = 0
+        adjacency.eliminate_zeros()
+        self.matrix_a = pd.DataFrame.sparse.from_spmatrix(adjacency, index = tgt_entry_u, columns = tgt_entry_u)
+        self.labels_a = [self.dict_kwa_id[item] for item in tgt_entry_u] 
+        self.n_colab  = n_colab.tolist()
         return self
     
     # Function: KWP Colaboration Adjacency Matrix
     def __adjacency_matrix_kwp(self, min_colab = 1):
-        self.matrix_a = pd.DataFrame(np.zeros( (len(self.u_kid), len(self.u_kid))), index = self.u_kid, columns = self.u_kid)
-        for i in range(0, len(self.kid)):
-            if (len(self.kid[i]) > 1):
-                for j in range(0, len(self.kid[i])-1):
-                    j1 = j
-                    j2 = j+1
-                    self.matrix_a.loc[self.kid[i][j1], self.kid[i][j2]] = self.matrix_a.loc[self.kid[i][j1], self.kid[i][j2]] + 1
-                    self.matrix_a.loc[self.kid[i][j2], self.kid[i][j1]] = self.matrix_a.loc[self.kid[i][j2], self.kid[i][j1]] + 1
-        np.fill_diagonal(self.matrix_a.values, 0)
-        self.labels_a =  [self.dict_kwp_id[item] for item in list(self.matrix_a.columns)]
-        self.matrix_a[self.matrix_a > 0] = 1
-        self.n_colab  = self.matrix_a.sum(axis = 0)
-        self.n_colab  = [int(item) for item in self.n_colab]
+        tgt_entry      = self.kid
+        tgt_entry_u    = self.u_kid
+        item_to_idx    = {tgt: idx for idx, tgt in enumerate(tgt_entry_u)} 
+        n_items        = len(tgt_entry_u) 
+        item_idx_list  = []
+        for it in tgt_entry:
+            if (it[0] != 'unknown'):
+                item_idx       = np.array([item_to_idx[i] for i in it], dtype = np.int32)
+                item_idx_list.append(item_idx)
+        item_idx_list_typed = List()
+        for arr in item_idx_list:
+            item_idx_list_typed.append(arr)
+        rows, cols     = build_edges(item_idx_list_typed)
+        data           = np.ones(len(rows), dtype = np.int8)
+        adjacency      = coo_matrix((data, (rows, cols)), shape = (n_items, n_items)).tocsr()
+        n_colab        = np.array(adjacency.sum(axis = 0)).flatten()
+        adjacency.data = (adjacency.data > 0).astype(np.int8)
         if (min_colab > 0):
-            cols =  [i for i in range(0, len(self.n_colab)) if self.n_colab[i] < min_colab]
-            if (len(cols) > 0):
-                self.matrix_a.iloc[cols, cols] = 0
-        self.matrix_a = self.matrix_a.astype(pd.SparseDtype('float', 0))
+            low_colab_mask = n_colab < min_colab
+            if (np.any(low_colab_mask)):
+                low_idx               = np.where(low_colab_mask)[0]
+                adjacency[low_idx, :] = 0
+                adjacency[:, low_idx] = 0
+        adjacency.eliminate_zeros()
+        self.matrix_a = pd.DataFrame.sparse.from_spmatrix(adjacency, index = tgt_entry_u, columns = tgt_entry_u)
+        self.labels_a = [self.dict_kwp_id[item] for item in tgt_entry_u] 
+        self.n_colab  = n_colab.tolist()
         return self
 
-    # Function: References Adjacency Matrix
+    # Function: References Adjacency Matrix   
     def __adjacency_matrix_ref(self, min_cites = 2, local_nodes = False):
         u_ref_map   = {ref: idx for idx, ref in enumerate(self.u_ref)}
         num_rows    = self.data.shape[0]
         num_cols    = len(self.u_ref)
-        ref_indices = [ [u_ref_map[ref] for ref in refs if ref in u_ref_map] for refs in self.ref ]
-        row_indices = []
-        col_indices = []
-        data        = []
-        for row, refs in enumerate(ref_indices):
-            for col in refs:
-                row_indices.append(row)
-                col_indices.append(col)
-                data.append(1)
-        sparse_matrix   = csr_matrix((data, (row_indices, col_indices)), shape = (num_rows, num_cols), dtype = np.float32)
-        self.matrix_r   = pd.DataFrame.sparse.from_spmatrix(sparse_matrix, columns = self.u_ref)
-        self.labels_r   = [f'r_{i}' for i in range(num_cols)]
-        sources         = self.data['source'].str.lower()
-        keys_1          = self.data['title'].str.lower().str.replace('[', '', regex = False).str.replace(']', '', regex = False).tolist()
-        keys_2          = self.data['doi'].str.lower().tolist()
-        keys            = np.where(sources.isin(['scopus', 'pubmed']), keys_1, np.where(sources == 'wos', keys_2, None))
-        corpus          = ' '.join(ref.lower() for ref in self.u_ref)
-        matched_indices = [i for i, key in enumerate(keys) if key and re.search(key, corpus)]
-        insd_r          = []
-        insd_t          = []
-        u_ref_lower     = [ref.lower() for ref in self.u_ref]
+        ref_indices = []
+        for refs in self.ref:
+            filtered = [u_ref_map[r] for r in refs if r in u_ref_map]
+            ref_indices.append(np.array(filtered, dtype = np.int32))
+        ref_idx_list_typed = List()
+        for arr in ref_indices:
+            ref_idx_list_typed.append(arr)
+        row_indices, col_indices = build_edges_ref(ref_idx_list_typed)
+        data                     = np.ones(len(row_indices), dtype = np.float32)
+        sparse_matrix            = csr_matrix((data, (row_indices, col_indices)), shape = (num_rows, num_cols), dtype = np.float32)
+        self.matrix_r            = pd.DataFrame.sparse.from_spmatrix(sparse_matrix, columns = self.u_ref)
+        self.labels_r            = [f'r_{i}' for i in range(0, num_cols)]
+        sources                  = self.data['source'].str.lower()
+        keys_1                   = self.data['title'].str.lower().str.replace('[', '', regex = False).str.replace(']', '', regex=False).tolist()
+        keys_2                   = self.data['doi'].str.lower().tolist()
+        keys                     = np.where(sources.isin(['scopus', 'pubmed']), keys_1, np.where(sources == 'wos', keys_2, None))
+        corpus                   = ' '.join(ref.lower() for ref in self.u_ref)
+        matched_indices          = [i for i, key in enumerate(keys) if key and re.search(key, corpus)]
+        insd_r                   = []
+        insd_t                   = []
+        u_ref_lower              = [ref.lower() for ref in self.u_ref]
         for i in matched_indices:
             key = keys[i]
             for j, ref in enumerate(u_ref_lower):
-                if re.search(key, ref):
+                if (re.search(key, ref)):
                     insd_r.append(f'r_{j}')
                     insd_t.append(str(i))
                     self.dy_ref[j] = int(self.dy[i])
-                    break  
+                    break
         self.dict_lbs         = dict(zip(insd_r, insd_t))
         self.dict_lbs.update({label: label for label in self.labels_r if label not in self.dict_lbs})
         self.labels_r         = [self.dict_lbs.get(label, label) for label in self.labels_r]
@@ -3026,7 +3148,7 @@ class pbx_probe():
             self.matrix_r = self.matrix_r.loc[:, mask]
             self.labels_r = self.matrix_r.columns.tolist()
         if (min_cites >= 1):
-            col_sums      = self.matrix_r.sum(axis = 0)
+            col_sums      = self.matrix_r.sum(axis=0)
             cols_to_keep  = col_sums[col_sums >= min_cites].index
             self.matrix_r = self.matrix_r[cols_to_keep]
             self.labels_r = cols_to_keep.tolist()
@@ -3249,8 +3371,8 @@ class pbx_probe():
         self.__adjacency_matrix_ctr(1)
         adjacency_matrix = self.matrix_a.values
         try:
-            row_pos                      = self.matrix_a.index.get_loc('UNKNOW')
-            col_pos                      = self.matrix_a.columns.get_loc('UNKNOW')
+            row_pos                      = self.matrix_a.index.get_loc('UNKNOWN')
+            col_pos                      = self.matrix_a.columns.get_loc('UNKNOWN')
             adjacency_matrix[row_pos, :] = 0
             adjacency_matrix[:, col_pos] = 0
         except:
@@ -3265,7 +3387,7 @@ class pbx_probe():
         rows, cols       = np.where(adjacency_matrix >= 1)
         edges            = list(zip(rows.tolist(), cols.tolist()))
         try:
-            unk   = int(self.dict_ctr_id['UNKNOW'].replace('c_',''))
+            unk   = int(self.dict_ctr_id['UNKNOWN'].replace('c_',''))
             edges = list(filter(lambda edge: unk not in edge, edges))
         except:
             pass
@@ -4545,7 +4667,7 @@ class pbx_probe():
         else:
             article_ids = [int(item) for item in article_ids]
         for i in range(0, abstracts.shape[0]):
-            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+            if (abstracts.iloc[i] != 'UNKNOWN' and i in article_ids):
                 corpus.append(abstracts.iloc[i])
         if (len(corpus) > 0):
             print('')
@@ -4604,7 +4726,7 @@ class pbx_probe():
         else:
             article_ids = [int(item) for item in article_ids]
         for i in range(0, abstracts.shape[0]):
-            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+            if (abstracts.iloc[i] != 'UNKNOWN' and i in article_ids):
                 corpus.append('Abstract (Document ID' + str(i) + '):\n\n')
                 corpus.append(abstracts.iloc[i])
                 print('Document ID' + str(i) + ' Number of Characters: ' + str(len(abstracts.iloc[i])))
@@ -4641,7 +4763,7 @@ class pbx_probe():
         else:
             article_ids = [int(item) for item in article_ids]
         for i in range(0, abstracts.shape[0]):
-            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+            if (abstracts.iloc[i] != 'UNKNOWN' and i in article_ids):
                 corpus.append(abstracts.iloc[i])
         if (len(corpus) > 0):
             print('')
@@ -4668,7 +4790,7 @@ class pbx_probe():
         else:
             article_ids = [int(item) for item in article_ids]
         for i in range(0, abstracts.shape[0]):
-            if (abstracts.iloc[i] != 'UNKNOW' and i in article_ids):
+            if (abstracts.iloc[i] != 'UNKNOWN' and i in article_ids):
                 corpus.append(abstracts.iloc[i])
         if (len(corpus) > 0):
             print('')
